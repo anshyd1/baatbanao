@@ -1,0 +1,65 @@
+{
+  "name": "BaatBanao — WhatsApp Message Assistant",
+  "short_name": "BaatBanao",
+  "description": "Paisa bhi wapas, rishta bhi safe. Vasooli Mode se WhatsApp-ready payment reminder 5 second mein.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF9E8",
+  "theme_color": "#FF725F",
+  "lang": "hi-IN",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "finance", "social"],
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Vasooli Mode",
+      "short_name": "Vasooli",
+      "description": "Payment reminder message banao",
+      "url": "./index.html#vasooli",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Udhaar Khata",
+      "short_name": "Khata",
+      "description": "Pending payments dekho",
+      "url": "./index.html#khata",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "BaatBanao Home"
+    }
+  ]
+}

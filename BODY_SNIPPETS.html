@@ -1,0 +1,19 @@
+<!-- ============================================================
+     BaatBanao — BODY snippets to add to index.html
+     ============================================================ -->
+
+<!-- 1) INSTALL BUTTON: replace/augment the existing "Pro" button in the top bar
+        with this install button (or add both). Place it in your .topbar area. -->
+
+<button class="bb-install-btn" data-bb-install-trigger aria-label="Install BaatBanao app">
+  <span class="bb-dot" aria-hidden="true"></span>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>
+  </svg>
+  <span>Install</span>
+</button>
+
+
+<!-- 2) SCRIPT: add this JUST BEFORE </body>, AFTER your existing app.js -->
+
+<script src="install.js" defer></script>
