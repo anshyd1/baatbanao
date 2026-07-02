@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
-<title>BaatBanao — WhatsApp Message Assistant | Vasooli Mode 💸</title>
-<meta name="description" content="Paisa bhi wapas, rishta bhi safe. BaatBanao WhatsApp payment reminder assistant — Hindi, Hinglish, Bhojpuri aur English mein message 5 second mein.">
-<meta name="theme-color" content="#FF725F">
+<title>BaatBanao</title>
+<meta name="description" content="Paisa bhi wapas, rishta bhi safe. BaatBanao WhatsApp payment reminder assistant.">
+<meta name="theme-color" content="#FFF9E8">
 <meta name="color-scheme" content="light">
 
 <!-- PWA Manifest -->
@@ -26,24 +26,244 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="BaatBanao — Vasooli Mode 💸">
-<meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄 WhatsApp-ready payment reminder 5 second mein.">
+<meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄">
 <meta property="og:image" content="assets/icon-512.png">
 <meta property="og:locale" content="hi_IN">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="BaatBanao — Vasooli Mode">
+<meta name="twitter:title" content="BaatBanao">
 <meta name="twitter:description" content="Paisa bhi wapas, rishta bhi safe 😄">
 <meta name="twitter:image" content="assets/icon-512.png">
 
-<!-- Fonts -->
+<!-- Preload mascot for instant splash -->
+<link rel="preload" as="image" href="assets/mascot-coin.png">
+
+<!-- ============================================================
+     INLINE CRITICAL CSS — SPLASH RENDERS INSTANTLY
+     No wait for stylesheets, no flicker.
+     ============================================================ -->
+<style>
+  html, body { margin:0; padding:0; background:#FFF9E8; }
+
+  #bb-splash-inline{
+    position:fixed; inset:0; z-index:99999;
+    background:linear-gradient(160deg, #FFF9E8 0%, #FFEACC 45%, #FFD4B8 100%);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  #bb-splash-inline.bb-fade-out{
+    animation: bbSplashOut .5s cubic-bezier(.5,.05,.5,.95) forwards;
+  }
+  @keyframes bbSplashOut {
+    0%{ opacity:1; transform:scale(1); filter:blur(0); }
+    100%{ opacity:0; transform:scale(1.06); filter:blur(6px); }
+  }
+
+  #bb-splash-inline .bg-blob{
+    position:absolute; border-radius:50%; filter:blur(40px); opacity:.5;
+    animation: bbBlobFloat 6s ease-in-out infinite;
+  }
+  #bb-splash-inline .b1{ width:280px; height:280px; background:#FF725F; top:-80px; right:-60px; animation-delay:0s; }
+  #bb-splash-inline .b2{ width:220px; height:220px; background:#FFB88C; bottom:-40px; left:-40px; animation-delay:1.5s; }
+  #bb-splash-inline .b3{ width:180px; height:180px; background:#FFD97D; top:50%; left:30%; animation-delay:3s; opacity:.35; }
+  @keyframes bbBlobFloat{ 0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(20px,-15px) scale(1.08);} }
+
+  #bb-splash-inline .content{
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; align-items:center;
+    gap:18px; padding:20px;
+  }
+
+  #bb-splash-inline .mascot-wrap{
+    position:relative; width:170px; height:170px;
+    display:flex; align-items:center; justify-content:center;
+    animation: bbMascotIn .9s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes bbMascotIn{
+    0%{ opacity:0; transform:scale(.3) rotate(-20deg); }
+    60%{ opacity:1; transform:scale(1.1) rotate(5deg); }
+    100%{ opacity:1; transform:scale(1) rotate(0); }
+  }
+
+  #bb-splash-inline .ring{
+    position:absolute; inset:-8px; border-radius:50%;
+    border:3px dashed rgba(255,114,95,.35);
+    animation: bbRingSpin 8s linear infinite;
+  }
+  @keyframes bbRingSpin{ to{ transform:rotate(360deg); } }
+
+  #bb-splash-inline .mascot{
+    width:130px; height:130px; object-fit:contain;
+    filter: drop-shadow(0 12px 20px rgba(230,150,20,0.4));
+    animation: bbMascotBounce 1.6s ease-in-out infinite;
+    z-index:2;
+  }
+  @keyframes bbMascotBounce{
+    0%,100%{ transform:translateY(0) rotate(-3deg); }
+    50%{ transform:translateY(-10px) rotate(3deg); }
+  }
+
+  #bb-splash-inline .coin{
+    position:absolute; z-index:3;
+    font-size:20px; font-weight:900; color:#FF725F;
+    background:#fff; width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    box-shadow:0 6px 12px rgba(255,114,95,.35);
+    opacity:0;
+    animation: bbCoinPop .5s ease-out forwards, bbCoinFloat 3s ease-in-out infinite;
+  }
+  #bb-splash-inline .c1{ top:5%; right:0; animation-delay:.6s, .6s; }
+  #bb-splash-inline .c2{ bottom:10%; left:-5%; animation-delay:.8s, .8s; }
+  #bb-splash-inline .c3{ top:55%; right:-10%; animation-delay:1s, 1s; }
+  @keyframes bbCoinPop{
+    from{ opacity:0; transform:scale(.2) translateY(-15px); }
+    to{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  @keyframes bbCoinFloat{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
+
+  #bb-splash-inline .logo{
+    margin:6px 0 0 0;
+    font-weight:900; font-size:38px; letter-spacing:-0.5px;
+    color:#261818;
+    display:flex; gap:1px;
+  }
+  #bb-splash-inline .logo span{
+    opacity:0; display:inline-block;
+    transform:translateY(15px);
+    animation: bbLetterUp .5s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  #bb-splash-inline .logo span:nth-child(1){ animation-delay:.4s; }
+  #bb-splash-inline .logo span:nth-child(2){ animation-delay:.48s; }
+  #bb-splash-inline .logo span:nth-child(3){ animation-delay:.56s; }
+  #bb-splash-inline .logo span:nth-child(4){ animation-delay:.64s; }
+  #bb-splash-inline .logo span:nth-child(5){ animation-delay:.72s; color:#FF725F; }
+  #bb-splash-inline .logo span:nth-child(6){ animation-delay:.80s; }
+  #bb-splash-inline .logo span:nth-child(7){ animation-delay:.88s; }
+  #bb-splash-inline .logo span:nth-child(8){ animation-delay:.96s; }
+  #bb-splash-inline .logo span:nth-child(9){ animation-delay:1.04s; }
+  @keyframes bbLetterUp{ to{ opacity:1; transform:translateY(0); } }
+
+  #bb-splash-inline .tag{
+    margin:0; font-weight:700; font-size:15px; color:#75615C;
+    opacity:0;
+    animation: bbFadeUp .5s ease-out 1.2s forwards;
+    text-align:center;
+  }
+  #bb-splash-inline .wink{
+    display:inline-block;
+    animation: bbEmojiWiggle 1.2s ease-in-out infinite 1.7s;
+  }
+  @keyframes bbEmojiWiggle{
+    0%,100%{ transform:rotate(0); }
+    25%{ transform:rotate(-15deg); }
+    75%{ transform:rotate(15deg); }
+  }
+  @keyframes bbFadeUp{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  #bb-splash-inline .dots{
+    display:flex; gap:6px; margin-top:10px;
+    opacity:0;
+    animation: bbFadeUp .4s ease-out 1.4s forwards;
+  }
+  #bb-splash-inline .dots span{
+    width:8px; height:8px; border-radius:50%; background:#FF725F;
+    animation: bbDotPulse 1.2s ease-in-out infinite;
+  }
+  #bb-splash-inline .dots span:nth-child(2){ animation-delay:.2s; }
+  #bb-splash-inline .dots span:nth-child(3){ animation-delay:.4s; }
+  @keyframes bbDotPulse{
+    0%,100%{ transform:scale(.6); opacity:.4; }
+    50%{ transform:scale(1); opacity:1; }
+  }
+
+  #bb-splash-inline .madein{
+    position:absolute; bottom:32px; left:0; right:0;
+    margin:0; text-align:center;
+    font-size:12.5px; font-weight:700; color:#9D8781;
+    opacity:0;
+    animation: bbFadeUp .5s ease-out 1.6s forwards;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  #bb-splash-inline .flag{
+    display:inline-flex; align-items:center; justify-content:center;
+    border-radius:2px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  /* Prevent page scroll while splash active */
+  body.bb-splash-lock{ overflow:hidden; }
+</style>
+
+<!-- Fonts (deferred, splash uses system font meanwhile) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&family=Manrope:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- Styles -->
+<!-- Full styles -->
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="install.css">
 </head>
-<body>
+<body class="bb-splash-lock">
+
+<!-- ============================================================
+     INSTANT SPLASH — visible from millisecond 0 (no JS wait)
+     ============================================================ -->
+<div id="bb-splash-inline">
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+  <div class="content">
+    <div class="mascot-wrap">
+      <div class="ring"></div>
+      <img src="assets/mascot-coin.png" alt="BaatBanao" class="mascot"/>
+      <span class="coin c1">₹</span>
+      <span class="coin c2">💸</span>
+      <span class="coin c3">₹</span>
+    </div>
+    <h1 class="logo">
+      <span>B</span><span>a</span><span>a</span><span>t</span><span>B</span><span>a</span><span>n</span><span>a</span><span>o</span>
+    </h1>
+    <p class="tag">Paisa bhi wapas, rishta bhi safe <span class="wink">😄</span></p>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+  <p class="madein">
+    <span class="flag" aria-label="India">
+      <svg viewBox="0 0 60 40" width="18" height="12">
+        <rect width="60" height="13.3" y="0" fill="#FF9933"/>
+        <rect width="60" height="13.3" y="13.3" fill="#FFFFFF"/>
+        <rect width="60" height="13.4" y="26.6" fill="#138808"/>
+        <circle cx="30" cy="20" r="4" fill="none" stroke="#000080" stroke-width="0.6"/>
+      </svg>
+    </span>
+    Made in Bharat with ❤️
+  </p>
+</div>
+
+<!-- ============================================================
+     INSTANT SPLASH REMOVER (runs before app.js)
+     3 seconds hold — user has time to read
+     ============================================================ -->
+<script>
+(function(){
+  var splash = document.getElementById('bb-splash-inline');
+  if (!splash) return;
+  // Total lifetime: 3.0s hold + 0.5s fade = 3.5s
+  setTimeout(function(){
+    splash.classList.add('bb-fade-out');
+    setTimeout(function(){
+      splash.remove();
+      document.body.classList.remove('bb-splash-lock');
+    }, 550);
+  }, 3000);
+})();
+</script>
 
 <div id="app">
 
@@ -101,7 +321,6 @@
   <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
   <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
   <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
-  <!-- Install App menu item — auto-hides via bb-install-menu-item class + data attribute -->
   <div class="drawer-link bb-install-menu-item" data-bb-install-trigger onclick="closeMenu()">📲 Install App</div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 💼');closeMenu()">Business Reply <span class="badge">Soon</span></div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 😄');closeMenu()">Masti Message <span class="badge">Soon</span></div>
@@ -110,7 +329,7 @@
   <div class="drawer-link" onclick="navigate('settings');closeMenu()">Settings</div>
   <div class="drawer-link" onclick="showToast('Feedback form coming soon');closeMenu()">Help &amp; Feedback</div>
   <div class="drawer-link" onclick="shareApp();closeMenu()">Share App</div>
-  <div class="drawer-footer">Made in Bharat ❤️ v1.0.4</div>
+  <div class="drawer-footer">Made in Bharat ❤️ v1.0.5</div>
 </div>
 
 <!-- Toast -->

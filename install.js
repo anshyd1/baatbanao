@@ -1,24 +1,24 @@
 /* ===========================================================
-   BaatBanao — Install + Splash + Update Manager v1.0.4
-   FIXED IN v1.0.4:
-   - Menu "Install App" item now auto-hides (uses class selector)
-   - After uninstall, install flow works again (beforeinstallprompt clears flag)
-   - Removed controllerchange auto-reload (no more "2 home page opening")
-   - Native OS splash minimized via short manifest name
-   - Install sheet no longer shown to installed users (better detection)
+   BaatBanao — Install + Update Manager v1.0.5
+   FIXED IN v1.0.5:
+   - Splash now in HTML (instant, no double-splash flicker)
+   - JS no longer creates splash (handled by inline)
+   - Ghost "installing" toasts cleared on load
+   - beforeinstallprompt debounced (no repeat toasts)
+   - Menu install item hidden RELIABLY
    =========================================================== */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.4';
+  const APP_VERSION = '1.0.5';
 
-  /* ---------- Service Worker registration + update handling ---------- */
+  /* ---------- Service Worker ---------- */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
         .then(reg => {
-          console.log('[BB] SW v' + APP_VERSION, reg.scope);
+          console.log('[BB] SW v' + APP_VERSION);
           reg.update().catch(()=>{});
           if (reg.waiting) promptSwUpdate(reg.waiting);
           reg.addEventListener('updatefound', () => {
@@ -32,9 +32,6 @@
           });
         })
         .catch(err => console.warn('[BB] SW failed', err));
-
-      // NOTE: Removed auto-reload on controllerchange - was causing double navigation
-      // User will manually refresh via update banner button
 
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'SW_UPDATED') {
@@ -60,7 +57,16 @@
     });
   }
 
-  /* ---------- Detection helpers ---------- */
+  /* ---------- Clear any ghost toasts from previous session ---------- */
+  function clearGhostToasts(){
+    document.querySelectorAll('.bb-toast, #toast').forEach(el => {
+      if (el.classList) el.classList.remove('show');
+      if (el.id === 'toast') el.textContent = '';
+    });
+  }
+  clearGhostToasts();
+
+  /* ---------- Detection ---------- */
   const ua = navigator.userAgent || '';
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
 
@@ -83,24 +89,21 @@
     return ts && (Date.now() - ts) < HIDE_MS;
   }
 
-  // Persist install status on standalone launch
   if (isStandalone) {
     try { localStorage.setItem(INSTALLED_KEY, '1'); } catch (e) {}
   }
   let isKnownInstalled = localStorage.getItem(INSTALLED_KEY) === '1';
 
-  /* ---------- Hide install buttons if installed ---------- */
+  /* ---------- Hide/show install buttons ---------- */
   function hideInstallButtons() {
     document.body.classList.add('bb-installed');
-    // Hide by attribute
     document.querySelectorAll('[data-bb-install-trigger], .bb-install-menu-item').forEach(el => {
       el.style.setProperty('display', 'none', 'important');
       el.setAttribute('aria-hidden', 'true');
     });
-    // Also hide any menu item whose text contains "Install"
     document.querySelectorAll('.drawer-link').forEach(el => {
       const txt = (el.textContent || '').toLowerCase();
-      if (txt.includes('install app') || txt.includes('install karein') || txt.includes('📲')) {
+      if (txt.includes('install app') || txt.includes('📲')) {
         el.style.setProperty('display', 'none', 'important');
       }
     });
@@ -113,7 +116,7 @@
     });
     document.querySelectorAll('.drawer-link').forEach(el => {
       const txt = (el.textContent || '').toLowerCase();
-      if (txt.includes('install app') || txt.includes('install karein') || txt.includes('📲')) {
+      if (txt.includes('install app') || txt.includes('📲')) {
         el.style.removeProperty('display');
       }
     });
@@ -129,82 +132,23 @@
     refreshInstallUI();
   }
 
-  // Watch DOM mutations for dynamically added menu items
   const mo = new MutationObserver(() => refreshInstallUI());
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  /* ==========================================================
-     BRANDED SPLASH
-     ========================================================== */
-  const SPLASH_SESSION_KEY = 'bb_splash_this_session';
-
-  function showBrandedSplash(){
-    const shownThisSession = sessionStorage.getItem(SPLASH_SESSION_KEY) === '1';
-    const shouldShow = isStandalone || !shownThisSession;
-    if(!shouldShow) return;
-    try { sessionStorage.setItem(SPLASH_SESSION_KEY, '1'); } catch(e){}
-
-    const old = document.getElementById('bb-splash');
-    if (old) old.remove();
-
-    const splash = document.createElement('div');
-    splash.id = 'bb-splash';
-    splash.innerHTML = `
-      <div class="bb-splash-bg">
-        <div class="bb-splash-blob bb-blob-1"></div>
-        <div class="bb-splash-blob bb-blob-2"></div>
-        <div class="bb-splash-blob bb-blob-3"></div>
-      </div>
-      <div class="bb-splash-content">
-        <div class="bb-splash-mascot-wrap">
-          <div class="bb-splash-ring"></div>
-          <img src="assets/mascot-coin.png" alt="BaatBanao" class="bb-splash-mascot"/>
-          <span class="bb-splash-coin bb-splash-coin-1">₹</span>
-          <span class="bb-splash-coin bb-splash-coin-2">💸</span>
-          <span class="bb-splash-coin bb-splash-coin-3">₹</span>
-        </div>
-        <h1 class="bb-splash-logo">
-          <span>B</span><span>a</span><span>a</span><span>t</span><span>B</span><span>a</span><span>n</span><span>a</span><span>o</span>
-        </h1>
-        <p class="bb-splash-tag">Paisa bhi wapas, rishta bhi safe <span class="bb-emoji-wink">😄</span></p>
-        <div class="bb-splash-dots"><span></span><span></span><span></span></div>
-        <p class="bb-splash-madein">
-          <span class="bb-flag" aria-label="India">
-            <svg viewBox="0 0 60 40" width="18" height="12">
-              <rect width="60" height="13.3" y="0" fill="#FF9933"/>
-              <rect width="60" height="13.3" y="13.3" fill="#FFFFFF"/>
-              <rect width="60" height="13.4" y="26.6" fill="#138808"/>
-              <circle cx="30" cy="20" r="4" fill="none" stroke="#000080" stroke-width="0.6"/>
-            </svg>
-          </span>
-          Made in Bharat with ❤️
-        </p>
-      </div>`;
-    document.body.appendChild(splash);
-    setTimeout(() => splash.classList.add('bb-fade-out'), 1700);
-    setTimeout(() => splash.remove(), 2300);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', showBrandedSplash);
-  } else {
-    showBrandedSplash();
-  }
-
-  /* ---------- Deferred prompt ---------- */
+  /* ---------- Deferred prompt with DEBOUNCE (no repeat) ---------- */
   let deferredPrompt = null;
+  let promptEventCount = 0;
 
   window.addEventListener('beforeinstallprompt', (e) => {
-    // 🔑 CRITICAL FIX: If browser fires this event, app is NOT installed.
-    // Clear stale INSTALLED_KEY (handles uninstall case).
-    if (!isStandalone) {
+    promptEventCount++;
+    // Only clear stale flag on FIRST event (not every re-fire)
+    if (!isStandalone && promptEventCount === 1) {
       try { localStorage.removeItem(INSTALLED_KEY); } catch (err) {}
       isKnownInstalled = false;
       refreshInstallUI();
     }
     e.preventDefault();
     deferredPrompt = e;
-    console.log('[BB] Install available');
   });
 
   window.addEventListener('appinstalled', () => {
@@ -216,7 +160,8 @@
     } catch (e) {}
     isKnownInstalled = true;
     hideInstallButtons();
-    toast('BaatBanao install ho gaya! 🎉 Home screen check karo.');
+    // Single confirmation toast — no queue overlap
+    setTimeout(() => toast('BaatBanao install ho gaya! 🎉 Home screen check karo.'), 200);
   });
 
   const mm = window.matchMedia('(display-mode: standalone)');
@@ -234,24 +179,14 @@
   window.BB_Install = {
     trigger: triggerInstall,
     show: () => {
-      // If app is genuinely open in installed mode → just say so
-      if (isStandalone) {
-        return toast('Aap already installed app use kar rahe hain! 🎉');
-      }
-      // If we THINK it's installed but browser fires beforeinstallprompt → it's not
-      // Check deferredPrompt: if available, definitely can install
+      if (isStandalone) return toast('Aap already installed app use kar rahe hain! 🎉');
       if (deferredPrompt) return triggerInstall();
-      // If iOS → show iOS instructions
       if (isIOS) return showInstallUI('ios');
-      // Fallback
-      if (isKnownInstalled) {
-        return toast('App shayad already installed hai. Home screen check karo 🏠');
-      }
+      if (isKnownInstalled) return toast('App shayad already installed hai 🏠');
       showInstallUI('generic');
     },
     isInstalled: () => isStandalone || isKnownInstalled,
     reset: () => {
-      // For debugging — reset install state
       try {
         localStorage.removeItem(INSTALLED_KEY);
         localStorage.removeItem(STORAGE_KEY);
@@ -268,11 +203,10 @@
       if (isIOS) return showInstallUI('ios');
       return showInstallUI('generic');
     }
+    // DON'T show "installing..." toast here — appinstalled event will confirm
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choice) => {
-      if (choice.outcome === 'accepted') {
-        toast('BaatBanao install ho raha hai ⏳');
-      } else {
+      if (choice.outcome !== 'accepted') {
         try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (e) {}
       }
       deferredPrompt = null;
@@ -357,12 +291,18 @@
     if (el) { el.classList.remove('bb-show'); setTimeout(() => el.remove(), 220); }
   }
 
-  /* ---------- TOAST QUEUE ---------- */
+  /* ---------- Toast queue (no overlap, no dup) ---------- */
   const toastQueue = [];
   let toastActive = false;
+  let lastToast = '';
+  let lastToastTime = 0;
+
   function toast(msg) {
-    // De-dupe: don't queue same message back-to-back
-    if (toastQueue[toastQueue.length - 1] === msg) return;
+    // De-dupe: same message within 3 seconds ignored
+    const now = Date.now();
+    if (msg === lastToast && (now - lastToastTime) < 3000) return;
+    lastToast = msg;
+    lastToastTime = now;
     toastQueue.push(msg);
     if (!toastActive) processToast();
   }
@@ -372,7 +312,7 @@
     const msg = toastQueue.shift();
     if (typeof window.showToast === 'function') {
       window.showToast(msg);
-      setTimeout(processToast, 2600);
+      setTimeout(processToast, 2800);
       return;
     }
     const t = document.createElement('div');

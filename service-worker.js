@@ -1,8 +1,8 @@
 /* ===========================================================
-   BaatBanao Service Worker v1.0.4
+   BaatBanao Service Worker v1.0.5
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.4';
+const CACHE_VERSION = 'baatbanao-v1.0.5';
 const CORE_ASSETS = [
   './',
   './index.html',
