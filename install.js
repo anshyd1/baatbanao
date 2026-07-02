@@ -1,17 +1,62 @@
 /* ===========================================================
-   BaatBanao — Install + Update Manager v1.0.5
-   FIXED IN v1.0.5:
-   - Splash now in HTML (instant, no double-splash flicker)
-   - JS no longer creates splash (handled by inline)
-   - Ghost "installing" toasts cleared on load
-   - beforeinstallprompt debounced (no repeat toasts)
-   - Menu install item hidden RELIABLY
+   BaatBanao — Install + Update Manager v1.0.6
+   NUCLEAR TOAST FIX:
+   - No queue — max 1 toast at a time (new replaces old)
+   - "Installing..." toast REMOVED forever (only success shows)
+   - App's own showToast() overridden to prevent duplicates
+   - Aggressive ghost toast cleanup on load
    =========================================================== */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.5';
+  const APP_VERSION = '1.0.6';
+
+  /* ---------- NUKE ALL EXISTING TOASTS ON LOAD ---------- */
+  function nukeAllToasts(){
+    // Remove all rogue toast elements
+    document.querySelectorAll('.bb-toast, #toast, [class*="toast"]').forEach(el => {
+      if (el.id === 'toast') {
+        el.textContent = '';
+        el.className = el.className.replace(/\bshow\b/g, '').trim();
+      } else if (el.classList && el.classList.contains('bb-toast')) {
+        el.remove();
+      }
+    });
+  }
+  // Nuke immediately + after DOM ready + after 500ms + after 2s (catch delayed)
+  nukeAllToasts();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', nukeAllToasts);
+  }
+  setTimeout(nukeAllToasts, 500);
+  setTimeout(nukeAllToasts, 2000);
+
+  /* ---------- Override app.js showToast if it exists (prevent old messages) ---------- */
+  let _origShowToast = null;
+  function installToastGuard(){
+    if (typeof window.showToast === 'function' && !window.showToast.__bbGuarded) {
+      _origShowToast = window.showToast;
+      const guardedToast = function(msg){
+        // Block known ghost messages
+        if (typeof msg === 'string' && (
+          msg.includes('Installing BaatBanao') ||
+          msg.includes('install ho raha')
+        )) {
+          console.log('[BB] Blocked ghost toast:', msg);
+          return;
+        }
+        // Show through native, but ensure only 1 at a time
+        nukeAllToasts();
+        return _origShowToast(msg);
+      };
+      guardedToast.__bbGuarded = true;
+      window.showToast = guardedToast;
+    }
+  }
+  installToastGuard();
+  setTimeout(installToastGuard, 200);
+  setTimeout(installToastGuard, 1000);
 
   /* ---------- Service Worker ---------- */
   if ('serviceWorker' in navigator) {
@@ -56,15 +101,6 @@
       setTimeout(() => window.location.reload(), 400);
     });
   }
-
-  /* ---------- Clear any ghost toasts from previous session ---------- */
-  function clearGhostToasts(){
-    document.querySelectorAll('.bb-toast, #toast').forEach(el => {
-      if (el.classList) el.classList.remove('show');
-      if (el.id === 'toast') el.textContent = '';
-    });
-  }
-  clearGhostToasts();
 
   /* ---------- Detection ---------- */
   const ua = navigator.userAgent || '';
@@ -135,13 +171,12 @@
   const mo = new MutationObserver(() => refreshInstallUI());
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
-  /* ---------- Deferred prompt with DEBOUNCE (no repeat) ---------- */
+  /* ---------- Deferred prompt (DEBOUNCED) ---------- */
   let deferredPrompt = null;
   let promptEventCount = 0;
 
   window.addEventListener('beforeinstallprompt', (e) => {
     promptEventCount++;
-    // Only clear stale flag on FIRST event (not every re-fire)
     if (!isStandalone && promptEventCount === 1) {
       try { localStorage.removeItem(INSTALLED_KEY); } catch (err) {}
       isKnownInstalled = false;
@@ -149,6 +184,7 @@
     }
     e.preventDefault();
     deferredPrompt = e;
+    // NO TOAST HERE — user hasn't asked yet
   });
 
   window.addEventListener('appinstalled', () => {
@@ -160,8 +196,9 @@
     } catch (e) {}
     isKnownInstalled = true;
     hideInstallButtons();
-    // Single confirmation toast — no queue overlap
-    setTimeout(() => toast('BaatBanao install ho gaya! 🎉 Home screen check karo.'), 200);
+    // Nuke any pending toasts first, then show SINGLE success
+    nukeAllToasts();
+    setTimeout(() => showSingleToast('BaatBanao install ho gaya! 🎉'), 300);
   });
 
   const mm = window.matchMedia('(display-mode: standalone)');
@@ -179,10 +216,10 @@
   window.BB_Install = {
     trigger: triggerInstall,
     show: () => {
-      if (isStandalone) return toast('Aap already installed app use kar rahe hain! 🎉');
+      if (isStandalone) return showSingleToast('Aap already installed app use kar rahe hain! 🎉');
       if (deferredPrompt) return triggerInstall();
       if (isIOS) return showInstallUI('ios');
-      if (isKnownInstalled) return toast('App shayad already installed hai 🏠');
+      if (isKnownInstalled) return showSingleToast('App shayad already installed hai 🏠');
       showInstallUI('generic');
     },
     isInstalled: () => isStandalone || isKnownInstalled,
@@ -193,8 +230,9 @@
       } catch (e) {}
       isKnownInstalled = false;
       showInstallButtons();
-      toast('Install state reset ho gaya ✅');
+      showSingleToast('Install state reset ✅');
     },
+    nukeToasts: nukeAllToasts,
     version: APP_VERSION
   };
 
@@ -203,7 +241,7 @@
       if (isIOS) return showInstallUI('ios');
       return showInstallUI('generic');
     }
-    // DON'T show "installing..." toast here — appinstalled event will confirm
+    // NO "installing" toast — user sees native Chrome prompt anyway
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choice) => {
       if (choice.outcome !== 'accepted') {
@@ -291,37 +329,24 @@
     if (el) { el.classList.remove('bb-show'); setTimeout(() => el.remove(), 220); }
   }
 
-  /* ---------- Toast queue (no overlap, no dup) ---------- */
-  const toastQueue = [];
-  let toastActive = false;
-  let lastToast = '';
-  let lastToastTime = 0;
+  /* ---------- SINGLE TOAST (no queue, always replaces) ---------- */
+  let currentToastEl = null;
+  let currentToastTimer = null;
 
-  function toast(msg) {
-    // De-dupe: same message within 3 seconds ignored
-    const now = Date.now();
-    if (msg === lastToast && (now - lastToastTime) < 3000) return;
-    lastToast = msg;
-    lastToastTime = now;
-    toastQueue.push(msg);
-    if (!toastActive) processToast();
-  }
-  function processToast(){
-    if (!toastQueue.length) { toastActive = false; return; }
-    toastActive = true;
-    const msg = toastQueue.shift();
-    if (typeof window.showToast === 'function') {
-      window.showToast(msg);
-      setTimeout(processToast, 2800);
-      return;
-    }
+  function showSingleToast(msg) {
+    // Kill any existing toast (mine OR app's)
+    nukeAllToasts();
+    if (currentToastTimer) { clearTimeout(currentToastTimer); currentToastTimer = null; }
+    if (currentToastEl) { try { currentToastEl.remove(); } catch(e){} }
+
     const t = document.createElement('div');
     t.className = 'bb-toast'; t.textContent = msg;
     document.body.appendChild(t);
+    currentToastEl = t;
     requestAnimationFrame(() => t.classList.add('show'));
-    setTimeout(() => {
+    currentToastTimer = setTimeout(() => {
       t.classList.remove('show');
-      setTimeout(()=>{ t.remove(); processToast(); }, 300);
+      setTimeout(()=>{ t.remove(); if (currentToastEl === t) currentToastEl = null; }, 300);
     }, 2400);
   }
 
