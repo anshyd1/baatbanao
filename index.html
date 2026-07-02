@@ -1,12 +1,47 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="hi-IN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>BaatBanao — WhatsApp Message Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+<title>BaatBanao — WhatsApp Message Assistant | Vasooli Mode 💸</title>
+<meta name="description" content="Paisa bhi wapas, rishta bhi safe. BaatBanao WhatsApp payment reminder assistant — Hindi, Hinglish, Bhojpuri aur English mein message 5 second mein.">
+<meta name="theme-color" content="#FF725F">
+<meta name="color-scheme" content="light">
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BaatBanao">
+<meta name="application-name" content="BaatBanao">
+
+<!-- Icons -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+
+<!-- Open Graph / WhatsApp share preview -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="BaatBanao — Vasooli Mode 💸">
+<meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄 WhatsApp-ready payment reminder 5 second mein.">
+<meta property="og:image" content="assets/icon-512.png">
+<meta property="og:locale" content="hi_IN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="BaatBanao — Vasooli Mode">
+<meta name="twitter:description" content="Paisa bhi wapas, rishta bhi safe 😄">
+<meta name="twitter:image" content="assets/icon-512.png">
+
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&family=Manrope:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Styles -->
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="install.css">
 </head>
 <body>
 
@@ -14,15 +49,20 @@
 
   <!-- Top bar -->
   <div class="topbar">
-    <button class="icon-btn" onclick="openMenu()">
+    <button class="icon-btn" onclick="openMenu()" aria-label="Menu">
       <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><path d="M1 1H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 15H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
     <div class="logo-wrap" onclick="navigate('home')" style="cursor:pointer;">
       <span class="logo-text">BaatBanao</span>
       <span class="logo-emoji">🪙</span>
     </div>
-    <button class="pro-btn" onclick="showToast('Vasooli Pro — Coming soon 👑')">
-      <span>👑</span> Pro
+    <!-- NEW: Install button (replaces Pro button) -->
+    <button class="bb-install-btn" data-bb-install-trigger aria-label="Install BaatBanao app">
+      <span class="bb-dot" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>
+      </svg>
+      <span>Install</span>
     </button>
   </div>
 
@@ -62,6 +102,7 @@
   <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
   <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
   <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
+  <div class="drawer-link" onclick="window.BB_Install && window.BB_Install.show(); closeMenu()">📲 Install App</div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 💼');closeMenu()">Business Reply <span class="badge">Soon</span></div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 😄');closeMenu()">Masti Message <span class="badge">Soon</span></div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 👑');closeMenu()">Vasooli Pro <span class="badge">Soon</span></div>
@@ -76,6 +117,7 @@
 <div id="toast"></div>
 
 <script src="app.js"></script>
+<script src="install.js" defer></script>
 <script>
 function shareApp(){
   if(navigator.share){
@@ -86,5 +128,5 @@ function shareApp(){
   }
 }
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f6c4abda78371',t:'MTc4MzAxMzg5NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
