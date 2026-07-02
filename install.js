@@ -196,9 +196,17 @@
     } catch (e) {}
     isKnownInstalled = true;
     hideInstallButtons();
-    // Nuke any pending toasts first, then show SINGLE success
+    // 🔑 CRITICAL FIX: Chrome shows its own "Installing BaatBanao..." system toast
+    // for ~2-3 seconds. Delay our success message so they don't overlap.
+    // Also nuke any leftover toasts multiple times during the wait window.
     nukeAllToasts();
-    setTimeout(() => showSingleToast('BaatBanao install ho gaya! 🎉'), 300);
+    setTimeout(nukeAllToasts, 500);
+    setTimeout(nukeAllToasts, 1500);
+    setTimeout(nukeAllToasts, 2800);
+    setTimeout(() => {
+      nukeAllToasts();
+      showSingleToast('Home screen pe icon aa gaya! 🎉 Dabao aur try karo');
+    }, 3200);
   });
 
   const mm = window.matchMedia('(display-mode: standalone)');
