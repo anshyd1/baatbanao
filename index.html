@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>BaatBanao — WhatsApp Message Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&family=Manrope:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <button class="icon-btn" onclick="openMenu()">
+      <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><path d="M1 1H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 15H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="logo-wrap" onclick="navigate('home')" style="cursor:pointer;">
+      <span class="logo-text">BaatBanao</span>
+      <span class="logo-emoji">🪙</span>
+    </div>
+    <button class="pro-btn" onclick="showToast('Vasooli Pro — Coming soon 👑')">
+      <span>👑</span> Pro
+    </button>
+  </div>
+
+  <!-- Page content (rendered by app.js) -->
+  <div class="content" id="content"></div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-item" data-route="home" onclick="navigate('home')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20C5 20.55 5.45 21 6 21H9.5C10.05 21 10.5 20.55 10.5 20V15C10.5 14.45 10.95 14 11.5 14H12.5C13.05 14 13.5 14.45 13.5 15V20C13.5 20.55 13.95 21 14.5 21H18C18.55 21 19 20.55 19 20V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-route="khata" onclick="navigate('khata')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Khata</span>
+    </button>
+    <button class="nav-item" data-route="history" onclick="navigate('history')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>History</span>
+    </button>
+    <button class="nav-item" data-route="profile" onclick="navigate('profile')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Profile</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- Menu Drawer -->
+<div id="overlay" class="overlay" onclick="closeMenu()"></div>
+<div id="drawer" class="drawer">
+  <div class="drawer-header">
+    <span class="logo-text">BaatBanao 🪙</span>
+    <button class="icon-btn" onclick="closeMenu()">✕</button>
+  </div>
+  <div class="drawer-link" onclick="navigate('home');closeMenu()">Home</div>
+  <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
+  <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
+  <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
+  <div class="drawer-link disabled" onclick="showToast('Coming soon 💼');closeMenu()">Business Reply <span class="badge">Soon</span></div>
+  <div class="drawer-link disabled" onclick="showToast('Coming soon 😄');closeMenu()">Masti Message <span class="badge">Soon</span></div>
+  <div class="drawer-link disabled" onclick="showToast('Coming soon 👑');closeMenu()">Vasooli Pro <span class="badge">Soon</span></div>
+  <div class="divider"></div>
+  <div class="drawer-link" onclick="navigate('settings');closeMenu()">Settings</div>
+  <div class="drawer-link" onclick="showToast('Feedback form coming soon');closeMenu()">Help &amp; Feedback</div>
+  <div class="drawer-link" onclick="shareApp();closeMenu()">Share App</div>
+  <div class="drawer-footer">Made in India ❤️ v1.0</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+function shareApp(){
+  if(navigator.share){
+    navigator.share({ title:'BaatBanao', text:'BaatBanao — WhatsApp payment reminder assistant. Dosti alag ba, hisaab alag ba 😄', url: location.href });
+  } else {
+    navigator.clipboard?.writeText(location.href);
+    showToast('Link copied!');
+  }
+}
+</script>
+</body>
+</html>
