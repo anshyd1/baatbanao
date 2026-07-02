@@ -1,9 +1,10 @@
 /* ===========================================================
-   BaatBanao Install UI + Branded Splash
+   BaatBanao Install UI + Branded Splash v1.0.3
    =========================================================== */
 
-/* ---------- Hide install button when installed ---------- */
-body.bb-installed [data-bb-install-trigger]{ display:none !important; }
+/* Hide install button when installed (multiple selectors for safety) */
+body.bb-installed [data-bb-install-trigger],
+body.bb-installed .bb-install-btn{ display:none !important; }
 
 /* ---------- Header install button ---------- */
 .bb-install-btn{
@@ -28,8 +29,26 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   100%{ box-shadow:0 0 0 0 rgba(34,197,94,0); }
 }
 
+/* ---------- Update Banner ---------- */
+.bb-update-banner{
+  position:fixed; left:50%; bottom:100px; transform:translateX(-50%) translateY(10px);
+  background:#261818; color:#fff; padding:10px 12px 10px 16px; border-radius:14px;
+  font-family:inherit; font-weight:700; font-size:13px;
+  box-shadow:0 12px 24px rgba(0,0,0,0.28);
+  display:flex; align-items:center; gap:10px;
+  opacity:0; transition:opacity .25s ease, transform .25s ease;
+  z-index:10001;
+}
+.bb-update-banner.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.bb-update-btn{
+  background:#FF725F; color:#fff; border:none; padding:6px 12px;
+  border-radius:10px; font-family:inherit; font-weight:800; font-size:12.5px;
+  cursor:pointer;
+}
+.bb-update-btn:active{ transform:scale(0.96); }
+
 /* ===========================================================
-   🎬 BRANDED SPLASH — Coca-Cola / Cred / Instagram level
+   🎬 BRANDED SPLASH
    =========================================================== */
 #bb-splash{
   position:fixed; inset:0; z-index:99999;
@@ -48,7 +67,6 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   100%{ opacity:0; transform:scale(1.06); filter:blur(6px); }
 }
 
-/* Floating background blobs */
 .bb-splash-bg{ position:absolute; inset:0; overflow:hidden; z-index:0; }
 .bb-splash-blob{
   position:absolute; border-radius:50%; filter:blur(40px); opacity:.5;
@@ -62,17 +80,14 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   50%{ transform:translate(20px,-15px) scale(1.08); }
 }
 
-/* Content */
 .bb-splash-content{
   position:relative; z-index:1;
   display:flex; flex-direction:column; align-items:center;
   gap:18px; padding:20px;
 }
 
-/* Mascot with orbit ring + orbiting coins */
 .bb-splash-mascot-wrap{
-  position:relative;
-  width:170px; height:170px;
+  position:relative; width:170px; height:170px;
   display:flex; align-items:center; justify-content:center;
   animation: bbMascotEntrance .9s cubic-bezier(.34,1.56,.64,1);
 }
@@ -101,10 +116,9 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   50%{ transform:translateY(-10px) rotate(3deg); }
 }
 
-/* Orbiting coins around mascot */
 .bb-splash-coin{
   position:absolute; z-index:3;
-  font-size:22px; font-weight:900; color:#FF725F;
+  font-size:20px; font-weight:900; color:#FF725F;
   background:#fff; width:36px; height:36px;
   display:flex; align-items:center; justify-content:center;
   border-radius:50%;
@@ -115,7 +129,6 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
 .bb-splash-coin-1{ top:5%; right:0; animation-delay:.6s, .6s; }
 .bb-splash-coin-2{ bottom:10%; left:-5%; animation-delay:.8s, .8s; }
 .bb-splash-coin-3{ top:55%; right:-10%; animation-delay:1s, 1s; }
-
 @keyframes bbCoinPop{
   from{ opacity:0; transform:scale(.2) translateY(-15px); }
   to{ opacity:1; transform:scale(1) translateY(0); }
@@ -125,7 +138,6 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   50%{ transform:translateY(-6px); }
 }
 
-/* Logo — letter-by-letter reveal */
 .bb-splash-logo{
   margin:6px 0 0 0;
   font-family:'Manrope','Nunito Sans',-apple-system,BlinkMacSystemFont,sans-serif;
@@ -134,8 +146,7 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   display:flex; gap:1px;
 }
 .bb-splash-logo span{
-  opacity:0;
-  display:inline-block;
+  opacity:0; display:inline-block;
   transform:translateY(15px);
   animation: bbLetterUp .5s cubic-bezier(.34,1.56,.64,1) forwards;
 }
@@ -148,11 +159,8 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
 .bb-splash-logo span:nth-child(7){ animation-delay:.88s; }
 .bb-splash-logo span:nth-child(8){ animation-delay:.96s; }
 .bb-splash-logo span:nth-child(9){ animation-delay:1.04s; }
-@keyframes bbLetterUp{
-  to{ opacity:1; transform:translateY(0); }
-}
+@keyframes bbLetterUp{ to{ opacity:1; transform:translateY(0); } }
 
-/* Tagline */
 .bb-splash-tag{
   margin:0; font-family:'Nunito Sans',sans-serif;
   font-weight:700; font-size:14.5px; color:#75615C;
@@ -174,7 +182,6 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   to{ opacity:1; transform:translateY(0); }
 }
 
-/* Loading dots */
 .bb-splash-dots{
   display:flex; gap:6px; margin-top:10px;
   opacity:0;
@@ -192,15 +199,20 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   50%{ transform:scale(1); opacity:1; }
 }
 
-/* Made in India footer */
 .bb-splash-madein{
-  position:absolute; bottom:32px;
-  margin:0; font-size:12px; font-weight:700; color:#9D8781;
+  position:absolute; bottom:32px; left:0; right:0;
+  margin:0; text-align:center;
+  font-size:12px; font-weight:700; color:#9D8781;
   opacity:0;
   animation: bbFadeUp .5s ease-out 1.5s forwards;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.bb-flag{
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:2px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.1);
 }
 
-/* ---------- Install bottom sheet (unchanged) ---------- */
+/* ---------- Install bottom sheet ---------- */
 .bb-install-wrap{
   position:fixed; inset:0; z-index:9999;
   display:flex; align-items:flex-end; justify-content:center;
@@ -251,7 +263,7 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   margin:3px 0 0 0; font-size:13px; font-weight:600; color:#75615C;
 }
 .bb-trust{
-  list-style:none; padding:14px 14px; margin:2px 0 14px 0;
+  list-style:none; padding:14px; margin:2px 0 14px 0;
   background:#FFF5DF; border-radius:14px;
   display:grid; gap:9px;
 }
@@ -307,6 +319,7 @@ body.bb-installed [data-bb-install-trigger]{ display:none !important; }
   position:fixed; left:50%; bottom:80px; transform:translateX(-50%) translateY(10px);
   background:#261818; color:#fff; padding:10px 16px; border-radius:14px;
   font-family:inherit; font-weight:700; font-size:13px;
+  max-width:85vw; text-align:center;
   box-shadow:0 12px 24px rgba(0,0,0,0.25);
   opacity:0; transition:opacity .2s ease, transform .2s ease;
   z-index:10000;
