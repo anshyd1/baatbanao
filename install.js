@@ -1,29 +1,25 @@
 /* ===========================================================
-   BaatBanao — Install + Splash + Update Manager v1.0.3
-   Fixes:
-   - Install button reliably hides post-install
-   - Splash always animates on launch
-   - Auto-detect service worker updates → prompt to refresh
-   - Toast queue (no overlap)
-   - Better Bharat pride (no 🇮🇳 emoji dependency)
+   BaatBanao — Install + Splash + Update Manager v1.0.4
+   FIXED IN v1.0.4:
+   - Menu "Install App" item now auto-hides (uses class selector)
+   - After uninstall, install flow works again (beforeinstallprompt clears flag)
+   - Removed controllerchange auto-reload (no more "2 home page opening")
+   - Native OS splash minimized via short manifest name
+   - Install sheet no longer shown to installed users (better detection)
    =========================================================== */
 
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.3';
+  const APP_VERSION = '1.0.4';
 
   /* ---------- Service Worker registration + update handling ---------- */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
         .then(reg => {
-          console.log('[BB] SW registered v' + APP_VERSION, reg.scope);
-
-          // Check for updates every visit
+          console.log('[BB] SW v' + APP_VERSION, reg.scope);
           reg.update().catch(()=>{});
-
-          // Detect a waiting worker → new version available
           if (reg.waiting) promptSwUpdate(reg.waiting);
           reg.addEventListener('updatefound', () => {
             const nw = reg.installing;
@@ -37,13 +33,8 @@
         })
         .catch(err => console.warn('[BB] SW failed', err));
 
-      // Reload when a new SW takes control
-      let refreshed = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshed) return;
-        refreshed = true;
-        window.location.reload();
-      });
+      // NOTE: Removed auto-reload on controllerchange - was causing double navigation
+      // User will manually refresh via update banner button
 
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'SW_UPDATED') {
@@ -54,18 +45,18 @@
   }
 
   function promptSwUpdate(worker){
-    // Small non-intrusive banner
     if (document.getElementById('bb-update-banner')) return;
     const b = document.createElement('div');
     b.id = 'bb-update-banner';
     b.className = 'bb-update-banner';
     b.innerHTML = `
-      <span>Naya update available hai ✨</span>
+      <span>Naya update ready hai ✨</span>
       <button class="bb-update-btn" type="button">Refresh</button>`;
     document.body.appendChild(b);
     requestAnimationFrame(()=>b.classList.add('show'));
     b.querySelector('.bb-update-btn').addEventListener('click', () => {
       worker.postMessage({ type: 'SKIP_WAITING' });
+      setTimeout(() => window.location.reload(), 400);
     });
   }
 
@@ -92,46 +83,67 @@
     return ts && (Date.now() - ts) < HIDE_MS;
   }
 
-  // Persist install status
+  // Persist install status on standalone launch
   if (isStandalone) {
     try { localStorage.setItem(INSTALLED_KEY, '1'); } catch (e) {}
   }
-  const isKnownInstalled = localStorage.getItem(INSTALLED_KEY) === '1';
+  let isKnownInstalled = localStorage.getItem(INSTALLED_KEY) === '1';
 
-  /* ---------- Hide install buttons if installed (BULLETPROOF) ---------- */
+  /* ---------- Hide install buttons if installed ---------- */
   function hideInstallButtons() {
     document.body.classList.add('bb-installed');
-    const nodes = document.querySelectorAll('[data-bb-install-trigger]');
-    nodes.forEach(el => {
+    // Hide by attribute
+    document.querySelectorAll('[data-bb-install-trigger], .bb-install-menu-item').forEach(el => {
       el.style.setProperty('display', 'none', 'important');
       el.setAttribute('aria-hidden', 'true');
     });
+    // Also hide any menu item whose text contains "Install"
+    document.querySelectorAll('.drawer-link').forEach(el => {
+      const txt = (el.textContent || '').toLowerCase();
+      if (txt.includes('install app') || txt.includes('install karein') || txt.includes('📲')) {
+        el.style.setProperty('display', 'none', 'important');
+      }
+    });
   }
-  function ensureHidden(){
+  function showInstallButtons() {
+    document.body.classList.remove('bb-installed');
+    document.querySelectorAll('[data-bb-install-trigger], .bb-install-menu-item').forEach(el => {
+      el.style.removeProperty('display');
+      el.removeAttribute('aria-hidden');
+    });
+    document.querySelectorAll('.drawer-link').forEach(el => {
+      const txt = (el.textContent || '').toLowerCase();
+      if (txt.includes('install app') || txt.includes('install karein') || txt.includes('📲')) {
+        el.style.removeProperty('display');
+      }
+    });
+  }
+
+  function refreshInstallUI(){
     if (isStandalone || isKnownInstalled) hideInstallButtons();
+    else showInstallButtons();
   }
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureHidden);
+    document.addEventListener('DOMContentLoaded', refreshInstallUI);
   } else {
-    ensureHidden();
+    refreshInstallUI();
   }
-  // Watch for later DOM mutations (menu items etc.) — hide any new install buttons
-  const mo = new MutationObserver(() => ensureHidden());
+
+  // Watch DOM mutations for dynamically added menu items
+  const mo = new MutationObserver(() => refreshInstallUI());
   mo.observe(document.documentElement, { childList: true, subtree: true });
 
   /* ==========================================================
-     BRANDED SPLASH — always shows on standalone launches
+     BRANDED SPLASH
      ========================================================== */
   const SPLASH_SESSION_KEY = 'bb_splash_this_session';
 
   function showBrandedSplash(){
-    // Rule: show every standalone launch; only ONCE per browser session otherwise
     const shownThisSession = sessionStorage.getItem(SPLASH_SESSION_KEY) === '1';
     const shouldShow = isStandalone || !shownThisSession;
     if(!shouldShow) return;
     try { sessionStorage.setItem(SPLASH_SESSION_KEY, '1'); } catch(e){}
 
-    // Kill previous splash instance if any
     const old = document.getElementById('bb-splash');
     if (old) old.remove();
 
@@ -183,9 +195,16 @@
   let deferredPrompt = null;
 
   window.addEventListener('beforeinstallprompt', (e) => {
-    if (isStandalone || isKnownInstalled) return;
+    // 🔑 CRITICAL FIX: If browser fires this event, app is NOT installed.
+    // Clear stale INSTALLED_KEY (handles uninstall case).
+    if (!isStandalone) {
+      try { localStorage.removeItem(INSTALLED_KEY); } catch (err) {}
+      isKnownInstalled = false;
+      refreshInstallUI();
+    }
     e.preventDefault();
     deferredPrompt = e;
+    console.log('[BB] Install available');
   });
 
   window.addEventListener('appinstalled', () => {
@@ -195,6 +214,7 @@
       localStorage.setItem(INSTALLED_KEY, '1');
       localStorage.removeItem(STORAGE_KEY);
     } catch (e) {}
+    isKnownInstalled = true;
     hideInstallButtons();
     toast('BaatBanao install ho gaya! 🎉 Home screen check karo.');
   });
@@ -204,6 +224,7 @@
     if (e.matches) {
       hideInstallButtons();
       try { localStorage.setItem(INSTALLED_KEY, '1'); } catch(err){}
+      isKnownInstalled = true;
     }
   };
   if (mm.addEventListener) mm.addEventListener('change', onDisplayChange);
@@ -213,14 +234,32 @@
   window.BB_Install = {
     trigger: triggerInstall,
     show: () => {
-      if (isStandalone || isKnownInstalled) {
-        return toast('Aap already installed BaatBanao use kar rahe hain! 🎉');
+      // If app is genuinely open in installed mode → just say so
+      if (isStandalone) {
+        return toast('Aap already installed app use kar rahe hain! 🎉');
       }
-      if (isIOS) showInstallUI('ios');
-      else if (deferredPrompt) triggerInstall();
-      else showInstallUI('generic');
+      // If we THINK it's installed but browser fires beforeinstallprompt → it's not
+      // Check deferredPrompt: if available, definitely can install
+      if (deferredPrompt) return triggerInstall();
+      // If iOS → show iOS instructions
+      if (isIOS) return showInstallUI('ios');
+      // Fallback
+      if (isKnownInstalled) {
+        return toast('App shayad already installed hai. Home screen check karo 🏠');
+      }
+      showInstallUI('generic');
     },
     isInstalled: () => isStandalone || isKnownInstalled,
+    reset: () => {
+      // For debugging — reset install state
+      try {
+        localStorage.removeItem(INSTALLED_KEY);
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      isKnownInstalled = false;
+      showInstallButtons();
+      toast('Install state reset ho gaya ✅');
+    },
     version: APP_VERSION
   };
 
@@ -252,7 +291,7 @@
         <li><span class="bb-step-num">3</span> <b>Add</b> pe tap karein — bas ho gaya! ✅</li>
       </ol>`;
     const genericSteps = `
-      <p class="bb-note">Chrome menu <b>(⋮)</b> kholein aur <b>"Install app"</b> ya <b>"Add to Home Screen"</b> select karein.</p>`;
+      <p class="bb-note">Chrome ke <b>menu (⋮)</b> se <b>"Install app"</b> ya <b>"Add to Home Screen"</b> select karein.</p>`;
 
     const inner = mode === 'ios' ? iosSteps : (mode === 'android' ? '' : genericSteps);
 
@@ -271,7 +310,7 @@
           <li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span>Sirf <b>~1&nbsp;MB</b> — data bachega</span></li>
           <li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg><span><b>100% safe</b> — koi login nahi, data phone mein rehta hai</span></li>
           <li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg><span>Offline bhi chalega, ek tap mein khulega</span></li>
-          <li><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M2 12h20"/></svg><span>Made in Bharat — apne desh ke liye</span></li>
+          <li><span class="bb-flag" style="display:inline-flex;align-items:center;flex-shrink:0"><svg viewBox="0 0 60 40" width="18" height="12"><rect width="60" height="13.3" y="0" fill="#FF9933"/><rect width="60" height="13.3" y="13.3" fill="#FFFFFF"/><rect width="60" height="13.4" y="26.6" fill="#138808"/><circle cx="30" cy="20" r="4" fill="none" stroke="#000080" stroke-width="0.6"/></svg></span><span>Made in <b>Bharat</b> — apne desh ke liye</span></li>
         </ul>
         ${inner}
         <div class="bb-install-actions">
@@ -289,11 +328,10 @@
   }
 
   function showInstallUI(mode) {
-    if (isStandalone || isKnownInstalled) return;
+    if (isStandalone) return;
     if (wasRecentlyDismissed() && !window._bbForceInstall) return;
     hideInstallUI();
 
-    // If Android, prefer to show real prompt when available
     const finalMode = (mode === 'android' && !deferredPrompt) ? 'generic' : mode;
 
     const wrap = document.createElement('div');
@@ -319,10 +357,12 @@
     if (el) { el.classList.remove('bb-show'); setTimeout(() => el.remove(), 220); }
   }
 
-  /* ---------- TOAST QUEUE (no overlap) ---------- */
+  /* ---------- TOAST QUEUE ---------- */
   const toastQueue = [];
   let toastActive = false;
   function toast(msg) {
+    // De-dupe: don't queue same message back-to-back
+    if (toastQueue[toastQueue.length - 1] === msg) return;
     toastQueue.push(msg);
     if (!toastActive) processToast();
   }
@@ -330,7 +370,6 @@
     if (!toastQueue.length) { toastActive = false; return; }
     toastActive = true;
     const msg = toastQueue.shift();
-    // Prefer app's built-in toast if available
     if (typeof window.showToast === 'function') {
       window.showToast(msg);
       setTimeout(processToast, 2600);
@@ -345,7 +384,6 @@
       setTimeout(()=>{ t.remove(); processToast(); }, 300);
     }, 2400);
   }
-  window.__bbToast = toast; // expose for debugging
 
   /* ---------- iOS auto-nudge ---------- */
   if (isIOS && !isStandalone && !isKnownInstalled && !wasRecentlyDismissed()) {

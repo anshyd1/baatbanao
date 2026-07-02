@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 
-<!-- Open Graph / WhatsApp share preview -->
+<!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="BaatBanao — Vasooli Mode 💸">
 <meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄 WhatsApp-ready payment reminder 5 second mein.">
@@ -56,7 +56,6 @@
       <span class="logo-text">BaatBanao</span>
       <span class="logo-emoji">🪙</span>
     </div>
-    <!-- NEW: Install button (replaces Pro button) -->
     <button class="bb-install-btn" data-bb-install-trigger aria-label="Install BaatBanao app">
       <span class="bb-dot" aria-hidden="true"></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -66,7 +65,7 @@
     </button>
   </div>
 
-  <!-- Page content (rendered by app.js) -->
+  <!-- Page content -->
   <div class="content" id="content"></div>
 
   <!-- Bottom nav -->
@@ -102,7 +101,8 @@
   <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
   <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
   <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
-  <div class="drawer-link" onclick="window.BB_Install && window.BB_Install.show(); closeMenu()">📲 Install App</div>
+  <!-- Install App menu item — auto-hides via bb-install-menu-item class + data attribute -->
+  <div class="drawer-link bb-install-menu-item" data-bb-install-trigger onclick="closeMenu()">📲 Install App</div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 💼');closeMenu()">Business Reply <span class="badge">Soon</span></div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 😄');closeMenu()">Masti Message <span class="badge">Soon</span></div>
   <div class="drawer-link disabled" onclick="showToast('Coming soon 👑');closeMenu()">Vasooli Pro <span class="badge">Soon</span></div>
@@ -110,7 +110,7 @@
   <div class="drawer-link" onclick="navigate('settings');closeMenu()">Settings</div>
   <div class="drawer-link" onclick="showToast('Feedback form coming soon');closeMenu()">Help &amp; Feedback</div>
   <div class="drawer-link" onclick="shareApp();closeMenu()">Share App</div>
-  <div class="drawer-footer">Made in India ❤️ v1.0</div>
+  <div class="drawer-footer">Made in Bharat ❤️ v1.0.4</div>
 </div>
 
 <!-- Toast -->
@@ -128,5 +128,5 @@ function shareApp(){
   }
 }
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a14f6c4abda78371',t:'MTc4MzAxMzg5NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
