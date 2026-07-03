@@ -117,7 +117,7 @@
     const container = document.getElementById('content');
     container.innerHTML = `
       <div class="chat-setup">
-        <img src="assets/mascot-coin.png" alt="" width="120" height="120"/>
+        <img src="assets/mascot-coin.webp" alt="" width="120" height="120"/>
         <h2>Chat me apna naam kya rakhoge?</h2>
         <p>Dost ko yehi naam dikhega. Kabhi bhi change kar sakte ho.</p>
         <input id="chatNameInput" type="text" placeholder="Ramesh, Priya, ya nickname..." maxlength="20" autofocus/>

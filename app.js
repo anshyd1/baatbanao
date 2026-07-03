@@ -154,7 +154,7 @@ const ICONS = {
 /* ===========================================================
    MASCOT
    =========================================================== */
-const MASCOT = `<img class="mascot-img" src="assets/mascot-coin.png" alt="BaatBanao mascot" />`;
+const MASCOT = `<img class="mascot-img" src="assets/mascot-coin.webp" alt="BaatBanao mascot" />`;
 
 /* ===========================================================
    VIEWS
@@ -641,6 +641,10 @@ function renderApp(){
   const route = state.route || 'home';
   // Chat routes handled by chat-ui.js separately
   if (route === 'chat' || route === 'connect') {
+    // Make sure Firebase starts loading the moment the user navigates to
+    // Chat, in case it hasn't already (e.g. idle callback hasn't fired
+    // yet on a very slow connection).
+    if (typeof window.BB_loadFirebase === 'function') window.BB_loadFirebase();
     document.getElementById('content').innerHTML = '';
     if (typeof window.renderChatView === 'function') {
       window.renderChatView(route === 'connect' ? 'connect' : 'list');

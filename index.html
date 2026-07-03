@@ -35,7 +35,7 @@
 <meta name="twitter:image" content="assets/icon-512.png">
 
 <!-- Preload critical mascot for instant splash -->
-<link rel="preload" as="image" href="assets/mascot-coin.png" fetchpriority="high">
+<link rel="preload" as="image" href="assets/mascot-coin.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/vasooli-hero-banner.webp" fetchpriority="high">
 <!-- Prefetch other mascots (loaded when idle, not blocking) -->
 <link rel="prefetch" as="image" href="assets/mascot-sleeping.webp">
@@ -209,15 +209,47 @@
 <!-- Fonts (deferred, splash uses system font meanwhile) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&family=Manrope:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- BUGFIX: this was a blocking <link rel="stylesheet">. On slow/2G-3G
+     connections (common for our audience), the browser holds up ALL
+     subsequent <script defer> execution until every earlier blocking
+     stylesheet finishes downloading — even though the scripts are
+     "deferred". That meant app.js (which builds the entire home page)
+     sometimes didn't run for 10+ seconds, leaving a blank screen below
+     the static topbar/bottom-nav. Loading it non-blocking (print-media
+     trick) fixes this without any visible FOUC since text already has
+     a system-font fallback while it swaps in. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;0,6..12,800;0,6..12,900&family=Manrope:wght@500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
 
 <!-- Full styles -->
+<!-- style.css stays render-blocking on purpose: it's small and needed
+     immediately to avoid a flash of unstyled home page. -->
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="install.css">
-<link rel="stylesheet" href="chat-styles.css">
+<!-- BUGFIX: install.css (install-banner) and chat-styles.css (chat
+     screen) are NOT needed for the very first paint of the Home page.
+     Loading them as blocking stylesheets was adding 2 more slow,
+     sequential network round-trips before ANY deferred <script> could
+     run — on a 15 KB/s connection this alone added 5-8+ seconds of
+     blank screen. Loading them non-blocking removes that delay; both
+     screens still get their styles the moment the CSS arrives, well
+     before a user could realistically navigate there. -->
+<link rel="stylesheet" href="install.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="chat-styles.css" media="print" onload="this.media='all'">
+<noscript>
+  <link rel="stylesheet" href="install.css">
+  <link rel="stylesheet" href="chat-styles.css">
+</noscript>
 
-<!-- Firebase (module — loads once, provides window.BB_Firebase) -->
-<script type="module" src="firebase-config.js"></script>
+<!-- BUGFIX: Firebase (Auth + Firestore + Realtime DB SDKs) is ~880 KB
+     total, only needed for the Chat feature — yet it used to load
+     eagerly on every single page visit, competing for bandwidth with
+     app.js/style.css that build the Home page. On a slow connection
+     (~15 KB/s, common on budget phones / rural India) that's 45-60+
+     extra seconds before Home could even render, since browsers only
+     open a handful of parallel connections. It's now lazy-loaded: once
+     right after Home paints (via requestIdleCallback, so it doesn't
+     compete for the critical path) and immediately if the user jumps
+     straight to #chat/#connect. See lazy-firebase.js. -->
+<script src="lazy-firebase.js" defer></script>
 </head>
 <body class="bb-splash-lock">
 
@@ -231,7 +263,7 @@
   <div class="content">
     <div class="mascot-wrap">
       <div class="ring"></div>
-      <img src="assets/mascot-coin.png" alt="BaatBanao" class="mascot"/>
+      <img src="assets/mascot-coin.webp" alt="BaatBanao" class="mascot"/>
       <span class="coin c1">₹</span>
       <span class="coin c2">💸</span>
       <span class="coin c3">₹</span>
@@ -263,14 +295,46 @@
 (function(){
   var splash = document.getElementById('bb-splash-inline');
   if (!splash) return;
-  // Total lifetime: 3.0s hold + 0.5s fade = 3.5s
-  setTimeout(function(){
+
+  // BUGFIX: this used to be a flat setTimeout(..., 3000) that hid the
+  // splash on a fixed clock, with zero regard for whether app.js had
+  // actually finished loading and rendering the Home page yet. On a
+  // slow connection app.js could still be mid-download when the splash
+  // disappeared, revealing a completely blank #content area below the
+  // static topbar/bottom-nav (users reported this as "app not loading").
+  //
+  // Now: hide splash once #content actually has something rendered in
+  // it (checked on an interval), with a sensible minimum hold time so
+  // the brand moment isn't skipped on fast connections, and a maximum
+  // cap so a broken/very slow load doesn't trap the user behind the
+  // splash forever.
+  var MIN_HOLD_MS = 1400;   // still feels like an intentional brand beat
+  var MAX_HOLD_MS = 6000;   // safety cap even if app.js never finishes
+  var start = Date.now();
+
+  function contentReady(){
+    var el = document.getElementById('content');
+    return !!(el && el.innerHTML && el.innerHTML.trim().length > 0);
+  }
+
+  function hideSplash(){
+    if (!splash.isConnected) return;
     splash.classList.add('bb-fade-out');
     setTimeout(function(){
       splash.remove();
       document.body.classList.remove('bb-splash-lock');
     }, 550);
-  }, 3000);
+  }
+
+  function checkAndMaybeHide(){
+    var elapsed = Date.now() - start;
+    if (elapsed >= MAX_HOLD_MS || (elapsed >= MIN_HOLD_MS && contentReady())) {
+      hideSplash();
+    } else {
+      setTimeout(checkAndMaybeHide, 150);
+    }
+  }
+  setTimeout(checkAndMaybeHide, MIN_HOLD_MS);
 })();
 </script>
 
@@ -345,9 +409,9 @@
 <!-- Toast -->
 <div id="toast"></div>
 
-<script src="app.js"></script>
-<script src="chat-app.js"></script>
-<script src="chat-ui.js"></script>
+<script src="app.js" defer></script>
+<script src="chat-app.js" defer></script>
+<script src="chat-ui.js" defer></script>
 <script src="install.js" defer></script>
 <script>
 function shareApp(){

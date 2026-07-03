@@ -2,7 +2,7 @@
    BaatBanao Service Worker v1.0.5
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.10';
+const CACHE_VERSION = 'baatbanao-v1.0.11';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   './app.js',
   './install.js',
   './install.css',
+  './lazy-firebase.js',
   './manifest.json',
   './chat-app.js',
   './chat-ui.js',
@@ -18,7 +19,7 @@ const CORE_ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
-  './assets/mascot-coin.png',
+  './assets/mascot-coin.webp',
   './assets/mascot-celebrate.webp',
   './assets/mascot-sleeping.webp',
   './assets/mascot-thinking.webp',
