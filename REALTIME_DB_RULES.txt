@@ -1,0 +1,24 @@
+// ===========================================================
+// BaatBanao — Realtime Database Security Rules (v1.0.9+ chat system)
+// Paste this into: Firebase Console > Realtime Database > Rules > Publish
+// Used for: presence/{uid}  and  typing/{chatId}/{uid}
+// ===========================================================
+
+{
+  "rules": {
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "typing": {
+      "$chatId": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      }
+    }
+  }
+}
