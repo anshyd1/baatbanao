@@ -167,9 +167,13 @@ function viewHome(){
       ${MASCOT}
     </div>
 
-    <button class="hero-card" onclick="navigate('vasooli')">
-      <h2>Vasooli Mode 💸</h2>
-      <p>Paisa bhi wapas, rishta bhi safe 😄</p>
+    <button class="hero-card hero-card-banner" onclick="navigate('vasooli')">
+      <img class="hero-banner-img" src="assets/vasooli-hero-banner.webp" alt="" loading="eager" decoding="async" fetchpriority="high"/>
+      <div class="hero-card-content">
+        <h2>Vasooli Mode 💸</h2>
+        <p>Paisa bhi wapas, rishta bhi safe 😄</p>
+        <span class="hero-cta-pill">Shuru karo →</span>
+      </div>
     </button>
 
     <div class="secondary-row">

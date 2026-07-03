@@ -2,7 +2,7 @@
    BaatBanao Service Worker v1.0.5
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.7';
+const CACHE_VERSION = 'baatbanao-v1.0.8';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -19,6 +19,7 @@ const CORE_ASSETS = [
   './assets/mascot-sleeping.webp',
   './assets/mascot-thinking.webp',
   './assets/mascot-paid.webp',
+  './assets/vasooli-hero-banner.webp',
   './favicon.ico'
 ];
 
