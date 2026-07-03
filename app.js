@@ -294,7 +294,7 @@ function handleGenerate(){
 
   outputDiv.innerHTML = `
     <div class="loading-box">
-      <div class="loading-coin">🪙</div>
+      <img class="loading-mascot" src="assets/mascot-thinking.webp" alt="" width="120" height="120" loading="lazy" decoding="async"/>
       <p>Dosti bachate hue hisaab bana rahe hain...</p>
     </div>
   `;
@@ -407,8 +407,8 @@ function viewKhata(){
 
     ${list.length===0 ? `
       <div class="empty-state">
-        <span class="emoji">📒</span>
-        <p>Koi entry nahi hai abhi.</p>
+        <img class="empty-mascot" src="assets/mascot-sleeping.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
+        <p><b>Sab clear!</b> ✨<br>Coin so raha hai — koi udhaar pending nahi.</p>
       </div>
     ` : list.map(k => khataCard(k)).join('')}
   `;
@@ -453,8 +453,27 @@ function markPaid(id){
   k.status = 'paid';
   k.updatedAt = Date.now();
   persist();
-  showToast(`${k.name} — Paid mark ho gaya ✅`);
+  showPaidCelebration(k.name, k.amount);
   renderApp();
+}
+
+// 🎉 Celebration popup with mascot — dopamine hit for user
+function showPaidCelebration(name, amount){
+  const existing = document.getElementById('bb-celebrate');
+  if(existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'bb-celebrate';
+  el.className = 'bb-celebrate-overlay';
+  el.innerHTML = `
+    <div class="bb-celebrate-card">
+      <img src="assets/mascot-paid.webp" alt="" width="180" height="180" loading="eager" decoding="async"/>
+      <h2>Paisa aa gaya! 🎉</h2>
+      <p><b>${escapeHtml(name)}</b> ne <b>${fmtMoney(amount)}</b> clear kiya</p>
+      <p class="bb-celebrate-tag">Dosti safe, hisaab clear ✨</p>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(), 300); }, 2200);
 }
 
 function deleteKhata(id){
@@ -473,8 +492,8 @@ function viewHistory(){
     </div>
     ${list.length===0 ? `
       <div class="empty-state">
-        <span class="emoji">🕓</span>
-        <p>Abhi tak koi message generate nahi hua.</p>
+        <img class="empty-mascot" src="assets/mascot-thinking.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
+        <p><b>Abhi tak koi message nahi banaya.</b><br>Vasooli Mode kholo aur shuru karo!</p>
       </div>
     ` : list.map(h => historyCard(h)).join('')}
     ${list.length>0 ? `<button class="ghost-btn danger" style="margin-top:6px;" onclick="clearHistory()">${ICONS.trash} Clear All History</button>` : ''}

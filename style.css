@@ -247,3 +247,119 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 /* misc */
 .section-title{ font-family:'Manrope',sans-serif; font-weight:800; font-size:16px; margin:4px 2px 0 2px; }
 .divider{ height:1px; background:var(--border-soft); margin:4px 0; }
+
+/* ===========================================================
+   v1.0.7 — Mascot Integration + Performance (2G/3G ready)
+   =========================================================== */
+
+/* Empty state mascots — smart sizing */
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 20px; text-align:center; gap:14px;
+  min-height:280px;
+}
+.empty-state .empty-mascot{
+  width:160px; height:160px; object-fit:contain;
+  filter: drop-shadow(0 8px 16px rgba(230,150,20,0.25));
+  animation: bbEmptyFloat 3.5s ease-in-out infinite;
+}
+.empty-state p{
+  margin:0; font-size:14.5px; color:var(--text-secondary);
+  font-weight:600; line-height:1.5; max-width:280px;
+}
+.empty-state p b{ color:var(--text-main); }
+@keyframes bbEmptyFloat{
+  0%,100%{ transform:translateY(0) rotate(-2deg); }
+  50%{ transform:translateY(-6px) rotate(2deg); }
+}
+
+/* Loading mascot */
+.loading-box{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  padding:30px 20px; text-align:center;
+}
+.loading-mascot{
+  width:100px; height:100px; object-fit:contain;
+  animation: bbLoadingThink 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 8px 14px rgba(230,150,20,0.25));
+}
+@keyframes bbLoadingThink{
+  0%,100%{ transform:rotate(-6deg) scale(1); }
+  50%{ transform:rotate(6deg) scale(1.05); }
+}
+.loading-box p{
+  margin:0; font-size:14px; font-weight:700; color:var(--text-brown);
+}
+
+/* 🎉 Paid Celebration Popup */
+.bb-celebrate-overlay{
+  position:fixed; inset:0; z-index:9998;
+  background:rgba(20,10,5,0.55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition: opacity .3s ease;
+}
+.bb-celebrate-overlay.show{ opacity:1; pointer-events:auto; }
+.bb-celebrate-card{
+  background:linear-gradient(160deg,#FFF9E8,#FFEACC);
+  border-radius:22px; padding:26px 24px 22px 24px;
+  max-width:320px; text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  transform:scale(0.85);
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.bb-celebrate-overlay.show .bb-celebrate-card{ transform:scale(1); }
+.bb-celebrate-card img{
+  width:150px; height:150px; object-fit:contain;
+  animation: bbCelebrateBounce .8s ease-out;
+}
+@keyframes bbCelebrateBounce{
+  0%{ transform:scale(0.3) rotate(-15deg); opacity:0; }
+  60%{ transform:scale(1.15) rotate(8deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0); }
+}
+.bb-celebrate-card h2{
+  margin:8px 0 6px 0; font-family:'Manrope',sans-serif;
+  font-weight:900; font-size:22px; color:#261818;
+}
+.bb-celebrate-card p{
+  margin:0; font-size:14px; font-weight:600; color:#75615C;
+}
+.bb-celebrate-card p b{ color:#261818; font-weight:800; }
+.bb-celebrate-tag{
+  margin-top:10px !important;
+  color:#EC6758 !important; font-weight:800 !important;
+  font-size:13px !important;
+}
+
+/* ===========================================================
+   PERFORMANCE — 2G/3G / Low-end phone optimizations
+   =========================================================== */
+
+/* GPU acceleration for smooth scrolling */
+.content, .drawer{ will-change:scroll-position; -webkit-overflow-scrolling:touch; }
+
+/* Prevent layout shift while images load */
+img[width][height]{ height:auto; max-width:100%; }
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Slow connection — pause decorative animations */
+@media (prefers-reduced-data: reduce){
+  .empty-mascot, .loading-mascot, .mascot-img{ animation: none !important; }
+}
+
+/* Data saver mode (older Chrome) */
+@media (max-width:480px){
+  /* Smaller mascots on tiny screens */
+  .empty-state .empty-mascot{ width:130px; height:130px; }
+  .bb-celebrate-card img{ width:120px; height:120px; }
+}
