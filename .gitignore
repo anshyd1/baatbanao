@@ -16,3 +16,9 @@ build/
 
 # Misc
 *.log
+
+# BaatBanao Pro Admin Tool — LOCAL ONLY, never commit/deploy this.
+# Ye file sirf tumhare apne computer mein raakhna, GitHub/Vercel pe kabhi upload mat karna,
+# warna koi bhi user isko /ADMIN_redeem_code_tool.html khol ke unlock codes generate kar payega.
+ADMIN_redeem_code_tool.html
+ADMIN_*.html
