@@ -599,8 +599,8 @@ const BB_DAILY_DATE_KEY = 'bb_daily_gen_date';
 const BB_FREE_DAILY_LIMIT = 8;
 
 // ⚠️ CHANGE THESE 2 VALUES before going live:
-const BB_UPI_ID = 'yourupi@bank';
-const BB_ADMIN_WHATSAPP = '91XXXXXXXXXX';
+const BB_UPI_ID = 'ansh.y@ptyes';
+const BB_ADMIN_WHATSAPP = '919918996096';
 const BB_SECRET_SALT = 'baatbanao-2026-vasooli-secret'; // must match ADMIN_redeem_code_tool.html
 
 function isBBPro(){
