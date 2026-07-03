@@ -1,8 +1,10 @@
 /* ===========================================================
-   BaatBanao Service Worker v1.0.13
+   BaatBanao Service Worker v1.0.15
+   (v1.0.15: install-button audit fixes — added manifest.json +
+   maskable icons to precache list, which were missing before)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.13';
+const CACHE_VERSION = 'baatbanao-v1.0.15';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -18,6 +20,8 @@ const CORE_ASSETS = [
   './firebase-config.js',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/icon-maskable-192.png',
+  './assets/icon-maskable-512.png',
   './assets/apple-touch-icon.png',
   './assets/mascot-coin.webp',
   './assets/mascot-celebrate.webp',

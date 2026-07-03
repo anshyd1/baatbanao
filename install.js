@@ -104,7 +104,20 @@
 
   /* ---------- Detection ---------- */
   const ua = navigator.userAgent || '';
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
+  // Bug fix #3: iPadOS 13+ reports itself as "Macintosh" in the UA string
+  // (desktop-mode default), so the old /iPad|iPhone|iPod/ regex alone
+  // misses newer iPads. Add a touch-capable Mac check as a fallback.
+  const isIOS = (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // Bug fix #1: In-app browsers (Instagram, Facebook, WhatsApp, Line,
+  // WeChat) never fire `beforeinstallprompt` and often hide/restrict the
+  // native browser chrome (Share button etc.), so PWA install is not
+  // actually possible inside them — even though our button still shows.
+  // Detect these via known UA substrings so we can show an honest message
+  // instead of broken/misleading install instructions.
+  const isInAppBrowser = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|WhatsApp\/|Snapchat|Pinterest/i.test(ua);
 
   function detectStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches ||
@@ -220,6 +233,10 @@
     trigger: triggerInstall,
     show: () => {
       if (isStandalone) return showSingleToast('Aap already installed app use kar rahe hain! 🎉');
+      // Bug fix #1: check in-app browser FIRST — even if a stray
+      // `deferredPrompt` somehow exists, most in-app webviews will not
+      // actually complete an install, so we must not attempt it silently.
+      if (isInAppBrowser) return showInstallUI('inapp');
       if (deferredPrompt) return triggerInstall();
       if (isIOS) return showInstallUI('ios');
       if (isKnownInstalled) return showSingleToast('App shayad already installed hai 🏠');
@@ -240,6 +257,7 @@
   };
 
   function triggerInstall() {
+    if (isInAppBrowser) return showInstallUI('inapp');
     if (!deferredPrompt) {
       if (isIOS) return showInstallUI('ios');
       return showInstallUI('generic');
@@ -265,10 +283,25 @@
         <li><span class="bb-step-num">2</span> Scroll karke <b>"Add to Home Screen"</b> chunein</li>
         <li><span class="bb-step-num">3</span> <b>Add</b> pe tap karein — bas ho gaya! ✅</li>
       </ol>`;
-    const genericSteps = `
-      <p class="bb-note">Chrome ke <b>menu (⋮)</b> se <b>"Install app"</b> ya <b>"Add to Home Screen"</b> select karein.</p>`;
 
-    const inner = mode === 'ios' ? iosSteps : (mode === 'android' ? '' : genericSteps);
+    // Bug fix #2: Old copy hardcoded "Chrome ke menu se..." which is wrong
+    // for Firefox, Samsung Internet, Edge, Opera, etc. Made browser-agnostic.
+    const genericSteps = `
+      <p class="bb-note">Apne browser ke <b>menu (⋮ ya ≡)</b> se <b>"Install app"</b> ya <b>"Add to Home Screen"</b> dhoondh kar select karein.</p>`;
+
+    // Bug fix #1: In-app browsers (Instagram/Facebook/WhatsApp webviews)
+    // cannot install PWAs at all — show an honest message telling the user
+    // to open the link in their real browser first, instead of broken/
+    // misleading install steps.
+    const inAppSteps = `
+      <p class="bb-note">Ye link ek app (Instagram/Facebook/WhatsApp) ke andar khula hai, jahan install karna possible nahi hai.</p>
+      <ol class="bb-ios-steps">
+        <li><span class="bb-step-num">1</span> Upar-right corner mein <b>⋮</b> ya <b>"..."</b> button dhoondein</li>
+        <li><span class="bb-step-num">2</span> <b>"Browser mein kholein"</b> ya <b>"Open in Chrome/Safari"</b> chunein</li>
+        <li><span class="bb-step-num">3</span> Wahan se dubara <b>Install</b> try karein ✅</li>
+      </ol>`;
+
+    const inner = mode === 'inapp' ? inAppSteps : (mode === 'ios' ? iosSteps : (mode === 'android' ? '' : genericSteps));
 
     return `
       <div class="bb-install-scrim" data-bb-close></div>
@@ -277,8 +310,8 @@
         <div class="bb-install-head">
           <img src="assets/icon-192.png" alt="BaatBanao" class="bb-install-icon"/>
           <div>
-            <h3 id="bb-install-title">BaatBanao install karein</h3>
-            <p class="bb-install-sub">Phone ki home screen pe app jaisa icon milega</p>
+            <h3 id="bb-install-title">${mode === 'inapp' ? 'Pehle browser mein kholein' : 'BaatBanao install karein'}</h3>
+            <p class="bb-install-sub">${mode === 'inapp' ? 'In-app browser se install nahi ho sakta' : 'Phone ki home screen pe app jaisa icon milega'}</p>
           </div>
         </div>
         <ul class="bb-trust">
