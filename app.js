@@ -304,6 +304,13 @@ function handleGenerate(){
   if(!s.name || !s.name.trim()){ showToast('Naam daalna zaroori hai'); return; }
   if(!s.amount || Number(s.amount) <= 0){ showToast('Sahi amount daalein'); return; }
 
+  const limitCheck = bbCanGenerate();
+  if (!limitCheck.allowed){
+    showToast(`Aaj ke ${BB_FREE_DAILY_LIMIT} free messages khatam! BaatBanao Pro lo unlimited ke liye 👑`);
+    setTimeout(()=> navigate('pro'), 900);
+    return;
+  }
+
   const combinedText = (s.name||'') + ' ' + (s.note||'');
   const outputDiv = document.getElementById('vasooli-output');
 
@@ -334,9 +341,16 @@ function handleGenerate(){
     });
     if(state.history.length > 200) state.history = state.history.slice(0,200);
     persist();
+    bbRecordGeneration();
+
+    const remainingAfter = bbCanGenerate().remaining;
+    const limitNotice = (!isBBPro() && remainingAfter <= 2)
+      ? `<div class="safety-banner">Aaj ${remainingAfter} free message${remainingAfter===1?'':'s'} bache hain. <a href="#pro" style="color:var(--coral-dark);font-weight:800;">BaatBanao Pro</a> lo unlimited ke liye 👑</div>`
+      : '';
 
     outputDiv.innerHTML = `
       ${unsafeNotice}
+      ${limitNotice}
       <div class="section-title">Ready Messages</div>
       ${messages.map((m,i) => outputCard(m, i, s)).join('')}
     `;
@@ -568,8 +582,154 @@ function viewProfile(){
     <div class="settings-item"><span class="label">📒 Total Khata Entries</span><span>${state.khata.length}</span></div>
     <div class="settings-item"><span class="label">🕓 Messages Generated</span><span>${state.history.length}</span></div>
     <button class="primary-btn" onclick="navigate('settings')">Settings ⚙️</button>
-    <button class="ghost-btn" onclick="showToast('Vasooli Pro — Coming soon 👑')">👑 Upgrade to Pro</button>
+    ${isBBPro() ?
+      `<div class="settings-item"><span class="label">👑 BaatBanao Pro</span><span class="status-badge paid">Active ✅</span></div>` :
+      `<button class="ghost-btn" onclick="navigate('pro')">👑 Upgrade to BaatBanao Pro</button>`
+    }
   `;
+}
+
+/* ===========================================================
+   BAATBANAO PRO — PAYWALL (UPI + Manual Redeem Code)
+   =========================================================== */
+const BB_PRO_KEY = 'bb_pro_unlocked';
+const BB_PRO_PLAN_KEY = 'bb_pro_plan';
+const BB_DAILY_COUNT_KEY = 'bb_daily_gen_count';
+const BB_DAILY_DATE_KEY = 'bb_daily_gen_date';
+const BB_FREE_DAILY_LIMIT = 8;
+
+// ⚠️ CHANGE THESE 2 VALUES before going live:
+const BB_UPI_ID = 'yourupi@bank';
+const BB_ADMIN_WHATSAPP = '91XXXXXXXXXX';
+const BB_SECRET_SALT = 'baatbanao-2026-vasooli-secret'; // must match ADMIN_redeem_code_tool.html
+
+function isBBPro(){
+  return localStorage.getItem(BB_PRO_KEY) === '1';
+}
+
+function bbSimpleHash(str){
+  let hash = 0;
+  for (let i = 0; i < str.length; i++){
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function bbGenerateRedeemCode(phone, plan){
+  const raw = `${phone}-${plan}-${BB_SECRET_SALT}`;
+  return bbSimpleHash(raw).toString(36).toUpperCase().slice(0,6).padEnd(6,'X');
+}
+
+function bbTodayKey(){ return new Date().toISOString().slice(0,10); }
+
+function bbCanGenerate(){
+  if (isBBPro()) return { allowed:true, remaining: Infinity };
+  const storedDate = localStorage.getItem(BB_DAILY_DATE_KEY);
+  let count = parseInt(localStorage.getItem(BB_DAILY_COUNT_KEY) || '0', 10);
+  if (storedDate !== bbTodayKey()){
+    count = 0;
+    localStorage.setItem(BB_DAILY_DATE_KEY, bbTodayKey());
+    localStorage.setItem(BB_DAILY_COUNT_KEY, '0');
+  }
+  const remaining = BB_FREE_DAILY_LIMIT - count;
+  return { allowed: remaining > 0, remaining: Math.max(remaining,0) };
+}
+
+function bbRecordGeneration(){
+  if (isBBPro()) return;
+  const check = bbCanGenerate();
+  const newCount = BB_FREE_DAILY_LIMIT - check.remaining + 1;
+  localStorage.setItem(BB_DAILY_DATE_KEY, bbTodayKey());
+  localStorage.setItem(BB_DAILY_COUNT_KEY, String(newCount));
+}
+
+function bbBuildUpiLink(plan){
+  const amount = plan === 'business' ? 499 : 149;
+  const note = encodeURIComponent(`BaatBanao ${plan === 'business' ? 'Business Pack' : 'Pro'}`);
+  return `upi://pay?pa=${BB_UPI_ID}&pn=BaatBanao&am=${amount}&cu=INR&tn=${note}`;
+}
+
+function bbBuildWhatsAppScreenshotLink(plan){
+  const amount = plan === 'business' ? 499 : 149;
+  const msg = encodeURIComponent(`Namaste! Maine BaatBanao ${plan==='business'?'Business Pack':'Pro'} (₹${amount}) ka payment kiya hai. Screenshot attach kar raha/rahi hoon. Mera phone number: `);
+  return `https://wa.me/${BB_ADMIN_WHATSAPP}?text=${msg}`;
+}
+
+function viewPro(){
+  return `
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('profile')">${ICONS.back}</button>
+      <h1>BaatBanao Pro 👑</h1>
+    </div>
+
+    <div class="hero-greeting" style="text-align:center;">
+      <h1 style="font-size:20px;">Vasooli bhi smart, app bhi Pro 😄</h1>
+    </div>
+    <p style="text-align:center;color:var(--text-secondary);font-weight:600;font-size:13.5px;margin-bottom:16px;">
+      Watermark hatao, unlimited messages banao, sabse pehle naye features paao.
+    </p>
+
+    <div class="list-card" style="margin-bottom:14px;">
+      <div class="row-top"><span class="name">BaatBanao Pro</span><span class="amount">₹149 lifetime</span></div>
+      <div class="meta">✅ Unlimited generation (free = ${BB_FREE_DAILY_LIMIT}/din)<br/>✅ No watermark on cards<br/>✅ Sab tone/language unlock<br/>✅ Priority AI (aane wale update mein)</div>
+      <button class="primary-btn" style="margin-top:10px;" onclick="bbStartPurchase('pro')">₹149 mein Unlock Karo</button>
+    </div>
+
+    <div class="list-card" style="margin-bottom:14px;">
+      <div class="row-top"><span class="name">Business Pack</span><span class="amount">₹499 lifetime</span></div>
+      <div class="meta">✅ Sab kuch Pro jaisa +<br/>✅ Multiple business profiles<br/>✅ Bulk-safe reminder queue<br/>✅ Business template packs</div>
+      <button class="primary-btn" style="margin-top:10px;background:var(--coral-dark);" onclick="bbStartPurchase('business')">₹499 mein Unlock Karo</button>
+    </div>
+
+    <div id="bb-pay-step" style="display:none;">
+      <div class="field-block">
+        <label class="field-label">Step 1 — UPI se Payment Karo</label>
+        <button class="ghost-btn" id="bb-upi-btn">📲 UPI se Pay Karo</button>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Step 2 — Screenshot Bhejo</label>
+        <button class="ghost-btn" id="bb-wa-btn">💬 WhatsApp par Screenshot Bhejo</button>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Step 3 — Code Daalo (verify hone ke baad milega)</label>
+        <input type="tel" id="bb-phone-input" placeholder="Apna WhatsApp number (10 digit)" maxlength="10"/>
+        <input type="text" id="bb-code-input" placeholder="6-digit unlock code" maxlength="6" style="margin-top:8px;text-transform:uppercase;"/>
+        <button class="primary-btn" style="margin-top:10px;" onclick="bbRedeemCode()">✅ Unlock Karo</button>
+        <div id="bb-redeem-msg" style="margin-top:8px;font-weight:700;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <div class="safety-banner">🙏 BaatBanao ek writing assistant hai, recovery agency nahi. Payment 100% manual-verified hai, koi auto-debit nahi hoga.</div>
+  `;
+}
+
+let bbSelectedPlan = 'pro';
+function bbStartPurchase(plan){
+  bbSelectedPlan = plan;
+  const step = document.getElementById('bb-pay-step');
+  step.style.display = 'block';
+  step.scrollIntoView({behavior:'smooth'});
+  document.getElementById('bb-upi-btn').onclick = () => { window.location.href = bbBuildUpiLink(plan); };
+  document.getElementById('bb-wa-btn').onclick = () => { window.open(bbBuildWhatsAppScreenshotLink(plan), '_blank'); };
+}
+
+function bbRedeemCode(){
+  const phone = document.getElementById('bb-phone-input').value.replace(/\D/g,'');
+  const code = document.getElementById('bb-code-input').value.trim().toUpperCase();
+  const msgEl = document.getElementById('bb-redeem-msg');
+  if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
+  const expected = bbGenerateRedeemCode(phone, bbSelectedPlan);
+  if (expected === code){
+    localStorage.setItem(BB_PRO_KEY, '1');
+    localStorage.setItem(BB_PRO_PLAN_KEY, bbSelectedPlan);
+    msgEl.textContent = '🎉 BaatBanao Pro Unlock ho gaya! Dhanyavaad.';
+    msgEl.style.color = '#247C32';
+    setTimeout(()=> navigate('profile'), 1400);
+  } else {
+    msgEl.textContent = '❌ Code galat hai. Sahi phone number check karo jisse screenshot bheja tha.';
+    msgEl.style.color = '#C0392B';
+  }
 }
 
 function viewSettings(){
@@ -602,8 +762,13 @@ function viewSettings(){
     </div>
 
     <div class="settings-item">
-      <span class="label">Card watermark (Pro removes it)</span>
-      <div class="toggle ${s.watermarkEnabled?'on':''}" onclick="toggleSetting('watermarkEnabled')"><div class="knob"></div></div>
+      <span class="label">Card watermark ${isBBPro() ? '(Pro — removed ✅)' : '🔒 Pro removes it'}</span>
+      <div class="toggle ${(s.watermarkEnabled && !isBBPro())?'on':''}" onclick="${isBBPro() ? `showToast('Pro users ke liye watermark already off hai 👑')` : `toggleSetting('watermarkEnabled')`}"><div class="knob"></div></div>
+    </div>
+
+    <div class="settings-item" onclick="navigate('pro')" style="cursor:pointer;">
+      <span class="label">👑 BaatBanao Pro</span>
+      <span>${isBBPro() ? 'Active ✅' : 'Upgrade ›'}</span>
     </div>
 
     <button class="ghost-btn danger" onclick="clearAllData()">${ICONS.trash} Clear all app data</button>
@@ -654,6 +819,7 @@ const ROUTES = {
   history: viewHistory,
   profile: viewProfile,
   settings: viewSettings,
+  pro: viewPro,
   chat: () => '<div id="chatMount"></div>',
   connect: () => '<div id="chatMount"></div>'
 };
