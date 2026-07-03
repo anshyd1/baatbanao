@@ -51,7 +51,8 @@ body.bb-installed .bb-install-btn{ display:none !important; }
    🎬 BRANDED SPLASH
    =========================================================== */
 #bb-splash{
-  position:fixed; inset:0; z-index:99999;
+  position:fixed; top:0; right:0; bottom:0; left:0; inset:0; z-index:99999;
+  width:100%; height:100%;
   background:linear-gradient(160deg, #FFF9E8 0%, #FFEACC 45%, #FFD4B8 100%);
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
@@ -67,7 +68,7 @@ body.bb-installed .bb-install-btn{ display:none !important; }
   100%{ opacity:0; transform:scale(1.06); filter:blur(6px); }
 }
 
-.bb-splash-bg{ position:absolute; inset:0; overflow:hidden; z-index:0; }
+.bb-splash-bg{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; overflow:hidden; z-index:0; }
 .bb-splash-blob{
   position:absolute; border-radius:50%; filter:blur(40px); opacity:.5;
   animation: bbBlobFloat 6s ease-in-out infinite;
@@ -98,7 +99,7 @@ body.bb-installed .bb-install-btn{ display:none !important; }
 }
 
 .bb-splash-ring{
-  position:absolute; inset:-8px;
+  position:absolute; top:-8px; right:-8px; bottom:-8px; left:-8px; inset:-8px;
   border-radius:50%;
   border:3px dashed rgba(255,114,95,.35);
   animation: bbRingSpin 8s linear infinite;
@@ -214,13 +215,15 @@ body.bb-installed .bb-install-btn{ display:none !important; }
 
 /* ---------- Install bottom sheet ---------- */
 .bb-install-wrap{
-  position:fixed; inset:0; z-index:9999;
+  position:fixed; top:0; right:0; bottom:0; left:0; inset:0; z-index:9999;
+  width:100%; height:100%;
   display:flex; align-items:flex-end; justify-content:center;
   opacity:0; pointer-events:none; transition:opacity .22s ease;
 }
 .bb-install-wrap.bb-show{ opacity:1; pointer-events:auto; }
 .bb-install-scrim{
-  position:absolute; inset:0;
+  position:absolute; top:0; right:0; bottom:0; left:0; inset:0;
+  width:100%; height:100%;
   background:rgba(20, 10, 5, 0.45);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }

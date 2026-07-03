@@ -43,9 +43,9 @@
   .try-btn{display:block;margin:8px auto 0;background:var(--coral);color:#fff;border:none;padding:12px 20px;border-radius:14px;font-family:inherit;font-weight:800;font-size:14px;box-shadow:0 8px 16px rgba(232,89,75,0.28);cursor:pointer}
 
   /* ---------- Install sheet (same styles as install.css) ---------- */
-  .bb-install-wrap{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s ease}
+  .bb-install-wrap{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:9999;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s ease}
   .bb-install-wrap.bb-show{opacity:1;pointer-events:auto}
-  .bb-install-scrim{position:absolute;inset:0;background:rgba(20,10,5,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .bb-install-scrim{position:absolute;top:0;right:0;bottom:0;left:0;inset:0;width:100%;height:100%;background:rgba(20,10,5,0.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
   .bb-install-sheet{position:relative;z-index:1;width:100%;max-width:480px;background:#FFFDF8;border-radius:22px 22px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom, 8px)) 20px;box-shadow:0 -20px 60px rgba(0,0,0,0.25);transform:translateY(24px);transition:transform .28s cubic-bezier(.2,.9,.3,1);color:var(--text-main)}
   .bb-install-wrap.bb-show .bb-install-sheet{transform:translateY(0)}
   @media(min-width:481px){.bb-install-wrap{align-items:center}.bb-install-sheet{border-radius:22px;max-width:420px}}

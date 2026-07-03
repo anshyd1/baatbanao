@@ -150,8 +150,8 @@
         chats.push({ id: doc.id, ...doc.data() });
       });
       chats.sort((a, b) => {
-        const ta = a.lastMessageAt?.toMillis ? a.lastMessageAt.toMillis() : (a.lastMessageAt?.seconds || 0) * 1000;
-        const tb = b.lastMessageAt?.toMillis ? b.lastMessageAt.toMillis() : (b.lastMessageAt?.seconds || 0) * 1000;
+        const ta = (a && a.lastMessageAt && a.lastMessageAt.toMillis) ? a.lastMessageAt.toMillis() : ((a && a.lastMessageAt && a.lastMessageAt.seconds) || 0) * 1000;
+        const tb = (b && b.lastMessageAt && b.lastMessageAt.toMillis) ? b.lastMessageAt.toMillis() : ((b && b.lastMessageAt && b.lastMessageAt.seconds) || 0) * 1000;
         return tb - ta;
       });
       CHAT_STATE.chats = chats;

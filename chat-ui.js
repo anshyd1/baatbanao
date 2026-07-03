@@ -78,13 +78,13 @@
   });
 
   window.addEventListener('bb-messages-updated', (e) => {
-    if (currentView === 'chat' && e.detail.chatId === currentChatData?.id) {
+    if (currentView === 'chat' && currentChatData && e.detail.chatId === currentChatData.id) {
       renderMessages(e.detail.msgs);
     }
   });
 
   window.addEventListener('bb-typing-updated', (e) => {
-    if (currentView === 'chat' && e.detail.chatId === currentChatData?.id) {
+    if (currentView === 'chat' && currentChatData && e.detail.chatId === currentChatData.id) {
       renderTyping(e.detail.typing);
     }
   });
@@ -94,6 +94,7 @@
     currentView = view || 'list';
     const container = document.getElementById('content');
     if (!container) return;
+    container.classList.remove('in-chat-window');
 
     const state = window.CHAT_STATE || {};
     if (!state.ready) {
@@ -123,7 +124,10 @@
         <input id="chatNameInput" type="text" placeholder="Ramesh, Priya, ya nickname..." maxlength="20" autofocus/>
         <button id="chatNameSave" class="primary-btn">Aage badho →</button>
       </div>`;
-    setTimeout(() => document.getElementById('chatNameInput')?.focus(), 100);
+    setTimeout(() => {
+      const inp = document.getElementById('chatNameInput');
+      if (inp && inp.focus) inp.focus();
+    }, 100);
     document.getElementById('chatNameSave').addEventListener('click', async () => {
       const name = document.getElementById('chatNameInput').value.trim();
       if (!name) return bbToast('Naam to daalo bhai');
@@ -277,6 +281,7 @@
   /* -------- Chat Window (message view) -------- */
   function renderChatWindow(){
     const container = document.getElementById('content');
+    if (container) container.classList.add('in-chat-window');
     const state = window.CHAT_STATE;
     const user = state.user;
     const chat = currentChatData;
@@ -466,7 +471,7 @@
 
   function initials(name){
     if (!name) return '?';
-    return name.trim().split(/\s+/).slice(0,2).map(w => w[0]?.toUpperCase()||'').join('');
+    return name.trim().split(/\s+/).slice(0,2).map(w => (w && w[0] ? w[0].toUpperCase() : '') || '').join('');
   }
 
   function formatChatTime(d){

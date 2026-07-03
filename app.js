@@ -122,7 +122,8 @@ function navigate(route, params={}){
   state.routeParams = params;
   window.location.hash = route;
   renderApp();
-  document.getElementById('content')?.scrollTo?.(0,0);
+  const _c = document.getElementById('content');
+  if (_c && _c.scrollTo) _c.scrollTo(0, 0);
 }
 
 window.addEventListener('hashchange', ()=>{
@@ -218,11 +219,12 @@ function setDefaultLanguage(l){
 
 function viewVasooli(){
   const s = state.vasooliForm || {
-    name:'', amount:'', relation:'Dost',
+    name:'', phone:'', amount:'', relation:'Dost',
     language: state.settings.defaultLanguage || 'Hinglish',
     tone: state.settings.defaultTone || 'Friendly',
     note:''
   };
+  if(s.phone === undefined) s.phone = '';
   state.vasooliForm = s;
 
   const relations = ['Dost','Customer','Client','Student/Parent','Tenant','Shop Khata','Relative','General'];
@@ -233,11 +235,16 @@ function viewVasooli(){
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
       <h1>Vasooli Mode 💸</h1>
     </div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, amount aur language select karo — WhatsApp-ready reminder milega.</p>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, phone, amount aur language select karo — WhatsApp-ready reminder milega.</p>
 
     <div class="field-block">
       <label class="field-label">Naam</label>
       <input type="text" id="f-name" placeholder="Ramesh bhai" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
+    </div>
+
+    <div class="field-block">
+      <label class="field-label">WhatsApp Number (optional, direct chat open karne ke liye)</label>
+      <input type="tel" id="f-phone" placeholder="9876543210 (10 digits)" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
     </div>
 
     <div class="field-block">
@@ -350,17 +357,24 @@ function outputCard(m, idx, formSnapshot){
 
 function copyOutput(taId){
   const ta = document.getElementById(taId);
-  navigator.clipboard?.writeText(ta.value).then(()=>{
-    showToast('Copied! ✅');
-  }).catch(()=>{
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value).then(()=>{
+      showToast('Copied! ✅');
+    }).catch(()=>{
+      ta.select(); document.execCommand('copy'); showToast('Copied! ✅');
+    });
+  } else {
     ta.select(); document.execCommand('copy'); showToast('Copied! ✅');
-  });
+  }
 }
 
 function whatsappOutput(taId){
   const ta = document.getElementById(taId);
   const text = encodeURIComponent(ta.value);
-  window.open(`https://wa.me/?text=${text}`, '_blank');
+  let phone = (state.vasooliForm && state.vasooliForm.phone) ? String(state.vasooliForm.phone).replace(/[^0-9]/g, '') : '';
+  if (phone.length === 10) phone = '91' + phone;
+  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+  window.open(url, '_blank');
 }
 
 function saveOutputToKhata(m, formSnapshot, taId){
@@ -368,7 +382,7 @@ function saveOutputToKhata(m, formSnapshot, taId){
   const entry = {
     id: uid(),
     name: formSnapshot.name || 'Unknown',
-    phone:'',
+    phone: formSnapshot.phone || '',
     amount: Number(formSnapshot.amount) || 0,
     relation: formSnapshot.relation || 'General',
     status:'pending',
@@ -447,7 +461,10 @@ function remindKhata(id){
   const encoded = encodeURIComponent(text);
   k.lastReminderAt = Date.now();
   persist();
-  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  let phone = k.phone ? String(k.phone).replace(/[^0-9]/g, '') : '';
+  if (phone.length === 10) phone = '91' + phone;
+  const url = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
+  window.open(url, '_blank');
   showToast('WhatsApp khul raha hai...');
 }
 
@@ -671,8 +688,13 @@ function renderApp(){
 }
 
 /* Init */
-document.addEventListener('DOMContentLoaded', ()=>{
+function initApp() {
   const initialRoute = window.location.hash.replace('#','') || 'home';
   state.route = initialRoute;
   renderApp();
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
