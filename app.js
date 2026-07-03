@@ -237,39 +237,43 @@ function viewVasooli(){
     </div>
     <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, phone, amount aur language select karo — WhatsApp-ready reminder milega.</p>
 
-    <div class="field-block">
-      <label class="field-label">Naam</label>
-      <input type="text" id="f-name" placeholder="Ramesh bhai" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
-    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block">
+        <label class="field-label">Naam</label>
+        <input type="text" id="f-name" placeholder="Ramesh bhai" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
+      </div>
 
-    <div class="field-block">
-      <label class="field-label">WhatsApp Number (optional, direct chat open karne ke liye)</label>
-      <input type="tel" id="f-phone" placeholder="9876543210 (10 digits)" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
-    </div>
+      <div class="field-block">
+        <label class="field-label">WhatsApp Number (optional, direct chat open karne ke liye)</label>
+        <input type="tel" id="f-phone" placeholder="9876543210 (10 digits)" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
+      </div>
 
-    <div class="field-block">
-      <label class="field-label">Amount</label>
-      <input type="number" id="f-amount" placeholder="2500" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)"/>
-    </div>
+      <div class="field-block">
+        <label class="field-label">Amount</label>
+        <input type="number" id="f-amount" placeholder="2500" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)"/>
+      </div>
 
-    <div class="field-block">
-      <label class="field-label">Relation</label>
-      <select id="f-relation" onchange="updateForm('relation', this.value)">
-        ${relations.map(r => `<option value="${r}" ${s.relation===r?'selected':''}>${r}</option>`).join('')}
-      </select>
-    </div>
-
-    <div class="field-block">
-      <label class="field-label">Language</label>
-      <div class="chip-row">
-        ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="updateForm('language','${l}')">${l}</div>`).join('')}
+      <div class="field-block">
+        <label class="field-label">Relation</label>
+        <select id="f-relation" onchange="updateForm('relation', this.value)">
+          ${relations.map(r => `<option value="${r}" ${s.relation===r?'selected':''}>${r}</option>`).join('')}
+        </select>
       </div>
     </div>
 
-    <div class="field-block">
-      <label class="field-label">Tone</label>
-      <div class="chip-row">
-        ${['Friendly','Polite','Strong'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="updateForm('tone','${t}')">${t}</div>`).join('')}
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block">
+        <label class="field-label">Language</label>
+        <div class="chip-row">
+          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="updateForm('language','${l}')">${l}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label">Tone</label>
+        <div class="chip-row">
+          ${['Friendly','Polite','Strong'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="updateForm('tone','${t}')">${t}</div>`).join('')}
+        </div>
       </div>
     </div>
 

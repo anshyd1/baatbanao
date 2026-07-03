@@ -37,10 +37,32 @@ body{
   box-shadow: 0 0 60px rgba(90,48,30,0.12);
 }
 @media(min-width:481px){
-  body{ padding:24px 12px; }
-  #app{ max-width:680px; min-height:calc(100vh - 48px); border-radius:28px; overflow:visible; box-shadow:0 10px 40px rgba(90,48,30,0.15); }
+  body{ padding:16px; display:flex; align-items:flex-start; justify-content:center; min-height:100vh; }
+  #app{
+    width:100%; max-width:920px;
+    margin:0 auto;
+    min-height:calc(min(100vh - 32px, 860px));
+    height:auto;
+    border-radius:28px;
+    overflow:visible;
+    box-shadow:0 15px 50px rgba(90,48,30,0.18);
+  }
   .topbar { border-radius: 28px 28px 0 0; }
   .bottom-nav { border-radius: 0 0 28px 28px; }
+}
+
+@media(min-width:600px){
+  .content{ padding:16px 28px 32px 28px; gap:20px; }
+  .hero-card-banner{ min-height:230px; border-radius:24px; }
+  .hero-card-banner h2{ font-size:30px !important; }
+  .hero-card-banner p{ font-size:16px !important; }
+  .secondary-row{ grid-template-columns:1fr 1fr; gap:18px; }
+  .sec-card{ padding:20px; }
+  .sec-card h3{ font-size:17px; }
+  .sec-card p{ font-size:13.5px; }
+  .input-pill{ padding:16px 20px; font-size:15px; }
+  .khata-strip{ padding:18px 20px; }
+  .vasooli-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 20px; }
 }
 
 /* Top bar */
