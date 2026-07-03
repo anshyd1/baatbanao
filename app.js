@@ -632,17 +632,37 @@ const ROUTES = {
   khata: viewKhata,
   history: viewHistory,
   profile: viewProfile,
-  settings: viewSettings
+  settings: viewSettings,
+  chat: () => '<div id="chatMount"></div>',
+  connect: () => '<div id="chatMount"></div>'
 };
 
 function renderApp(){
   const route = state.route || 'home';
+  // Chat routes handled by chat-ui.js separately
+  if (route === 'chat' || route === 'connect') {
+    document.getElementById('content').innerHTML = '';
+    if (typeof window.renderChatView === 'function') {
+      window.renderChatView(route === 'connect' ? 'connect' : 'list');
+    } else {
+      // Firebase not loaded yet — show loader
+      document.getElementById('content').innerHTML = `
+        <div style="text-align:center; padding:60px 20px;">
+          <img src="assets/mascot-thinking.webp" alt="" width="100" height="100"/>
+          <p style="margin-top:14px; font-weight:700; color:#75615C;">Chat connect ho raha hai...</p>
+        </div>`;
+    }
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      el.classList.toggle('active', el.dataset.route === 'chat');
+    });
+    return;
+  }
   const viewFn = ROUTES[route] || viewHome;
   document.getElementById('content').innerHTML = viewFn();
 
   // bottom nav active state
   document.querySelectorAll('.nav-item').forEach(el=>{
-    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile'].includes(route) ? route : ''));
+    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile','chat'].includes(route) ? route : ''));
   });
 }
 

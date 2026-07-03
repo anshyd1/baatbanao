@@ -214,6 +214,10 @@
 <!-- Full styles -->
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="install.css">
+<link rel="stylesheet" href="chat-styles.css">
+
+<!-- Firebase (module — loads once, provides window.BB_Firebase) -->
+<script type="module" src="firebase-config.js"></script>
 </head>
 <body class="bb-splash-lock">
 
@@ -303,9 +307,9 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>Khata</span>
     </button>
-    <button class="nav-item" data-route="history" onclick="navigate('history')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>History</span>
+    <button class="nav-item" data-route="chat" onclick="navigate('chat')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Chat</span>
     </button>
     <button class="nav-item" data-route="profile" onclick="navigate('profile')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -324,6 +328,7 @@
   </div>
   <div class="drawer-link" onclick="navigate('home');closeMenu()">Home</div>
   <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
+  <div class="drawer-link" onclick="navigate('chat');closeMenu()">Chat 💬 <span class="badge badge-new">NEW</span></div>
   <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
   <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
   <div class="drawer-link bb-install-menu-item" data-bb-install-trigger onclick="closeMenu()">📲 Install App</div>
@@ -334,13 +339,15 @@
   <div class="drawer-link" onclick="navigate('settings');closeMenu()">Settings</div>
   <div class="drawer-link" onclick="showToast('Feedback form coming soon');closeMenu()">Help &amp; Feedback</div>
   <div class="drawer-link" onclick="shareApp();closeMenu()">Share App</div>
-  <div class="drawer-footer">Made in Bharat ❤️ v1.0.8</div>
+  <div class="drawer-footer">Made in Bharat ❤️ v1.0.9</div>
 </div>
 
 <!-- Toast -->
 <div id="toast"></div>
 
 <script src="app.js"></script>
+<script src="chat-app.js"></script>
+<script src="chat-ui.js"></script>
 <script src="install.js" defer></script>
 <script>
 function shareApp(){
