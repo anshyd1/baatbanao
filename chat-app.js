@@ -134,10 +134,14 @@
   /* -------- Chat List Subscription -------- */
   function subscribeChats(){
     if (unsubChats) unsubChats();
+    // NOTE: intentionally NOT using orderBy('lastMessageAt') here.
+    // array-contains + orderBy on a different field needs a Firestore
+    // composite index (Console > Firestore > Indexes). To keep this
+    // working out-of-the-box with zero manual Firebase Console setup,
+    // we sort client-side instead (50 chats max, trivial cost).
     const q = FB.query(
       FB.collection(FB.db, 'chats'),
       FB.where('participants', 'array-contains', currentUser.uid),
-      FB.orderBy('lastMessageAt', 'desc'),
       FB.limit(50)
     );
     unsubChats = FB.onSnapshot(q, (snapshot) => {
@@ -145,10 +149,19 @@
       snapshot.forEach(doc => {
         chats.push({ id: doc.id, ...doc.data() });
       });
+      chats.sort((a, b) => {
+        const ta = a.lastMessageAt?.toMillis ? a.lastMessageAt.toMillis() : (a.lastMessageAt?.seconds || 0) * 1000;
+        const tb = b.lastMessageAt?.toMillis ? b.lastMessageAt.toMillis() : (b.lastMessageAt?.seconds || 0) * 1000;
+        return tb - ta;
+      });
       CHAT_STATE.chats = chats;
+      CHAT_STATE.chatsError = null;
       window.dispatchEvent(new CustomEvent('bb-chats-updated'));
     }, (err) => {
       console.error('[BB Chat] Chats subscription failed:', err);
+      CHAT_STATE.chatsError = err.message;
+      // Let the UI know so it doesn't spin forever on a silent failure.
+      window.dispatchEvent(new CustomEvent('bb-chats-updated'));
     });
   }
 

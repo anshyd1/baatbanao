@@ -9,6 +9,16 @@
   let currentView = null; // 'list' | 'chat' | 'connect' | 'setup'
   let currentChatData = null;
 
+  // BUGFIX: chat used native alert() popups for every validation/error
+  // message ("Naam to daalo bhai", "Missing or insufficient permissions",
+  // etc). These block the whole page and look completely out of place
+  // next to the app's own toast system. Route everything through the
+  // same toast used by the rest of the app instead.
+  function bbToast(msg){
+    if (typeof window.showToast === 'function') window.showToast(msg);
+    else console.warn('[BB Chat]', msg);
+  }
+
   /* Wait for chat ready before mounting */
   window.addEventListener('bb-chat-ready', (e) => {
     const user = e.detail;
@@ -18,9 +28,37 @@
       const wasSetup = localStorage.getItem('bb_chat_setup_done');
       if (!wasSetup && location.hash === '#chat') {
         renderChatView('setup');
+        return;
       }
     }
+    // BUGFIX: returning users (name already set) were stuck forever on the
+    // "Chat connect ho raha hai..." loader — nothing re-rendered the view
+    // once chat became ready, unless the chats subscription happened to
+    // fire first. Force a re-render of whatever view is currently mounted.
+    if ((location.hash === '#chat' || location.hash === '#connect') && currentView) {
+      renderChatView(currentView);
+    }
   });
+
+  /* Safety net: if chat init hangs (slow/broken network) for too long,
+     stop the infinite spinner and show a retry option instead of leaving
+     the user staring at a loading mascot forever. */
+  let chatReadyTimeout = setTimeout(() => {
+    const state = window.CHAT_STATE || {};
+    if (!state.ready && (location.hash === '#chat' || location.hash === '#connect')) {
+      const container = document.getElementById('content');
+      if (container) {
+        container.innerHTML = `
+          <div class="chat-loading">
+            <img src="assets/mascot-sleeping.webp" alt="" width="120" height="120" loading="eager"/>
+            <p>Connect hone mein time lag raha hai 😕</p>
+            <button class="primary-btn" style="margin-top:14px;" onclick="location.reload()">Dobara try karo</button>
+          </div>`;
+      }
+    }
+  }, 12000);
+  window.addEventListener('bb-chat-ready', () => clearTimeout(chatReadyTimeout));
+  window.addEventListener('bb-chat-error', () => clearTimeout(chatReadyTimeout));
 
   window.addEventListener('bb-chat-error', (e) => {
     if (typeof window.showToast === 'function') {
@@ -88,11 +126,18 @@
     setTimeout(() => document.getElementById('chatNameInput')?.focus(), 100);
     document.getElementById('chatNameSave').addEventListener('click', async () => {
       const name = document.getElementById('chatNameInput').value.trim();
-      if (!name) return alert('Naam to daalo bhai');
-      await window.BB_Chat.updateDisplayName(name);
-      localStorage.setItem('bb_chat_setup_done', '1');
-      window.location.hash = 'chat';
-      renderChatView('list');
+      if (!name) return bbToast('Naam to daalo bhai');
+      const btn = document.getElementById('chatNameSave');
+      btn.disabled = true; btn.textContent = 'Save ho raha hai...';
+      try {
+        await window.BB_Chat.updateDisplayName(name);
+        localStorage.setItem('bb_chat_setup_done', '1');
+        window.location.hash = 'chat';
+        renderChatView('list');
+      } catch(err) {
+        bbToast('❌ ' + err.message);
+        btn.disabled = false; btn.textContent = 'Aage badho →';
+      }
     });
     document.getElementById('chatNameInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') document.getElementById('chatNameSave').click();
@@ -131,6 +176,12 @@
       <button class="chat-new-btn" onclick="renderChatView('connect')">
         <span>➕</span> Naya dost add karo (code se)
       </button>
+
+      ${state.chatsError ? `
+        <div class="safety-banner" style="background:#FFE3E0; color:#B3261E; margin-top:10px;">
+          ⚠️ Chats load nahi ho paye. <a href="#" onclick="event.preventDefault(); location.reload();" style="color:#B3261E; text-decoration:underline; font-weight:700;">Retry karo</a>
+        </div>
+      ` : ''}
 
       <div class="chat-list-title">Aapke chats</div>
 
@@ -195,15 +246,14 @@
     input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g,''); });
     document.getElementById('connectSubmit').addEventListener('click', async () => {
       const code = input.value.trim().toUpperCase();
-      if (code.length !== 6) return alert('6 characters ka code chahiye');
+      if (code.length !== 6) return bbToast('6 characters ka code chahiye');
+      const btn = document.getElementById('connectSubmit');
+      btn.disabled = true; btn.textContent = 'Connect ho raha hai...';
       try {
-        const btn = document.getElementById('connectSubmit');
-        btn.disabled = true; btn.textContent = 'Connect ho raha hai...';
         const { chatId } = await window.BB_Chat.connectViaCode(code);
         openChatById(chatId);
       } catch(err) {
-        alert(err.message);
-        const btn = document.getElementById('connectSubmit');
+        bbToast('❌ ' + err.message);
         btn.disabled = false; btn.textContent = 'Chat shuru karo 💬';
       }
     });
@@ -296,7 +346,7 @@
       try {
         await window.BB_Chat.sendMessage(chat.id, text);
       } catch(err) {
-        alert(err.message);
+        bbToast('❌ ' + err.message);
       }
     }
 
