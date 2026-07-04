@@ -274,8 +274,13 @@ function showToast(msg){
 /* ===========================================================
    ROUTING
    =========================================================== */
+function getHashRoute(){
+  const raw = (window.location.hash || '').replace('#','') || 'home';
+  return (raw.split('?')[0] || 'home');
+}
 function navigate(route, params={}){
-  state.route = route;
+  const routeName = String(route || 'home').split('?')[0] || 'home';
+  state.route = routeName;
   state.routeParams = params;
   window.location.hash = route;
   renderApp();
@@ -284,8 +289,7 @@ function navigate(route, params={}){
 }
 
 window.addEventListener('hashchange', ()=>{
-  const r = window.location.hash.replace('#','') || 'home';
-  state.route = r;
+  state.route = getHashRoute();
   renderApp();
 });
 
@@ -509,9 +513,9 @@ function isValidUpiId(upi){
 function getSavedUpiId(){ return normalizeUpiId(state.settings.upiId || ''); }
 function getSavedUpiName(){ return (state.settings.upiName && state.settings.upiName.trim()) ? state.settings.upiName.trim() : 'BaatBanao User'; }
 function canUseUpi(){ return isValidUpiId(getSavedUpiId()); }
-function buildUpiLink(data={}){
+function buildUpiParams(data={}){
   const upi = getSavedUpiId();
-  if(!isValidUpiId(upi)) return '';
+  if(!isValidUpiId(upi)) return null;
   const params = new URLSearchParams();
   params.set('pa', upi);
   params.set('pn', getSavedUpiName());
@@ -519,15 +523,46 @@ function buildUpiLink(data={}){
   params.set('cu', 'INR');
   const note = (data.note || data.name || 'BaatBanao payment reminder').toString().slice(0, 70);
   if(note) params.set('tn', note);
-  return 'upi://pay?' + params.toString();
+  return params;
+}
+function buildUpiLink(data={}){
+  const params = buildUpiParams(data);
+  return params ? 'upi://pay?' + params.toString() : '';
+}
+function buildUpiWebLink(data={}){
+  const params = buildUpiParams(data);
+  if(!params) return '';
+  return `${location.origin}${location.pathname}#pay?${params.toString()}`;
 }
 function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
   if(!state.settings.upiAttachEnabled || !canUseUpi()) return base;
-  const upiLink = buildUpiLink(data);
-  if(!upiLink) return base;
-  const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}\n` : '';
-  return `${base}\n\nPayment option:\n${amountLine}UPI ID: ${getSavedUpiId()}\nPay link: ${upiLink}`;
+  const webLink = buildUpiWebLink(data);
+  if(!webLink) return base;
+  const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}
+` : '';
+  return `${base}
+
+Payment option:
+${amountLine}UPI ID: ${getSavedUpiId()}
+Pay link: ${webLink}`;
+}
+function buildUpiLinkFromPayParams(pay={}){
+  const pa = normalizeUpiId(pay.pa || '');
+  if(!isValidUpiId(pa)) return '';
+  const params = new URLSearchParams();
+  params.set('pa', pa);
+  params.set('pn', (pay.pn || 'BaatBanao User').toString().slice(0, 60));
+  if(hasValidAmount(pay.am)) params.set('am', String(Number(String(pay.am).replace(/,/g,''))));
+  params.set('cu', 'INR');
+  if(pay.tn) params.set('tn', pay.tn.toString().slice(0, 70));
+  return 'upi://pay?' + params.toString();
+}
+function parsePayParams(){
+  const hash = (location.hash || '').replace(/^#/, '');
+  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const p = new URLSearchParams(qs);
+  return { pa:p.get('pa')||'', pn:p.get('pn')||'', am:p.get('am')||'', tn:p.get('tn')||'' };
 }
 function showUpiQr(data={}){
   if(!canUseUpi()){
@@ -1418,6 +1453,36 @@ function bbRedeemCode(){
   }
 }
 
+function viewPay(){
+  const pay = parsePayParams();
+  const upiLink = buildUpiLinkFromPayParams(pay);
+  if(!upiLink){
+    return `
+      <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Payment Link</h1></div>
+      <div class="safety-banner">Payment link invalid hai. UPI ID check karein.</div>
+    `;
+  }
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data=${encodeURIComponent(upiLink)}`;
+  const amountText = hasValidAmount(pay.am) ? displayAmount(pay.am) : 'Amount payer enter karega';
+  return `
+    <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Pay via UPI</h1></div>
+    <div class="output-card" style="align-items:center;text-align:center;">
+      <span class="tag">BaatBanao Payment</span>
+      <img src="${qrSrc}" alt="UPI QR" width="280" height="280" style="width:280px;max-width:100%;border-radius:18px;background:#fff;padding:8px;border:1px solid var(--border-soft);"/>
+      <div style="font-weight:900;color:var(--text-main);line-height:1.5;">
+        ${escapeHtml(pay.pn || 'UPI Payment')}<br/>
+        <span style="color:var(--text-secondary);font-size:13px;">${escapeHtml(normalizeUpiId(pay.pa))}</span><br/>
+        <span style="color:var(--pending-text);">${escapeHtml(amountText)}</span>
+      </div>
+      <div class="btn-row" style="width:100%;">
+        <button class="ghost-btn copy" onclick="copyUpiLink('${encodeURIComponent(upiLink)}')">Copy UPI Link</button>
+        <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI App</button>
+      </div>
+      <div class="safety-banner" style="text-align:left;">Agar Open UPI kaam na kare toh QR scan karein ya UPI ID copy karein.</div>
+    </div>
+  `;
+}
+
 function openFeedback(){
   const msg = encodeURIComponent('Hi BaatBanao team, feedback: ');
   window.open(`https://wa.me/${BB_ADMIN_WHATSAPP}?text=${msg}`, '_blank');
@@ -1572,6 +1637,7 @@ const ROUTES = {
   settings: viewSettings,
   privacy: viewPrivacy,
   terms: viewTerms,
+  pay: viewPay,
   pro: viewPro,
   chat: () => '<div id="chatMount"></div>',
   connect: () => '<div id="chatMount"></div>'
@@ -1612,8 +1678,7 @@ function renderApp(){
 
 /* Init */
 function initApp() {
-  const initialRoute = window.location.hash.replace('#','') || 'home';
-  state.route = initialRoute;
+  state.route = getHashRoute();
   renderApp();
 }
 if (document.readyState === 'loading') {
