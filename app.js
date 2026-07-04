@@ -65,211 +65,79 @@ function generateMessages({name, amount, relation, language, tone, note}){
   const noteLine = note && note.trim() ? note.trim() : '';
   const emojiOn = state.settings.emojiEnabled;
   const e = (s) => emojiOn ? s : '';
-
-  // Random pick helper
-  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function pickN(arr, count){
-    const copy = [...arr].sort(() => Math.random() - 0.5);
-    return copy.slice(0, Math.min(count, copy.length));
-  }
-
-  // ===== FUNNY POOL =====
-  const FUNNY = {
-    Hinglish: [
-      (n,amt) => `${n} bhai, mera ${amt} raat ko sapne mein aata hai — "Ghar bhej do yaar!" 😂 Aaj bhej do!`,
-      (n,amt) => `${n}, teri wajah se mera ${amt} homesick ho gaya hai 😭 Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
-      (n,amt) => `${n} bhai, ${amt} ka Google Maps on kiya — still showing at your location 📍😂 Transfer karo!`,
-      (n,amt) => `${n}, Google Pay ne ${amt} ke liye "Pending Since Forever" badge de diya 😂 Aaj clear karo!`,
-      (n,amt) => `${n} bhai, IRCTC ka waiting confirm ho jaata hai lekin tera ${amt} nahi aaya 😂 Tu IRCTC se bhi slow hai!`,
-      (n,amt) => `${n}, Zomato 30 min mein khana deta hai, Amazon same day — tera ${amt} kab aayega? 😂`,
-      (n,amt) => `${n} bhai, "Picture abhi baaki hai mere dost" 🎬 Aur wo picture hai ${amt} transfer hone ki. Action!`,
-      (n,amt) => `${n}, "All izz well" tab hoga jab ${amt} aa jaaye 😂 Aaj bhej do, sab theek!`,
-      (n,amt) => `${n} bhai, ${amt} pe documentary bana sakta hun — "The Money That Never Came Home" 🎬 Sequel mat banana!`,
-      (n,amt) => `${n}, ${amt} ne mujhse complaint ki — "Woh mujhe ghar nahi aane deta" 😂 Please uski bail karo!`,
-      (n,amt) => `${n} bhai, mera ${amt} tere ghar permanent resident ban gaya 😂 Ab citizenship bhi le raha hai. Deportation karo!`,
-      (n,amt) => `${n}, Netflix subscription renew ho jaata hai, EMI cut hoti hai — but tera ${amt} kabhi nahi aaya 😂`,
-      (n,amt) => `${n} bhai, maa ne kaha — "Waqt pe paisa dena achha kaam hai" 😄 Maa ki baat maano — aaj bhej do!`,
-      (n,amt) => `${n}, tune hi kaha tha "Bhai tu bol, main karunga" 😄 Bol raha hun — ${amt} aaj bhej de!`,
-      (n,amt) => `${n} bhai, Diwali hai — ghar ki safai ke saath ${amt} bhi clear karo 🪔 Lakshmi ji khush hongi!`,
-      (n,amt) => `${n}, ${amt} ne WhatsApp status lagaya — "Missing my owner since forever" 😭 Reunite karo aaj!`,
-      (n,amt) => `${n} bhai, petrol ke daam badhte hain, season bhi change hota hai — mera ${amt} nahi aata 😂`,
-      (n,amt) => `${n}, UPI ne ${amt} ka tracker laga diya — abhi bhi tere account ki taraf arrow hai 😂 Redirect kar do!`,
-    ],
-    Bhojpuri: [
-      (n,amt) => `${n} bhaiya, hamaar ${amt} roj sapna mein aawela — "Ghar bhej da!" 😂 Aaj bhej da please!`,
-      (n,amt) => `${n} bhai, ${amt} ke GPS on ba — "Still at ${n}'s location" show ho raha ba 😂 Transfer kar da!`,
-      (n,amt) => `${n} bhaiya, ${amt} itna time se baaki ba ki uski dadi aa gayi 😂 Ab aur mat roko!`,
-      (n,amt) => `${n} bhai, hamaar ${amt} tohar ghar ke permanent resident ban gaili ba 😅 Kiraya bhi maangi. Bhej da!`,
-      (n,amt) => `${n} bhaiya, IRCTC ke waiting confirm ho jaala, train time pe aawela — tohar ${amt} kabhi nahi aail 😂`,
-      (n,amt) => `${n} bhai, Amazon same day delivery deta ba — tohar ${amt} kab aaii? 😂`,
-      (n,amt) => `${n} bhaiya, "Dosti alag ba, hisaab alag ba" — ${amt} aaj clear kar da 😄`,
-      (n,amt) => `${n} bhai, maai kaheli "Waqt pe paisa dena achha kaam ba" 😄 Maai ke baat maano — ${amt} aaj!`,
-      (n,amt) => `${n} bhaiya, ${amt} ke documentary banat ba — "Wo Paisa Jo Kabhi Nahi Aail" 🎬 Sequel mat banana!`,
-      (n,amt) => `${n} bhai, tohi kahelu "Bhai tu bol, karb" 😄 Bol taat ba — ${amt} aaj bhej da!`,
-      (n,amt) => `${n} bhaiya, Diwali ba — purana hisaab clear kar da 🪔 Lakshmi maiya khush hoihin!`,
-      (n,amt) => `${n} bhai, ${amt} emotional ho gaili ba 😢 "Kab aaun ghar?" kahe rahi ba — aaj bhej ke khush kar da!`,
-    ],
-    Hindi: [
-      (n,amt) => `${n} bhai, ${amt} ne mujhse baat karna band kar diya — "Jab tak tu mujhe wapas nahi laata" 😢 Aaj le aao!`,
-      (n,amt) => `${n} ji, IRCTC ki waiting list confirm hoti hai — lekin aapka ${amt} nahi aaya 😄 Aaj zaroor bhejein!`,
-      (n,amt) => `${n} bhai, Amazon same-day delivery deta hai — sirf aapka ${amt} delivery pending hai 😂`,
-      (n,amt) => `${n} ji, ${amt} ek unsolved mystery ban gayi hai 🔍 Aaj solve karein — transfer karein!`,
-      (n,amt) => `${n} bhai, "All izz well" tab hoga jab ${amt} aa jaaye 😂 Aaj transfer karein!`,
-      (n,amt) => `${n} ji, maa ne kaha tha "Udhaar jaldi wapas karo" 😄 Maa ki baat maano — ${amt} aaj!`,
-      (n,amt) => `${n} bhai, tune hi kaha tha "Bhai bol, main karunga" 😄 Bol raha hun — ${amt} aaj bhej de!`,
-      (n,amt) => `${n} ji, Diwali hai — ghar ki safai ke saath ${amt} bhi clear karein 🪔`,
-      (n,amt) => `${n} bhai, bijli ka bill aata hai, Netflix renew hota hai — sirf ${amt} kabhi nahi aaya 😂`,
-      (n,amt) => `${n} ji, ${amt} ne sad WhatsApp status lagaya — "Missing since forever" 😭 Ghar bhej do aaj!`,
-    ],
-    English: [
-      (n,amt) => `${n} bro, my ${amt} has been living at your place so long it's started paying rent there 😂 Please evict it!`,
-      (n,amt) => `${n}, GPS tracking for my ${amt} — still showing at your location 📍😂 Please redirect it!`,
-      (n,amt) => `${n} bro, Zomato delivers in 30 mins, Amazon in a day — when is my ${amt} arriving? 😂`,
-      (n,amt) => `${n}, my ${amt} filed a missing person report 😂 Help reunite us today please!`,
-      (n,amt) => `${n} bro, "All izz well" only when ${amt} arrives 😂 Make it happen today!`,
-      (n,amt) => `${n}, Netflix auto-renews, EMIs get cut — but your ${amt} needs manual effort? 😂`,
-      (n,amt) => `${n} bro, my ${amt} is in therapy — abandonment issues 😂 Please heal it — send it home!`,
-      (n,amt) => `${n}, you said "bro just ask me anything" 😄 Asking — ${amt} please, today!`,
-    ],
-  };
-
-  // ===== FRIENDLY POOL =====
-  const FRIENDLY = {
-    Hinglish: [
-      (n,amt,note) => `${n}, ${amt} abhi pending hai. Aaj bhej doge toh bahut help ho jayegi. Dosti apni jagah, hisaab apni jagah 😄${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} bhai, ${amt} yaad hai na? Aaj bhej do yaar — tension khatam, dono khush 😊${note?' — '+note:''}`,
-      (n,amt,note) => `Oye ${n}! ${amt} pending hai — aaj clear karo, rishta bhi solid rahega 😄${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} yaar, ek chhoti reminder — ${amt} suvidha ho toh aaj bhej do 😊${note?' Note: '+note:''}`,
-      (n,amt,note) => `${n} bhai, ${amt} wali baat — aaj bhej do, main wait kar raha hun 😄${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n}, teri yaad aayi aur ${amt} ki bhi 😄 Dono ek saath — aaj bhej do!${note?' '+note:''}`,
-      (n,amt,note) => `${n} bhai, chai peete peete ${amt} bhej do — koi effort nahi lagega 😊${note?' ('+note+')':''}`,
-    ],
-    Hindi: [
-      (n,amt,note) => `${n}, ${amt} abhi baaki hai. Aaj bhejoge toh bahut achha lagega 😄${note?'. '+note:''}`,
-      (n,amt,note) => `${n} bhai, ${amt} yaad hai? Aaj bhej do, dono ki tension khatam 😊${note?' — '+note:''}`,
-      (n,amt,note) => `${n} ji, ek chhoti si yaad — ${amt} aaj tak bhej dein 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n}, wo ${amt} — aaj suvidha ho toh bhej do 😊${note?' '+note:''}`,
-      (n,amt,note) => `${n} bhai, dosti mein seedha bolunga — ${amt} aaj bhej do 😊${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n}, ek kaam karo aaj — ${amt} bhej do. Shukriya pehle se! 😊${note?' '+note:''}`,
-    ],
-    Bhojpuri: [
-      (n,amt,note) => `${n} bhaiya, ${amt} baaki ba. Aaj bhej da, bahut meharbani hoi. Dosti alag ba, hisaab alag ba 😄`,
-      (n,amt,note) => `${n} bhai, ${amt} yaad ba na? Aaj bhej diha, rishta bhi rahee paisa bhi aaee 😊`,
-      (n,amt,note) => `Arre ${n} bhaiya! ${amt} abhi baaki ba — aaj clear kar da, bahut khushi hoi 😄`,
-      (n,amt,note) => `${n} bhaiya, suvidha ho toh ${amt} aaj bhej diha — bahut upkar hoi 🙏`,
-      (n,amt,note) => `${n} bhaiya, tohar yaad aail aur ${amt} ke bhi yaad aail 😄 Dono ek saath — aaj bhej da!`,
-      (n,amt,note) => `${n} bhai, seedha bolat ba — ${amt} aaj bhej da. Rishta solid rahee 😄`,
-    ],
-    English: [
-      (n,amt,note) => `Hey ${n}, ${amt} is still pending. It'd really help if you could send it today! 😄${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} buddy, quick reminder — ${amt} pending. Send it today when you can 😊${note?' Note: '+note:''}`,
-      (n,amt,note) => `Hi ${n}! Just a gentle nudge — ${amt} is pending. Today works? 😊${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n}, no pressure but... ${amt} is pending 😄 Today would be great!${note?' ('+note+')':''}`,
-      (n,amt,note) => `Hey ${n}! ${amt} is still out there — send it home today 😊${note?' '+note:''}`,
-    ],
-  };
-
-  // ===== POLITE POOL =====
-  const POLITE = {
-    Hinglish: [
-      (n,amt,note) => `${n}, aapka ${amt} payment pending hai. Kripya jab time mile aaj bhej dein 🙏${note?'. '+note:''}`,
-      (n,amt,note) => `${n} ji, ek vinamra nivedan — ${amt} aaj bhej dein, bahut sahayata hogi 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `Namaste ${n} ji, ${amt} pending hai. Kripya aaj tak bhejne ka kast karein 🙏${note?' '+note:''}`,
-      (n,amt,note) => `${n} sahab, ${amt} abhi pending hai — suvidha anusaar aaj bhej dein 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} ji, ${amt} abhi clear nahi hua. Kripya aaj bhejein, dhanyavaad 🙏${note?' Note: '+note:''}`,
-      (n,amt,note) => `Namaste ${n} ji. ${amt} ka hisaab baaki hai — kripya aaj tak clear karein 🙏${note?' ('+note+')':''}`,
-    ],
-    Hindi: [
-      (n,amt,note) => `${n} ji, ${amt} abhi pending hai. Kripya aaj bhej dein, sahayata hogi 🙏${note?'. '+note:''}`,
-      (n,amt,note) => `${n}, aapka ${amt} abhi clear nahi hua. Kripya aaj bhej dein 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `Namaste ${n} ji, ek choti yaad — ${amt} aaj bhejein 🙏${note?' '+note:''}`,
-      (n,amt,note) => `${n} sahab, ${amt} ka bhugtan aaj kar dein, bahut upkar hoga 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} ji, aapse anurodh hai — ${amt} aaj bhej dein. Dhanyavaad 🙏${note?' '+note:''}`,
-    ],
-    Bhojpuri: [
-      (n,amt,note) => `${n} bhaiya, ${amt} ke rakam abhi baaki ba. Aaj bhej dijiye, bahut meharbani hoi 🙏`,
-      (n,amt,note) => `${n} sahab, ek nivedan ba — ${amt} aaj bhej da, bahut upkar hoi 🙏`,
-      (n,amt,note) => `Pranam ${n} bhaiya, ${amt} ke yaad dilaile ba. Aaj bhej da kripaya 🙏`,
-      (n,amt,note) => `${n} bhaiya, ${amt} ka hisaab baaki ba — aaj suvidha se bhej da 🙏`,
-      (n,amt,note) => `${n} bhai, ${amt} ke payment abhi nahi aail ba. Aaj bhej diha 🙏`,
-    ],
-    English: [
-      (n,amt,note) => `Hi ${n}, this is a gentle reminder that ${amt} is still pending. Please send today 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `Dear ${n}, kindly note ${amt} remains unpaid. Settlement today appreciated 🙏${note?' '+note:''}`,
-      (n,amt,note) => `${n}, gentle reminder — ${amt} is pending. Today works? 🙏${note?' ('+note+')':''}`,
-      (n,amt,note) => `Hi ${n}, polite follow-up on ${amt}. Please send today. Thanks 🙏${note?' Note: '+note:''}`,
-    ],
-  };
-
-  // ===== STRONG POOL =====
-  const STRONG = {
-    Hinglish: [
-      (n,amt,note) => `${n}, ${amt} ka payment kaafi din se pending hai. Kripya aaj tak clear kar dein.${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} bhai, ${amt} bahut time se baaki hai. Aaj clear karna zaroori hai.${note?' '+note:''}`,
-      (n,amt,note) => `Final reminder ${n} — ${amt} pending hai. Aaj tak nahi aaya toh problem hogi.${note?' '+note:''}`,
-      (n,amt,note) => `${n}, ab seedha bolunga — ${amt} bahut din se pending hai. Aaj last chance hai.${note?' '+note:''}`,
-      (n,amt,note) => `${n} ji, ${amt} ka payment overdue hai. Kripya aaj hi bhugtan karein.${note?' ('+note+')':''}`,
-    ],
-    Hindi: [
-      (n,amt,note) => `${n} ji, ${amt} kaafi samay se pending hai. Kripya aaj hi bhugtan kar dein.${note?' '+note:''}`,
-      (n,amt,note) => `${n}, ${amt} ki payment bahut din se ruki hai. Aaj tak nahi aaya toh dikkat hogi.${note?' ('+note+')':''}`,
-      (n,amt,note) => `Final reminder ${n} ji — ${amt} aaj tak clear karna zaroori hai.${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n} bhai, ${amt} clear karna aaj zaroori hai.${note?' '+note:''}`,
-    ],
-    Bhojpuri: [
-      (n,amt,note) => `${n} bhaiya, ${amt} bahut din se baaki ba. Aaj tak clear kar dijiye, jaruri ba.`,
-      (n,amt,note) => `Final reminder ${n} bhaiya — ${amt} aaj clear karna zaroori ba.`,
-      (n,amt,note) => `${n} bhai, ${amt} bahut din se pending ba. Aaj nahi aaya toh aage dikkat hoi.`,
-      (n,amt,note) => `${n} bhaiya, ab seedha baat — ${amt} kaafi din se baaki ba. Aaj bhej da.`,
-    ],
-    English: [
-      (n,amt,note) => `${n}, ${amt} has been pending for a while. Please clear it today.${note?' ('+note+')':''}`,
-      (n,amt,note) => `Hi ${n}, final reminder — ${amt} is overdue. Please clear today.${note?' '+note:''}`,
-      (n,amt,note) => `${n}, ${amt} needs to be cleared today — further delay won't work.${note?' ('+note+')':''}`,
-      (n,amt,note) => `${n}, I'll be direct — ${amt} is long overdue. Please send today.${note?' '+note:''}`,
-    ],
-  };
-
   const lang = language || 'Hinglish';
+  function rnd3(arr){ return [...arr].sort(()=>Math.random()-.5).slice(0,3); }
 
-  // FUNNY — 3 random unique
-  if (tone === 'Funny') {
-    const pool = FUNNY[lang] || FUNNY['Hinglish'];
-    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-    return [
-      { label: '😂 Funny',        text: picks[0](n, amt) },
-      { label: '😄 Mast Funny',   text: picks[1] ? picks[1](n, amt) : picks[0](n, amt) },
-      { label: '🤣 Dhamaal',      text: picks[2] ? picks[2](n, amt) : picks[0](n, amt) },
-    ];
-  }
+  const FUNNY = {
+    Hinglish:[
+      (n,a)=>`${n} bhai, mera ${a} raat ko sapne mein aata hai — "Ghar bhej do yaar!" \u{1F602} Aaj bhej do!`,
+      (n,a)=>`${n}, teri wajah se mera ${a} homesick ho gaya \u{1F62D} Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
+      (n,a)=>`${n} bhai, ${a} ka Google Maps on kiya — still showing at your location \u{1F4CD}\u{1F602} Transfer karo!`,
+      (n,a)=>`${n}, Google Pay ne ${a} ke liye "Pending Since Forever" badge de diya \u{1F602} Aaj clear karo!`,
+      (n,a)=>`${n} bhai, IRCTC ka waiting confirm ho jaata hai lekin tera ${a} nahi aaya \u{1F602} Tu IRCTC se bhi slow hai!`,
+      (n,a)=>`${n}, Zomato 30 min mein khana deta hai, Amazon same day — tera ${a} kab aayega? \u{1F602}`,
+      (n,a)=>`${n} bhai, "Picture abhi baaki hai mere dost" \u{1F3AC} Aur wo picture hai ${a} transfer hone ki!`,
+      (n,a)=>`${n}, "All izz well" tab hoga jab ${a} aa jaaye \u{1F602} Aaj bhej do, sab theek!`,
+      (n,a)=>`${n} bhai, ${a} pe documentary bana sakta hun — "The Money That Never Came Home" \u{1F3AC} Sequel mat banana!`,
+      (n,a)=>`${n}, ${a} ne mujhse complaint ki — "Woh mujhe ghar nahi aane deta" \u{1F602} Uski bail karo!`,
+      (n,a)=>`${n} bhai, ${a} tere ghar permanent resident ban gaya \u{1F602} Citizenship bhi le raha hai. Deportation karo!`,
+      (n,a)=>`${n}, Netflix renew ho jaata hai, EMI cut hoti hai — tera ${a} kabhi nahi aaya \u{1F602}`,
+      (n,a)=>`${n} bhai, maa ne kaha "Waqt pe paisa dena achha kaam hai" \u{1F604} Maa ki baat maano — ${a} aaj!`,
+      (n,a)=>`${n}, tune hi kaha tha "Bhai tu bol, main karunga" \u{1F604} Bol raha hun — ${a} aaj bhej de!`,
+      (n,a)=>`${n} bhai, Diwali hai — ghar ki safai ke saath ${a} bhi clear karo \u{1FA94} Lakshmi ji khush hongi!`,
+      (n,a)=>`${n}, ${a} ne WhatsApp status lagaya "Missing my owner since forever" \u{1F62D} Reunite karo aaj!`,
+      (n,a)=>`${n} bhai, petrol ke daam badhte hain, season bhi change hota hai — mera ${a} nahi aata \u{1F602}`,
+      (n,a)=>`${n}, UPI ne ${a} ka tracker laga diya — abhi bhi tere account ki taraf arrow hai \u{1F602}`,
+    ],
+    Bhojpuri:[
+      (n,a)=>`${n} bhaiya, hamaar ${a} roj sapna mein aawela — "Ghar bhej da!" \u{1F602} Aaj bhej da please!`,
+      (n,a)=>`${n} bhai, ${a} ke GPS on ba — "Still at ${n}'s location" show ho raha ba \u{1F602} Transfer kar da!`,
+      (n,a)=>`${n} bhaiya, ${a} itna time se baaki ba ki uski dadi aa gayi \u{1F602} Ab aur mat roko!`,
+      (n,a)=>`${n} bhai, hamaar ${a} tohar ghar ke permanent resident ban gaili ba \u{1F605} Kiraya bhi maangi. Bhej da!`,
+      (n,a)=>`${n} bhaiya, IRCTC ke waiting confirm ho jaala, train time pe aawela — tohar ${a} kabhi nahi aail \u{1F602}`,
+      (n,a)=>`${n} bhai, Amazon same day delivery deta ba — tohar ${a} kab aaii? \u{1F602}`,
+      (n,a)=>`${n} bhaiya, "Dosti alag ba, hisaab alag ba" — ${a} aaj clear kar da \u{1F604}`,
+      (n,a)=>`${n} bhai, maai kaheli "Waqt pe paisa dena achha kaam ba" \u{1F604} Maai ke baat maano — ${a} aaj!`,
+      (n,a)=>`${n} bhaiya, ${a} ke documentary banat ba — "Wo Paisa Jo Kabhi Nahi Aail" \u{1F3AC} Sequel mat banana!`,
+      (n,a)=>`${n} bhai, tohi kahelu "Bhai tu bol, karb" \u{1F604} Bol taat ba — ${a} aaj bhej da!`,
+      (n,a)=>`${n} bhaiya, Diwali ba — purana hisaab clear kar da \u{1FA94} Lakshmi maiya khush hoihin!`,
+      (n,a)=>`${n} bhai, ${a} emotional ho gaili ba \u{1F622} "Kab aaun ghar?" kahe rahi ba — aaj bhej ke khush kar da!`,
+    ],
+    Hindi:[
+      (n,a)=>`${n} bhai, ${a} ne baat karna band kar diya — "Jab tak wapas nahi laata" \u{1F622} Aaj le aao!`,
+      (n,a)=>`${n} ji, IRCTC ki waiting list confirm hoti hai — lekin aapka ${a} nahi aaya \u{1F604} Aaj zaroor bhejein!`,
+      (n,a)=>`${n} bhai, Amazon same-day delivery deta hai — sirf aapka ${a} delivery pending hai \u{1F602}`,
+      (n,a)=>`${n} ji, ${a} ek unsolved mystery ban gayi hai \u{1F50D} Aaj solve karein — transfer karein!`,
+      (n,a)=>`${n} bhai, "All izz well" tab hoga jab ${a} aa jaaye \u{1F602} Aaj transfer karein!`,
+      (n,a)=>`${n} ji, maa ne kaha "Udhaar jaldi wapas karo" \u{1F604} Maa ki baat maano — ${a} aaj!`,
+      (n,a)=>`${n} bhai, tune hi kaha "Bhai bol, main karunga" \u{1F604} Bol raha hun — ${a} aaj bhej de!`,
+      (n,a)=>`${n} ji, Diwali hai — safai ke saath ${a} bhi clear karein \u{1FA94}`,
+      (n,a)=>`${n} bhai, bijli ka bill aata hai, Netflix renew hota hai — sirf ${a} kabhi nahi aaya \u{1F602}`,
+      (n,a)=>`${n} ji, ${a} ne sad status lagaya — "Missing since forever" \u{1F62D} Ghar bhej do aaj!`,
+    ],
+    English:[
+      (n,a)=>`${n} bro, my ${a} has been at your place so long it's started paying rent \u{1F602} Please evict it!`,
+      (n,a)=>`${n}, GPS tracking for my ${a} — still showing at your location \u{1F4CD}\u{1F602} Please redirect it!`,
+      (n,a)=>`${n} bro, Zomato delivers in 30 mins, Amazon in a day — when is my ${a} arriving? \u{1F602}`,
+      (n,a)=>`${n}, my ${a} filed a missing person report \u{1F602} Help reunite us today please!`,
+      (n,a)=>`${n} bro, "All izz well" only when ${a} arrives \u{1F602} Make it happen today!`,
+      (n,a)=>`${n}, Netflix auto-renews, EMIs get cut — but your ${a} needs manual effort? \u{1F602}`,
+      (n,a)=>`${n} bro, my ${a} is in therapy — abandonment issues \u{1F602} Please send it home!`,
+      (n,a)=>`${n}, you said "bro just ask me anything" \u{1F604} Asking — ${a} please, today!`,
+    ],
+  };
 
-  // FRIENDLY — 3 random unique
-  if (tone === 'Friendly') {
-    const pool = FRIENDLY[lang] || FRIENDLY['Hinglish'];
-    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-    return picks.map(fn => ({ label: e('😊') + ' Friendly', text: fn(n, amt, noteLine) }));
-  }
+  const FRIENDLY={Hinglish:[(n,a,nt)=>`${n}, ${a} abhi pending hai. Aaj bhej doge toh bahut help ho jayegi. Dosti apni jagah, hisaab apni jagah ${e('\u{1F604}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} bhai, ${a} yaad hai na? Aaj bhej do yaar — tension khatam, dono khush ${e('\u{1F60A}')}${nt?' — '+nt:''}`, (n,a,nt)=>`Oye ${n}! ${a} pending hai — aaj clear karo, rishta bhi solid rahega ${e('\u{1F604}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} yaar, ek chhoti reminder — ${a} suvidha ho toh aaj bhej do ${e('\u{1F60A}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} bhai, ${a} wali baat — aaj bhej do, main wait kar raha hun ${e('\u{1F604}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n}, teri yaad aayi aur ${a} ki bhi ${e('\u{1F604}')} Dono ek saath — aaj bhej do!${nt?' '+nt:''}`, (n,a,nt)=>`${n} bhai, chai peete peete ${a} bhej do — koi effort nahi lagega ${e('\u{1F60A}')}${nt?' ('+nt+')':''}`,],Hindi:[(n,a,nt)=>`${n}, ${a} abhi baaki hai. Aaj bhejoge toh bahut achha lagega ${e('\u{1F604}')}${nt?'. '+nt:''}`, (n,a,nt)=>`${n} bhai, ${a} yaad hai? Aaj bhej do, tension khatam ${e('\u{1F60A}')}${nt?' — '+nt:''}`, (n,a,nt)=>`${n} ji, ek chhoti si yaad — ${a} aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n}, wo ${a} — aaj bhej do ${e('\u{1F60A}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} bhai, ${a} aaj bhej do ${e('\u{1F60A}')}${nt?' ('+nt+')':''}`,],Bhojpuri:[(n,a,nt)=>`${n} bhaiya, ${a} baaki ba. Aaj bhej da, bahut meharbani hoi. Dosti alag ba, hisaab alag ba ${e('\u{1F604}')}`, (n,a,nt)=>`${n} bhai, ${a} yaad ba na? Aaj bhej diha, rishta bhi rahee paisa bhi aaee ${e('\u{1F60A}')}`, (n,a,nt)=>`Arre ${n} bhaiya! ${a} abhi baaki ba — aaj clear kar da, bahut khushi hoi ${e('\u{1F604}')}`, (n,a,nt)=>`${n} bhaiya, suvidha ho toh ${a} aaj bhej diha — bahut upkar hoi ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} bhaiya, tohar yaad aail aur ${a} ke bhi ${e('\u{1F604}')} Dono ek saath — aaj bhej da!`, (n,a,nt)=>`${n} bhai, seedha bolat ba — ${a} aaj bhej da. Rishta solid rahee ${e('\u{1F604}')}`,],English:[(n,a,nt)=>`Hey ${n}, ${a} is still pending. It'd really help if you sent it today! ${e('\u{1F604}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} buddy, quick reminder — ${a} pending. Send today when you can ${e('\u{1F60A}')}${nt?' Note: '+nt:''}`, (n,a,nt)=>`Hi ${n}! ${a} is pending. Today works? ${e('\u{1F60A}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n}, no pressure but... ${a} is pending ${e('\u{1F604}')} Today would be great!${nt?' ('+nt+')':''}`,],};
+  const POLITE={Hinglish:[(n,a,nt)=>`${n}, aapka ${a} payment pending hai. Kripya jab time mile aaj bhej dein ${e('\u{1F64F}')}${nt?'. '+nt:''}`, (n,a,nt)=>`${n} ji, ek vinamra nivedan — ${a} aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Namaste ${n} ji, ${a} pending hai. Kripya aaj bhejne ka kast karein ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} sahab, ${a} abhi pending hai — suvidha anusaar aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} ji, ${a} abhi clear nahi hua. Kripya aaj bhejein ${e('\u{1F64F}')}${nt?' Note: '+nt:''}`, (n,a,nt)=>`Namaste ${n} ji. ${a} baaki hai — kripya aaj tak clear karein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`,],Hindi:[(n,a,nt)=>`${n} ji, ${a} abhi pending hai. Kripya aaj bhej dein ${e('\u{1F64F}')}${nt?'. '+nt:''}`, (n,a,nt)=>`${n}, aapka ${a} abhi clear nahi hua. Kripya aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Namaste ${n} ji, ek choti yaad — ${a} aaj bhejein ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} sahab, ${a} ka bhugtan aaj kar dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} ji, aapse anurodh — ${a} aaj bhej dein. Dhanyavaad ${e('\u{1F64F}')}${nt?' '+nt:''}`,],Bhojpuri:[(n,a,nt)=>`${n} bhaiya, ${a} ke rakam abhi baaki ba. Aaj bhej dijiye ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} sahab, ek nivedan ba — ${a} aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`Pranam ${n} bhaiya, ${a} ke yaad dilaile ba. Aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} bhaiya, ${a} ka hisaab baaki ba — aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} bhai, ${a} ke payment abhi nahi aail ba. Aaj bhej diha ${e('\u{1F64F}')}`,],English:[(n,a,nt)=>`Hi ${n}, gentle reminder — ${a} is still pending. Please send today ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Dear ${n}, kindly note ${a} remains unpaid. Settlement today appreciated ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n}, gentle reminder — ${a} is pending. Today works? ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Hi ${n}, polite follow-up on ${a}. Please send today. Thanks ${e('\u{1F64F}')}${nt?' Note: '+nt:''}`,],};
+  const STRONG={Hinglish:[(n,a,nt)=>`${n}, ${a} ka payment kaafi din se pending hai. Kripya aaj tak clear kar dein.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} bhai, ${a} bahut time se baaki hai. Aaj clear karna zaroori hai.${nt?' '+nt:''}`, (n,a,nt)=>`Final reminder ${n} — ${a} pending hai. Aaj tak nahi aaya toh problem hogi.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ab seedha bolunga — ${a} bahut din se pending hai. Aaj last chance hai.${nt?' '+nt:''}`, (n,a,nt)=>`${n} ji, ${a} ka payment overdue hai. Kripya aaj hi bhugtan karein.${nt?' ('+nt+')':''}`,],Hindi:[(n,a,nt)=>`${n} ji, ${a} kaafi samay se pending hai. Kripya aaj hi bhugtan kar dein.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ${a} ki payment bahut din se ruki hai. Aaj tak nahi aayi toh dikkat hogi.${nt?' ('+nt+')':''}`, (n,a,nt)=>`Final reminder ${n} ji — ${a} aaj tak clear karna zaroori hai.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} bhai, ${a} clear karna aaj zaroori hai.${nt?' '+nt:''}`,],Bhojpuri:[(n,a,nt)=>`${n} bhaiya, ${a} bahut din se baaki ba. Aaj tak clear kar dijiye, jaruri ba.`, (n,a,nt)=>`Final reminder ${n} bhaiya — ${a} aaj clear karna zaroori ba.`, (n,a,nt)=>`${n} bhai, ${a} bahut din se pending ba. Aaj nahi aaya toh aage dikkat hoi.`, (n,a,nt)=>`${n} bhaiya, ab seedha baat — ${a} kaafi din se baaki ba. Aaj bhej da.`,],English:[(n,a,nt)=>`${n}, ${a} has been pending a while. Please clear it today.${nt?' ('+nt+')':''}`, (n,a,nt)=>`Hi ${n}, final reminder — ${a} is overdue. Please clear today.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ${a} needs to be cleared today.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n}, being direct — ${a} is long overdue. Please send today.${nt?' '+nt:''}`,],};
 
-  // POLITE — 3 random unique
-  if (tone === 'Polite') {
-    const pool = POLITE[lang] || POLITE['Hinglish'];
-    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-    return picks.map(fn => ({ label: e('🙏') + ' Polite', text: fn(n, amt, noteLine) }));
-  }
-
-  // STRONG — 3 random unique
-  if (tone === 'Strong' || tone === 'Strong but Respectful') {
-    const pool = STRONG[lang] || STRONG['Hinglish'];
-    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-    return picks.map(fn => ({ label: e('💪') + ' Strong', text: fn(n, amt, noteLine) }));
-  }
-
-  // DEFAULT fallback — mix
-  return [
-    { label: 'Friendly',             text: pick(FRIENDLY[lang] || FRIENDLY['Hinglish'])(n, amt, noteLine) },
-    { label: 'Polite',               text: pick(POLITE[lang]   || POLITE['Hinglish'])(n, amt, noteLine)   },
-    { label: 'Strong but Respectful',text: pick(STRONG[lang]   || STRONG['Hinglish'])(n, amt, noteLine)   },
-  ];
+  if(tone==='Funny'){const pool=FUNNY[lang]||FUNNY.Hinglish;const picks=rnd3(pool);return[{label:'Funny',text:picks[0](n,amt)},{label:'Funny',text:(picks[1]||picks[0])(n,amt)},{label:'Funny',text:(picks[2]||picks[0])(n,amt)}];}
+  if(tone==='Polite'){const pool=POLITE[lang]||POLITE.Hinglish;const picks=rnd3(pool);return picks.map(fn=>({label:'Polite',text:fn(n,amt,noteLine)}));}
+  if(tone==='Strong'||tone==='Strong but Respectful'){const pool=STRONG[lang]||STRONG.Hinglish;const picks=rnd3(pool);return picks.map(fn=>({label:'Strong but Respectful',text:fn(n,amt,noteLine)}));}
+  // Default = Friendly random
+  const pool=FRIENDLY[lang]||FRIENDLY.Hinglish;
+  const picks=rnd3(pool);
+  return picks.map(fn=>({label:'Friendly',text:fn(n,amt,noteLine)}));
 }
 
 function safeAlternative(name, amount){
