@@ -456,6 +456,12 @@ function escapeHtml(str){
   if(str===undefined || str===null) return '';
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
+function optionLabel(v){
+  return ({
+    GoodMorning:'Good Morning', GoodNight:'Good Night', ThankYou:'Thank You',
+    Strong:'Strong', Professional:'Professional'
+  })[v] || v;
+}
 
 function updateForm(field, value){
   if(!state.vasooliForm) state.vasooliForm = {};
@@ -492,6 +498,86 @@ function normalizeWhatsAppPhone(raw){
   // WhatsApp/wa.me uses E.164 digits only, max 15 digits.
   if(v.length < 7 || v.length > 15) return null;
   return v;
+}
+
+function normalizeUpiId(raw){
+  return String(raw || '').trim().replace(/\s+/g, '').toLowerCase();
+}
+function isValidUpiId(upi){
+  return /^[a-z0-9._-]{2,}@[a-z0-9._-]{2,}$/i.test(normalizeUpiId(upi));
+}
+function getSavedUpiId(){ return normalizeUpiId(state.settings.upiId || ''); }
+function getSavedUpiName(){ return (state.settings.upiName && state.settings.upiName.trim()) ? state.settings.upiName.trim() : 'BaatBanao User'; }
+function canUseUpi(){ return isValidUpiId(getSavedUpiId()); }
+function buildUpiLink(data={}){
+  const upi = getSavedUpiId();
+  if(!isValidUpiId(upi)) return '';
+  const params = new URLSearchParams();
+  params.set('pa', upi);
+  params.set('pn', getSavedUpiName());
+  if(hasValidAmount(data.amount)) params.set('am', String(Number(String(data.amount).replace(/,/g,''))));
+  params.set('cu', 'INR');
+  const note = (data.note || data.name || 'BaatBanao payment reminder').toString().slice(0, 70);
+  if(note) params.set('tn', note);
+  return 'upi://pay?' + params.toString();
+}
+function appendUpiPaymentLine(textValue, data={}){
+  const base = textValue || '';
+  if(!state.settings.upiAttachEnabled || !canUseUpi()) return base;
+  const upiLink = buildUpiLink(data);
+  if(!upiLink) return base;
+  const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}\n` : '';
+  return `${base}\n\nPayment option:\n${amountLine}UPI ID: ${getSavedUpiId()}\nPay link: ${upiLink}`;
+}
+function showUpiQr(data={}){
+  if(!canUseUpi()){
+    showToast('Settings mein apna UPI ID save karo');
+    setTimeout(()=>navigate('settings'), 700);
+    return;
+  }
+  const upiLink = buildUpiLink(data);
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(upiLink)}`;
+  const old = document.getElementById('bb-upi-modal');
+  if(old) old.remove();
+  const amountText = hasValidAmount(data.amount) ? displayAmount(data.amount) : 'Payer amount enter karega';
+  const el = document.createElement('div');
+  el.id = 'bb-upi-modal';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(38,24,24,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;';
+  el.innerHTML = `
+    <div style="width:min(360px,100%);background:var(--card-cream);border-radius:24px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.22);text-align:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;">
+        <b style="font-family:Manrope,sans-serif;font-size:18px;">UPI QR</b>
+        <button class="icon-btn" onclick="closeUpiQr()">✕</button>
+      </div>
+      <img src="${qrSrc}" alt="UPI QR" width="260" height="260" style="width:260px;max-width:100%;border-radius:18px;background:#fff;padding:8px;border:1px solid var(--border-soft);"/>
+      <div style="margin-top:10px;color:var(--text-secondary);font-size:13px;font-weight:800;line-height:1.45;">
+        ${escapeHtml(getSavedUpiName())}<br/>
+        <span style="color:var(--text-main);">${escapeHtml(getSavedUpiId())}</span><br/>
+        ${escapeHtml(amountText)}
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="ghost-btn copy" onclick="copyUpiLink('${encodeURIComponent(upiLink)}')">Copy Link</button>
+        <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI</button>
+      </div>
+      <small class="field-hint" style="display:block;margin-top:10px;">QR image online service se render hota hai. UPI link app mein local generate hota hai.</small>
+    </div>`;
+  document.body.appendChild(el);
+}
+function closeUpiQr(){ const el = document.getElementById('bb-upi-modal'); if(el) el.remove(); }
+function copyUpiLink(encoded){
+  const link = decodeURIComponent(encoded || '');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(()=>showToast('UPI link copied ✅')).catch(()=>showToast('Copy failed'));
+  } else showToast('UPI link: ' + link);
+}
+function showUpiQrForKhata(id){
+  const k = state.khata.find(x=>x.id===id);
+  if(!k) return;
+  showUpiQr(k);
+}
+function upiOutputButton(formSnapshot){
+  const payload = JSON.stringify(formSnapshot || {}).replace(/'/g, '&#39;');
+  return `<button class="ghost-btn" onclick='showUpiQr(${payload})'>📲 UPI QR</button>`;
 }
 
 async function pickPhoneContact(target='vasooli'){
@@ -584,7 +670,7 @@ function handleGenerate(){
     messages.forEach(m => {
       state.history.unshift({
         id: uid(), message:m.text, name:formData.name, amount:formData.amount || '',
-        language:formData.language, tone:m.label, phone:formData.phone || '', action:'generated', copied:false, shared:false,
+        language:formData.language, tone:m.label, phone:formData.phone || '', note:formData.note || '', action:'generated', copied:false, shared:false,
         createdAt: Date.now()
       });
     });
@@ -617,6 +703,7 @@ function outputCard(m, idx, formSnapshot){
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
+        ${upiOutputButton(formSnapshot)}
         <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
       </div>
     </div>
@@ -636,8 +723,9 @@ function copyOutput(taId){
   }
 }
 
-function openWhatsAppWithText(textValue, phoneRaw=''){
-  const text = encodeURIComponent(textValue || '');
+function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
+  const finalText = appendUpiPaymentLine(textValue || '', paymentData || {});
+  const text = encodeURIComponent(finalText);
   const phone = normalizeWhatsAppPhone(phoneRaw);
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
   const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
@@ -646,18 +734,18 @@ function openWhatsAppWithText(textValue, phoneRaw=''){
 
 function whatsappOutput(taId){
   const ta = document.getElementById(taId);
-  openWhatsAppWithText(ta.value, state.vasooliForm && state.vasooliForm.phone);
+  openWhatsAppWithText(ta.value, state.vasooliForm && state.vasooliForm.phone, state.vasooliForm || {});
 }
 
 function whatsappGeneric(taId){
   const ta = document.getElementById(taId);
-  openWhatsAppWithText(ta ? ta.value : '', '');
+  openWhatsAppWithText(ta ? ta.value : '', '', {});
 }
 
 function whatsappHistory(id, taId){
   const ta = document.getElementById(taId);
   const h = state.history.find(x => x.id === id);
-  openWhatsAppWithText(ta ? ta.value : (h && h.message), h && h.phone);
+  openWhatsAppWithText(ta ? ta.value : (h && h.message), h && h.phone, h || {});
 }
 
 function saveOutputToKhata(m, formSnapshot, taId){
@@ -688,7 +776,7 @@ function genericOutputCard(m, idx, prefix){
   const taId = `${prefix}-${idx}`;
   return `
     <div class="output-card">
-      <span class="tag">${escapeHtml(m.label)}</span>
+      <span class="tag">${escapeHtml(optionLabel(m.label))}</span>
       <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
@@ -743,6 +831,34 @@ function generateBusinessReplies({context, language, tone, relation}){
       Apology: [`Sorry for the inconvenience. I’ll check this on priority and update you shortly.`, `Apologies for the delay. I’m checking this now and will get back to you soon.`, `Sorry about that. I’ll review the issue and share an update as soon as possible.`]
     }
   };
+  const extraBank = {
+    Payment: {
+      Hinglish: [`Namaste ${rel}, payment follow-up ke liye message kar raha/rahi hoon. Kripya status share kar dein ya payment clear kar dein.`, `${rel} ji, pending payment ke regarding gentle follow-up hai. Aaj update mil jaaye toh helpful rahega.`, `Hello ${rel}, payment status confirm kar dein please. Agar already done hai toh screenshot/reference share kar dein.`],
+      Hindi: [`Namaste ${rel} ji, payment ke sambandh mein follow-up hai. Kripya status share karein ya bhugtan clear karein.`, `${rel} ji, pending payment ke liye vinamra yaad hai. Aaj update mil jaye toh sahayata hogi.`, `Kripya payment status confirm kar dein. Agar bhugtan ho chuka hai toh reference/screenshot share karein.`],
+      Bhojpuri: [`Pranam ${rel} ji, payment ke follow-up ba. Kripya status bata dihi ya payment clear kar dihi.`, `${rel} ji, pending payment ke chhoti yaad ba. Aaj update mil jaai ta help hoi.`, `Payment status confirm kar dihi. Agar ho gail ba ta screenshot/reference bhej dihi.`],
+      English: [`Hi ${rel}, following up regarding the pending payment. Please share the status or clear it at your convenience.`, `Hello ${rel}, gentle payment follow-up. An update today would be appreciated.`, `Please confirm the payment status. If already paid, kindly share the reference/screenshot.`]
+    },
+    Delivery: {
+      Hinglish: [`Namaste ${rel}, order/delivery update: hum isko process kar rahe hain. Dispatch/update jaldi share karenge.`, `${rel} ji, delivery ke regarding update — item/process queue mein hai. Next update jaldi milega.`, `Hello ${rel}, aapka order note ho gaya hai. Delivery timeline confirm karke update karte hain.`],
+      Hindi: [`Namaste ${rel} ji, order/delivery update: prakriya chal rahi hai. Dispatch/update jald share karenge.`, `${rel} ji, delivery sambandhit update — order process mein hai. Agla update jaldi denge.`, `Aapka order note ho gaya hai. Delivery timeline confirm karke update karenge.`],
+      Bhojpuri: [`Pranam ${rel} ji, order/delivery update: process chal raha ba. Jaldi update deb.`, `${rel} ji, delivery ke update — order process mein ba. Agila update jaldi milega.`, `Aapke order note ho gail ba. Timeline confirm karke batayib.`],
+      English: [`Hi ${rel}, delivery update: your order is being processed. We’ll share the dispatch/update shortly.`, `Hello ${rel}, your order is in the queue. We’ll confirm the delivery timeline soon.`, `Thank you. We’ve noted your order and will update you once the timeline is confirmed.`]
+    },
+    Complaint: {
+      Hinglish: [`Sorry ${rel}, inconvenience ke liye khed hai. Aapki complaint note kar li hai, hum priority par check kar rahe hain.`, `${rel} ji, issue share karne ke liye thanks. Hum isko verify karke solution/update denge.`, `Apologies ${rel}. Please thoda time dijiye, hum issue check karke best possible resolution share karenge.`],
+      Hindi: [`Khed hai ${rel} ji, asuvidha ke liye maafi. Aapki complaint note kar li hai, hum priority par janch kar rahe hain.`, `${rel} ji, issue share karne ke liye dhanyavaad. Hum verify karke samadhan/update denge.`, `Maafi chahte hain. Kripya thoda samay dein, hum issue check karke uchit samadhan share karenge.`],
+      Bhojpuri: [`Khed ba ${rel} ji, asuvidha ke liye maafi. Complaint note kar lele bani, priority par check karat bani.`, `${rel} ji, issue batave ke dhanyavaad. Verify karke solution/update deb.`, `Maafi chaht bani. Thoda time dihi, issue check karke best solution deb.`],
+      English: [`Sorry ${rel}, we regret the inconvenience. We’ve noted your complaint and are checking it on priority.`, `Thank you for sharing the issue. We’ll verify it and share a resolution/update shortly.`, `Apologies. Please allow us some time to review the issue and provide the best possible resolution.`]
+    },
+    ThankYou: {
+      Hinglish: [`Thank you ${rel}! Aapka support valuable hai. Hum aapko best service dene ki koshish karenge.`, `${rel} ji, dhanyavaad. Aapke trust ke liye thankful hain.`, `Thanks ${rel}! Aapke message/order/payment ke liye dhanyavaad.`],
+      Hindi: [`Dhanyavaad ${rel} ji! Aapka vishwas hamare liye mahatvapurn hai.`, `${rel} ji, aapke support ke liye hardik dhanyavaad.`, `Dhanyavaad. Aapke message/order/payment ke liye aabhar.`],
+      Bhojpuri: [`Dhanyavaad ${rel} ji! Aapke bharosa hamni ke liye bahut maayne rakhela.`, `${rel} ji, support ke liye bahut dhanyavaad.`, `Dhanyavaad. Aapke message/order/payment ke liye aabhar.`],
+      English: [`Thank you ${rel}! We truly value your support and trust.`, `Thanks ${rel}. We appreciate your message/order/payment.`, `Thank you for choosing us. We’ll continue trying to serve you better.`]
+    }
+  };
+  const extraPool = extraBank[tone] && (extraBank[tone][lang] || extraBank[tone].Hinglish);
+  if(extraPool) return extraPool.map(text => ({ label: tone, text }));
   const toneKey = tone === 'Polite' ? 'Professional' : (tone || 'Professional');
   const pool = (bank[lang] && (bank[lang][toneKey] || bank[lang].Professional)) || bank.Hinglish.Professional;
   return pool.map(text => ({ label: tone || 'Professional', text }));
@@ -751,7 +867,7 @@ function viewBusinessReply(){
   const f = state.businessForm || defaultBusinessForm();
   state.businessForm = f;
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
-  const tones = ['Professional','Short','Apology'];
+  const tones = ['Professional','Short','Apology','Payment','Delivery','Complaint','ThankYou'];
   const relations = ['Customer','Client','Team','Vendor','Student/Parent','General'];
   return `
     <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Business Reply 💼</h1></div>
@@ -763,7 +879,7 @@ function viewBusinessReply(){
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block"><label class="field-label">Relation</label><select onchange="updateBusinessForm('relation', this.value)">${relations.map(r=>`<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}</select></div>
       <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectBusinessOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
-      <div class="field-block"><label class="field-label">Tone</label><div class="chip-row">${tones.map(t=>`<div class="chip ${f.tone===t?'active':''}" onclick="selectBusinessOption('tone','${t}',this)">${t}</div>`).join('')}</div></div>
+      <div class="field-block"><label class="field-label">Tone</label><div class="chip-row">${tones.map(t=>`<div class="chip ${f.tone===t?'active':''}" onclick="selectBusinessOption('tone','${t}',this)">${optionLabel(t)}</div>`).join('')}</div></div>
     </div>
     <button class="primary-btn" onclick="handleBusinessGenerate()">Reply Banao ✨</button>
     <div class="safety-banner">Professional tip: reply bhejne se pehle name/order/detail manually add kar sakte ho.</div>
@@ -807,6 +923,34 @@ function generateMastiMessages({name, language, mood}){
       English:[`Sorry ${n}. My bad — hope we can fix this 🙏`, `${n}, apologies. Coffee is on me next time ☕`, `Sorry ${n}, sincerely. Let’s sort this out?`]
     }
   };
+  const extraBank = {
+    GoodMorning: {
+      Hinglish: [`Good morning ${n}! Naya din, nayi energy — aaj mast kaam hoga ☀️`, `${n}, uth jao champion! Chai aur success dono wait kar rahe hain ☕`, `Morning ${n}! Aaj ka din productive aur positive rahe 🌞`],
+      Hindi: [`Suprabhat ${n}! Naya din, nayi ummeed — aaj ka din shubh ho ☀️`, `${n}, uth jaiye champion! Chai aur safalta dono intezar kar rahe hain ☕`, `Good morning ${n}! Aaj ka din sakaratmak aur sundar ho 🌞`],
+      Bhojpuri: [`Good morning ${n}! Naya din, nayi energy — aaj mast hoi ☀️`, `${n}, uth ja champion! Chai aur success wait karat ba ☕`, `Subah shubh ho ${n}! Aaj ke din positive rahe 🌞`],
+      English: [`Good morning ${n}! New day, fresh energy — make it count ☀️`, `${n}, wake up champion! Coffee and success are waiting ☕`, `Morning ${n}! Wishing you a productive and positive day 🌞`]
+    },
+    GoodNight: {
+      Hinglish: [`Good night ${n}! Aaj ki tension yahin park karo, kal fresh start 😴`, `${n}, phone side mein rakho aur dreams ko charging do 🌙`, `Shubh ratri ${n}! Kal phir dhamaka karenge ✨`],
+      Hindi: [`Shubh ratri ${n}! Aaj ki chinta yahin chhod do, kal nayi shuruaat hogi 😴`, `${n}, phone side mein rakhiye aur sapno ko jagah dijiye 🌙`, `Good night ${n}! Kal phir naye utsah ke saath ✨`],
+      Bhojpuri: [`Good night ${n}! Aaj ke tension yahin chhod da, kal fresh start 😴`, `${n}, phone side mein rakha aur sapna dekha 🌙`, `Shubh ratri ${n}! Kal phir dhamaka hoi ✨`],
+      English: [`Good night ${n}! Park today’s stress here and start fresh tomorrow 😴`, `${n}, keep the phone aside and let your dreams charge 🌙`, `Good night ${n}! Tomorrow we go again ✨`]
+    },
+    Motivation: {
+      Hinglish: [`${n}, slow progress bhi progress hota hai. Bas rukna mat 💪`, `${n}, aaj ek step le lo — kal result dikhne lagega 🚀`, `Champion ${n}, consistency hi asli superpower hai 🔥`],
+      Hindi: [`${n}, dheere pragati bhi pragati hoti hai. Bas rukna mat 💪`, `${n}, aaj ek kadam badhaiye — kal parinaam dikhega 🚀`, `${n}, lagatar mehnat hi asli shakti hai 🔥`],
+      Bhojpuri: [`${n}, dheere progress bhi progress hola. Bas rukna mat 💪`, `${n}, aaj ek step le la — kal result dekhaai 🚀`, `${n}, consistency sabse bada power ba 🔥`],
+      English: [`${n}, slow progress is still progress. Don’t stop 💪`, `${n}, take one step today — results will follow 🚀`, `${n}, consistency is the real superpower 🔥`]
+    },
+    Festival: {
+      Hinglish: [`${n}, festival ki bahut shubhkamnayein! Khushiyan, mithai aur good vibes bani rahein ✨`, `${n}, aapko aur family ko festival wishes. Ghar mein hamesha roshni rahe 🪔`, `Happy festival ${n}! Smile, sweets aur celebration full on 🎉`],
+      Hindi: [`${n}, tyohar ki hardik shubhkamnayein! Khushiyan aur samriddhi bani rahe ✨`, `${n}, aapko aur parivar ko shubhkamnayein. Ghar mein hamesha roshni rahe 🪔`, `Shubh tyohar ${n}! Muskaan, mithai aur utsav bana rahe 🎉`],
+      Bhojpuri: [`${n}, tyohar ke bahut shubhkamna! Khushi aur samriddhi ban rahe ✨`, `${n}, aap aur parivar ke shubhkamna. Ghar mein roshni rahe 🪔`, `Happy festival ${n}! Mithai aur celebration full on 🎉`],
+      English: [`${n}, warm festival wishes! May your home be full of joy and good vibes ✨`, `Wishing you and your family happiness, light and prosperity 🪔`, `Happy festival ${n}! Smile, sweets and celebration all the way 🎉`]
+    }
+  };
+  const extraPool = extraBank[mood] && (extraBank[mood][lang] || extraBank[mood].Hinglish);
+  if(extraPool) return extraPool.map(text => ({ label:mood, text }));
   const moodKey = bank[mood] ? mood : 'Friendly';
   const pool = (bank[moodKey][lang] || bank[moodKey].Hinglish);
   return pool.map(text => ({ label:moodKey, text }));
@@ -815,14 +959,14 @@ function viewMastiMessage(){
   const f = state.mastiForm || defaultMastiForm();
   state.mastiForm = f;
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
-  const moods = ['Friendly','Birthday','Sorry'];
+  const moods = ['Friendly','Birthday','Sorry','GoodMorning','GoodNight','Motivation','Festival'];
   return `
     <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Masti Message 😄</h1></div>
     <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Friends/family ke liye light, fun aur share-ready messages.</p>
     <div class="field-block"><label class="field-label">Naam (optional)</label><input type="text" placeholder="Dost ka naam" value="${escapeHtml(f.name)}" oninput="updateMastiForm('name', this.value)"/></div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectMastiOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
-      <div class="field-block"><label class="field-label">Mood</label><div class="chip-row">${moods.map(m=>`<div class="chip ${f.mood===m?'active':''}" onclick="selectMastiOption('mood','${m}',this)">${m}</div>`).join('')}</div></div>
+      <div class="field-block"><label class="field-label">Mood</label><div class="chip-row">${moods.map(m=>`<div class="chip ${f.mood===m?'active':''}" onclick="selectMastiOption('mood','${m}',this)">${optionLabel(m)}</div>`).join('')}</div></div>
     </div>
     <button class="primary-btn" onclick="handleMastiGenerate()">Masti Message Banao ✨</button>
     <div id="masti-output"></div>
@@ -1007,6 +1151,7 @@ function khataCard(k){
         <span class="status-badge ${k.status}">${k.status==='paid'?'Paid ✅':'Pending'}</span>
         <div class="btn-row" style="margin-top:0;">
           ${k.status==='pending' ? `<button class="ghost-btn" onclick="remindKhata('${k.id}')">🔔 Remind</button>
+          <button class="ghost-btn" onclick="showUpiQrForKhata('${k.id}')">📲 UPI QR</button>
           <button class="ghost-btn save" onclick="markPaid('${k.id}')">${ICONS.check} Paid</button>` : ''}
           <button class="ghost-btn" onclick="openKhataForm('${k.id}')">Edit</button>
           <button class="ghost-btn danger" onclick="deleteKhata('${k.id}')">${ICONS.trash}</button>
@@ -1020,13 +1165,9 @@ function remindKhata(id){
   const k = state.khata.find(x=>x.id===id);
   if(!k) return;
   const text = k.message || generateMessages(k)[0].text;
-  const encoded = encodeURIComponent(text);
   k.lastReminderAt = Date.now();
   persist();
-  const phone = normalizeWhatsAppPhone(k.phone);
-  if(phone === null){ showToast('Saved number invalid hai — edit karke country code lagao'); return; }
-  const url = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
-  window.open(url, '_blank');
+  openWhatsAppWithText(text, k.phone, k);
   showToast('WhatsApp khul raha hai...');
 }
 
@@ -1291,6 +1432,7 @@ function viewPrivacy(){
         • Khata, history aur settings is device ke local storage mein save hote hain.<br/>
         • App aapke behalf par automatic WhatsApp message send nahi karta. WhatsApp screen user ke click ke baad open hoti hai.<br/>
         • Contacts button sirf selected contact ka naam/number leta hai. Full contact book upload/read nahi hoti.<br/>
+        • Saved UPI ID/display name bhi local device storage mein save hota hai. QR/pay link isi data se banta hai.<br/>
         • Contact picker browser permission ke saath kaam karta hai; unsupported browser mein manual number paste karna hoga.<br/>
         • Firebase chat feature use karne par anonymous auth/chat data Firebase mein store ho sakta hai.<br/>
         • Payment/Pro verification currently manual UPI + WhatsApp screenshot flow par based hai.
@@ -1350,6 +1492,23 @@ function viewSettings(){
       <div class="toggle ${(s.watermarkEnabled && !isBBPro())?'on':''}" onclick="${isBBPro() ? `showToast('Pro users ke liye watermark already off hai 👑')` : `toggleSetting('watermarkEnabled')`}"><div class="knob"></div></div>
     </div>
 
+    <div class="divider"></div>
+    <div class="section-title">Payment Setup</div>
+    <div class="field-block">
+      <label class="field-label">Your UPI ID / VPA</label>
+      <input type="text" placeholder="example@upi" value="${escapeHtml(s.upiId||'')}" oninput="updateSettingValue('upiId', this.value)"/>
+      <small class="field-hint">QR aur UPI pay link isi ID par banega. Example: name@oksbi, mobile@paytm</small>
+    </div>
+    <div class="field-block">
+      <label class="field-label">UPI display name</label>
+      <input type="text" placeholder="Your business/name" value="${escapeHtml(s.upiName||'')}" oninput="updateSettingValue('upiName', this.value)"/>
+    </div>
+    <div class="settings-item">
+      <span class="label">WhatsApp reminder mein UPI ID/link attach karo</span>
+      <div class="toggle ${s.upiAttachEnabled?'on':''}" onclick="toggleSetting('upiAttachEnabled')"><div class="knob"></div></div>
+    </div>
+    <button class="ghost-btn" onclick="showUpiQr({note:'Test UPI QR'})">📲 Test UPI QR</button>
+
     <div class="settings-item" onclick="navigate('pro')" style="cursor:pointer;">
       <span class="label">👑 BaatBanao Pro</span>
       <span>${isBBPro() ? 'Active ✅' : 'Upgrade ›'}</span>
@@ -1364,6 +1523,10 @@ function viewSettings(){
   `;
 }
 
+function updateSettingValue(key, val){
+  state.settings[key] = val;
+  persist();
+}
 function setSetting(key, val){
   state.settings[key] = val;
   persist();
