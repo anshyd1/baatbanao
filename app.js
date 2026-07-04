@@ -286,7 +286,11 @@ function viewVasooli(){
 
       <div class="field-block">
         <label class="field-label">WhatsApp Number (optional)</label>
-        <input type="tel" id="f-phone" inputmode="numeric" placeholder="9876543210" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
+        <div class="phone-row">
+          <input type="tel" id="f-phone" inputmode="tel" placeholder="+91 9876543210 / +971..." value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="18"/>
+          <button type="button" class="ghost-btn contact-btn" onclick="pickPhoneContact()">Contacts</button>
+        </div>
+        <small class="field-hint">India 10 digit chalega. Bahar ke liye country code lagao, e.g. +971...</small>
       </div>
 
       <div class="field-block">
@@ -301,14 +305,14 @@ function viewVasooli(){
       <div class="field-block">
         <label class="field-label">Language</label>
         <div class="chip-row">
-          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="updateForm('language','${l}')">${l}</div>`).join('')}
+          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="selectFormOption('language','${l}',this)">${l}</div>`).join('')}
         </div>
       </div>
 
       <div class="field-block">
         <label class="field-label">Tone</label>
         <div class="chip-row">
-          ${['Friendly','Polite','Funny','Strong'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="updateForm('tone','${t}')">${t}</div>`).join('')}
+          ${['Friendly','Polite','Funny','Strong'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="selectFormOption('tone','${t}',this)">${t}</div>`).join('')}
         </div>
       </div>
     </div>
@@ -332,7 +336,65 @@ function escapeHtml(str){
 }
 
 function updateForm(field, value){
+  if(!state.vasooliForm) state.vasooliForm = {};
   state.vasooliForm[field] = value;
+}
+
+function selectFormOption(field, value, el){
+  updateForm(field, value);
+  if(field === 'language'){
+    state.settings.defaultLanguage = value;
+    persist();
+  }
+  if(field === 'tone'){
+    state.settings.defaultTone = value;
+    persist();
+  }
+  if(el && el.parentElement){
+    el.parentElement.querySelectorAll('.chip').forEach(ch => ch.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+
+function normalizeWhatsAppPhone(raw){
+  let v = String(raw || '').trim();
+  if(!v) return '';
+  v = v.replace(/[\s()\-.]/g, '');
+  if(v.startsWith('00')) v = '+' + v.slice(2);
+  if(v.startsWith('+')) v = v.slice(1);
+  v = v.replace(/\D/g, '');
+
+  // Indian local number: 9876543210 -> 919876543210
+  if(v.length === 10) v = '91' + v;
+
+  // WhatsApp/wa.me uses E.164 digits only, max 15 digits.
+  if(v.length < 7 || v.length > 15) return null;
+  return v;
+}
+
+async function pickPhoneContact(){
+  if(!('contacts' in navigator) || !navigator.contacts.select){
+    showToast('Contact picker is browser mein supported nahi hai. Number manually paste karo.');
+    return;
+  }
+  try{
+    const contacts = await navigator.contacts.select(['name','tel'], { multiple:false });
+    const c = contacts && contacts[0];
+    if(!c || !c.tel || !c.tel.length){ showToast('Is contact mein number nahi mila'); return; }
+    const phone = c.tel[0];
+    const name = c.name && c.name[0] ? c.name[0] : '';
+    updateForm('phone', phone.replace(/[^0-9+]/g,''));
+    const phoneEl = document.getElementById('f-phone');
+    if(phoneEl) phoneEl.value = state.vasooliForm.phone;
+    if(name && (!state.vasooliForm.name || !state.vasooliForm.name.trim())){
+      updateForm('name', name);
+      const nameEl = document.getElementById('f-name');
+      if(nameEl) nameEl.value = name;
+    }
+    showToast('Contact select ho gaya ✅');
+  }catch(e){
+    showToast('Contact permission cancel ho gayi');
+  }
 }
 
 function handleGenerate(){
@@ -341,10 +403,10 @@ function handleGenerate(){
   if(!amount || amount <= 0){ showToast('Amount required hai — jaise 2500'); return; }
 
   // Naam optional rakha hai: user amount daal ke turant message bana sake.
-  // Isse mobile par “button kaam nahi kar raha” wali confusion nahi hoti.
-  const cleanPhone = s.phone ? String(s.phone).replace(/[^0-9]/g, '') : '';
-  if(cleanPhone && !(cleanPhone.length === 10 || cleanPhone.length === 12)){
-    showToast('WhatsApp number 10 digit daalo, ya blank chhod do');
+  // Phone India/local aur international dono support karta hai.
+  const cleanPhone = normalizeWhatsAppPhone(s.phone);
+  if(cleanPhone === null){
+    showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do');
     return;
   }
 
@@ -352,7 +414,7 @@ function handleGenerate(){
     ...s,
     name: (s.name && s.name.trim()) ? s.name.trim() : 'Bhai',
     amount,
-    phone: cleanPhone
+    phone: cleanPhone || ''
   };
   state.vasooliForm = formData;
 
@@ -442,8 +504,8 @@ function copyOutput(taId){
 function whatsappOutput(taId){
   const ta = document.getElementById(taId);
   const text = encodeURIComponent(ta.value);
-  let phone = (state.vasooliForm && state.vasooliForm.phone) ? String(state.vasooliForm.phone).replace(/[^0-9]/g, '') : '';
-  if (phone.length === 10) phone = '91' + phone;
+  const phone = normalizeWhatsAppPhone(state.vasooliForm && state.vasooliForm.phone);
+  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
   const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
   window.open(url, '_blank');
 }
@@ -532,8 +594,8 @@ function remindKhata(id){
   const encoded = encodeURIComponent(text);
   k.lastReminderAt = Date.now();
   persist();
-  let phone = k.phone ? String(k.phone).replace(/[^0-9]/g, '') : '';
-  if (phone.length === 10) phone = '91' + phone;
+  const phone = normalizeWhatsAppPhone(k.phone);
+  if(phone === null){ showToast('Saved number invalid hai — edit karke country code lagao'); return; }
   const url = phone ? `https://wa.me/${phone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
   window.open(url, '_blank');
   showToast('WhatsApp khul raha hai...');
