@@ -1,7 +1,8 @@
 /* ===========================================================
-   BaatBanao — app.js v2.1
-   Depends on: storage.js + messages.js (load pehle karein)
-   Sirf UI, routing, views — koi data/message logic nahi yahan
+   BaatBanao — app.js v2.2 FIXED
+   index.html mein topbar + bottom-nav already hai
+   Views sirf #content ke andar content daalenge
+   Depends on: storage.js + messages.js
    =========================================================== */
 
 /* ===========================================================
@@ -39,12 +40,6 @@ window.addEventListener('hashchange', () => {
    ICONS
    =========================================================== */
 const ICONS = {
-  menu:     `<svg width="22" height="16" viewBox="0 0 22 16" fill="none"><path d="M1 1H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 8H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M1 15H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-  mic:      `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 15C13.66 15 15 13.66 15 12V6C15 4.34 13.66 3 12 3C10.34 3 9 4.34 9 6V12C9 13.66 10.34 15 12 15Z" stroke="currentColor" stroke-width="2"/><path d="M19 11V12C19 15.87 15.87 19 12 19C8.13 19 5 15.87 5 12V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 19V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-  home:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20C5 20.55 5.45 21 6 21H9.5C10.05 21 10.5 20.55 10.5 20V15C10.5 14.45 10.95 14 11.5 14H12.5C13.05 14 13.5 14.45 13.5 15V20C13.5 20.55 13.95 21 14.5 21H18C18.55 21 19 20.55 19 20V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  khata:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
-  history:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  profile:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
   back:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   copy:     `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6C16 4.9 15.1 4 14 4H6C4.9 4 4 4.9 4 6V14C4 15.1 4.9 16 6 16H8" stroke="currentColor" stroke-width="2"/></svg>`,
   whatsapp: `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.13-1.33A9.93 9.93 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm0 18.2c-1.58 0-3.06-.47-4.3-1.26l-.3-.18-3.06.8.82-2.96-.2-.32A8.19 8.19 0 013.6 11.85C3.6 7.35 7.35 3.6 12.05 3.6c4.5 0 8.25 3.75 8.25 8.25 0 4.5-3.8 8.35-8.3 8.35zm4.55-6c-.25-.12-1.45-.7-1.68-.78-.22-.08-.39-.12-.55.13-.16.25-.63.78-.78.95-.14.16-.3.18-.54.06-.25-.12-1.02-.37-1.96-1.21-.72-.65-1.22-1.46-1.36-1.7-.14-.25-.01-.37.11-.49.11-.11.25-.29.37-.43.12-.13.17-.23.25-.4.08-.16.04-.31-.02-.43-.06-.12-.56-1.32-.77-1.81-.2-.48-.41-.41-.56-.42h-.48c-.17 0-.44.06-.67.31-.23.25-.87.84-.87 2.04s.89 2.37 1.01 2.53c.13.17 1.76 2.54 4.27 3.56 1.66.69 2.28.75 3.08.63.49-.07 1.51-.6 1.72-1.21.21-.61.21-1.13.15-1.24-.06-.11-.23-.18-.48-.3z"/></svg>`,
@@ -54,45 +49,20 @@ const ICONS = {
   crown:    `<span style="font-size:14px">👑</span>`,
   check:    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   trash:    `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+  mic:      `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 15C13.66 15 15 13.66 15 12V6C15 4.34 13.66 3 12 3C10.34 3 9 4.34 9 6V12C9 13.66 10.34 15 12 15Z" stroke="currentColor" stroke-width="2"/><path d="M19 11V12C19 15.87 15.87 19 12 19C8.13 19 5 15.87 5 12V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 19V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
 };
 
-const MASCOT = `<img src="assets/mascot-coin.webp" alt="BaatBanao mascot" class="mascot-img" />`;
-
 /* ===========================================================
-   BOTTOM NAV helper
-   =========================================================== */
-function bottomNav(active) {
-  const items = [
-    { route:'home',    icon: ICONS.home,    label:'Home'    },
-    { route:'khata',   icon: ICONS.khata,   label:'Khata'   },
-    { route:'history', icon: ICONS.history, label:'History' },
-    { route:'profile', icon: ICONS.profile, label:'Profile' },
-  ];
-  return `<nav class="bottom-nav">
-    ${items.map(it => `
-      <button class="nav-item ${active === it.route ? 'active' : ''}"
-        data-route="${it.route}" onclick="navigate('${it.route}')">
-        ${it.icon}<span>${it.label}</span>
-      </button>`).join('')}
-  </nav>`;
-}
-
-/* ===========================================================
-   HOME VIEW
+   HOME VIEW — sirf content, koi topbar/nav nahi
    =========================================================== */
 function viewHome() {
   const latest = state.khata.find(k => k.status === 'pending');
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="openMenu()">${ICONS.menu}</button>
-    <div class="logo-wrap"><span class="logo-text">BaatBanao</span><span class="logo-emoji">🪙</span></div>
-    <button class="pro-btn" onclick="navigate('pro')">${ICONS.crown} Pro</button>
-  </div>
-  <div class="content">
     <div class="hero-greeting">
       <h1>Namaste! 🙏<br>Aaj kya likhna hai?</h1>
-      ${MASCOT}
+      <img src="assets/mascot-coin.webp" alt="BaatBanao mascot" class="mascot-img" />
     </div>
+
     <button class="hero-card" onclick="navigate('vasooli')">
       <img src="assets/vasooli-hero-banner.webp" alt=""
         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:22px;opacity:.18;" />
@@ -100,6 +70,7 @@ function viewHome() {
       <p>Paisa bhi wapas, rishta bhi safe 😄</p>
       <span style="margin-top:12px;display:inline-block;font-size:13px;font-weight:800;color:rgba(255,255,255,.9)">Shuru karo →</span>
     </button>
+
     <div class="secondary-row">
       <button class="sec-card" onclick="navigate('vasooli')">
         <h3>Business Reply 💼</h3>
@@ -110,14 +81,17 @@ function viewHome() {
         <p>Fun chat &amp; sticker ideas</p>
       </button>
     </div>
+
     <div class="input-pill" onclick="navigate('vasooli')">
       <span>Bolo ya type karo...</span>${ICONS.mic}
     </div>
+
     <div class="lang-chips">
       ${['Hinglish','Hindi','Bhojpuri','English'].map(l => `
         <button class="lang-chip ${state.settings.defaultLanguage===l?'active':''}"
           onclick="setDefaultLang('${l}')">${l}</button>`).join('')}
     </div>
+
     <div class="khata-strip" onclick="navigate('khata')">
       <span class="khata-strip-label">Khata ${ICONS.bell}</span>
       <span class="khata-strip-text">
@@ -125,9 +99,7 @@ function viewHome() {
           ? `📒 <strong>${escapeHtml(latest.name)}</strong> — ${fmtMoney(latest.amount)} pending — Remind karo`
           : `Koi pending nahi hai. Sab clear! ✅`}
       </span>
-    </div>
-  </div>
-  ${bottomNav('home')}`;
+    </div>`;
 }
 
 function setDefaultLang(l) { settingSet('defaultLanguage', l); renderApp(); }
@@ -147,7 +119,7 @@ function viewVasooli() {
 
   const relations = ['Dost','Customer','Client','Student/Parent','Tenant','Shop Khata','Relative','General'];
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
-  const tones     = [
+  const tones = [
     { key:'Friendly', label:'😊 Friendly' },
     { key:'Polite',   label:'🙏 Polite'   },
     { key:'Funny',    label:'😂 Funny'    },
@@ -155,13 +127,13 @@ function viewVasooli() {
   ];
 
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">Vasooli Mode</span><span class="logo-emoji">💸</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
-    <p class="page-sub">Naam, amount aur tone select karo — har baar naya message milega!</p>
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
+      <span class="page-title">Vasooli Mode 💸</span>
+      <div style="width:38px"></div>
+    </div>
+
+    <p class="page-sub">Naam, amount aur tone select karo — har baar naya message!</p>
 
     <div class="form-group">
       <label class="form-label">Naam</label>
@@ -178,7 +150,6 @@ function viewVasooli() {
       <input class="form-input" type="number" placeholder="2500"
         value="${escapeHtml(s.amount)}" oninput="updateVForm('amount',this.value)" />
     </div>
-
     <div class="form-group">
       <label class="form-label">Relation</label>
       <div class="chip-row">
@@ -187,7 +158,6 @@ function viewVasooli() {
             onclick="updateVForm('relation','${r}');renderApp()">${r}</button>`).join('')}
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Language</label>
       <div class="chip-row">
@@ -196,7 +166,6 @@ function viewVasooli() {
             onclick="updateVForm('language','${l}');renderApp()">${l}</button>`).join('')}
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Tone</label>
       <div class="chip-row">
@@ -205,7 +174,6 @@ function viewVasooli() {
             onclick="updateVForm('tone','${t.key}');renderApp()">${t.label}</button>`).join('')}
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Note (optional)</label>
       <input class="form-input" type="text" placeholder="2 mahine se pending hai, aaj chahiye"
@@ -215,9 +183,7 @@ function viewVasooli() {
     <button class="btn-primary" onclick="handleGenerate()">Message Banao ✨</button>
     <p class="safety-note">BaatBanao sirf respectful reminders banata hai. Bhejne se pehle check/edit kar lein.</p>
 
-    <div id="vasooli-output"></div>
-  </div>
-  ${bottomNav('khata')}`;
+    <div id="vasooli-output"></div>`;
 }
 
 function updateVForm(field, value) {
@@ -253,16 +219,15 @@ function handleGenerate() {
 
   setTimeout(() => {
     const combined = (s.name || '') + ' ' + (s.note || '');
-    let messages, unsafe = '';
+    let messages, unsafeHtml = '';
 
     if (isUnsafe(combined)) {
-      unsafe = `<div class="unsafe-notice">⚠️ Gaali ke bina bhi strong message ban sakta hai:</div>`;
+      unsafeHtml = `<div class="unsafe-notice">⚠️ Gaali ke bina bhi strong message ban sakta hai:</div>`;
       messages = [{ label:'💪 Strong but Respectful', text: safeAlternative(s.name, s.amount) }];
     } else {
       messages = generateMessages(s);
     }
 
-    // save to history
     messages.forEach(m => historyAdd({
       id: uid(), message: m.text, name: s.name,
       amount: Number(s.amount) || 0, language: s.language,
@@ -274,26 +239,25 @@ function handleGenerate() {
 
     const { remaining } = bbCanGenerate();
     const limitNote = (!isBBPro() && remaining <= 2)
-      ? `<div class="limit-notice">Aaj ${remaining} free message${remaining===1?'':'s'} bache hain.
+      ? `<div class="limit-notice">Aaj ${remaining} free message${remaining===1?'':'s'} bache.
            <a onclick="navigate('pro')" style="cursor:pointer;font-weight:800;color:var(--coral)">Pro lo 👑</a></div>`
       : '';
 
     out.innerHTML = `
-      ${unsafe}${limitNote}
-      <div class="output-header">Ready Messages</div>
+      ${unsafeHtml}${limitNote}
+      <div class="output-header">Ready Messages ✨</div>
       <div class="output-regen-row">
         <button class="btn-regen" onclick="handleGenerate()">
           ${ICONS.refresh} Naye dikhao
         </button>
-        <span style="font-size:11px;color:var(--text-muted)">Pasand nahi aayi? Dobara banao!</span>
+        <span style="font-size:11px;color:var(--text-muted)">Pasand nahi? Dobara banao!</span>
       </div>
-      ${messages.map((m, i) => outputCard(m, i, { ...s })).join('')}`;
+      ${messages.map((m, i) => outputCard(m, i)).join('')}`;
   }, 600);
 }
 
-function outputCard(m, idx, snap) {
+function outputCard(m, idx) {
   const taId = 'out-' + idx;
-  const snapStr = JSON.stringify(snap).replace(/`/g, '\\`').replace(/\\/g, '\\\\').replace(/"/g, '&quot;');
   return `
   <div class="output-card">
     <div class="output-label">${m.label}</div>
@@ -350,12 +314,12 @@ function viewKhata() {
   const list    = state.khata.filter(k => f === 'all' ? true : k.status === f);
 
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">Udhaar Khata</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
+      <span class="page-title">Udhaar Khata</span>
+      <div style="width:38px"></div>
+    </div>
+
     <div class="khata-summary">
       <div class="khata-total">${fmtMoney(total)}</div>
       <div class="khata-count">${pending.length} pending payment${pending.length===1?'':'s'}</div>
@@ -363,12 +327,14 @@ function viewKhata() {
         Reminder Message Banao 🔔
       </button>
     </div>
+
     <div class="chip-row" style="margin-bottom:8px;">
       ${['all','pending','paid'].map(fv => `
         <button class="chip ${f===fv?'active':''}" onclick="setKhataFilter('${fv}')">
           ${fv==='all'?'All':fv==='pending'?'Pending':'Paid'}
         </button>`).join('')}
     </div>
+
     ${list.length === 0
       ? `<div style="text-align:center;padding:40px 20px;">
            <img src="assets/mascot-sleeping.webp" alt="" width="100" />
@@ -376,9 +342,7 @@ function viewKhata() {
              <strong>Sab clear!</strong> ✨<br>Coin so raha hai.
            </p>
          </div>`
-      : list.map(k => khataCard(k)).join('')}
-  </div>
-  ${bottomNav('khata')}`;
+      : list.map(k => khataCard(k)).join('')}`;
 }
 
 function setKhataFilter(f) { state.khataFilter = f; renderApp(); }
@@ -416,8 +380,9 @@ function remindKhata(id) {
   let phone = k.phone ? String(k.phone).replace(/[^0-9]/g, '') : '';
   if (phone.length === 10) phone = '91' + phone;
   khataUpdate(id, { lastReminderAt: Date.now() });
-  window.open(phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
-                    : `https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  window.open(phone
+    ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   showToast('WhatsApp khul raha hai...');
 }
 
@@ -454,12 +419,12 @@ function deleteKhata(id) { khataDelete(id); renderApp(); showToast('Entry delete
 function viewHistory() {
   const list = state.history;
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">History</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
+      <span class="page-title">History</span>
+      <div style="width:38px"></div>
+    </div>
+
     ${list.length === 0
       ? `<div style="text-align:center;padding:40px 20px;">
            <img src="assets/mascot-thinking.webp" alt="" width="100" />
@@ -468,12 +433,11 @@ function viewHistory() {
            </p>
          </div>`
       : list.map(h => historyCard(h)).join('')}
+
     ${list.length > 0
       ? `<button class="btn-danger-outline" onclick="clearHistory()">
            ${ICONS.trash} Clear All History
-         </button>` : ''}
-  </div>
-  ${bottomNav('history')}`;
+         </button>` : ''}`;
 }
 
 function historyCard(h) {
@@ -504,12 +468,12 @@ function clearHistory() {
    =========================================================== */
 function viewProfile() {
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">Profile</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
+      <span class="page-title">Profile</span>
+      <div style="width:38px"></div>
+    </div>
+
     <div class="profile-card">
       <h2>Guest User 🙌</h2>
       <p>Login abhi optional hai — sab kuch is device par save hai.</p>
@@ -527,9 +491,7 @@ function viewProfile() {
     <button class="btn-secondary" onclick="navigate('settings')">Settings ⚙️</button>
     ${isBBPro()
       ? `<div class="pro-active-badge">👑 BaatBanao Pro — Active ✅</div>`
-      : `<button class="btn-primary" onclick="navigate('pro')">👑 Upgrade to BaatBanao Pro</button>`}
-  </div>
-  ${bottomNav('profile')}`;
+      : `<button class="btn-primary" onclick="navigate('pro')">👑 Upgrade to BaatBanao Pro</button>`}`;
 }
 
 /* ===========================================================
@@ -544,12 +506,12 @@ function viewSettings() {
     { key:'Strong',   label:'💪 Strong'   },
   ];
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('profile')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">Settings</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('profile')">${ICONS.back}</button>
+      <span class="page-title">Settings</span>
+      <div style="width:38px"></div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Default language</label>
       <div class="chip-row">
@@ -576,8 +538,7 @@ function viewSettings() {
     </button>
     <button class="btn-danger-outline" onclick="clearAllData()">
       ${ICONS.trash} Clear all app data
-    </button>
-  </div>`;
+    </button>`;
 }
 
 function clearAllData() {
@@ -593,16 +554,17 @@ function clearAllData() {
    =========================================================== */
 function viewPro() {
   return `
-  <div class="topbar">
-    <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
-    <div class="logo-wrap"><span class="logo-text">BaatBanao Pro</span><span class="logo-emoji">👑</span></div>
-    <div style="width:38px"></div>
-  </div>
-  <div class="content">
+    <div class="page-topbar">
+      <button class="icon-btn" onclick="navigate('home')">${ICONS.back}</button>
+      <span class="page-title">BaatBanao Pro 👑</span>
+      <div style="width:38px"></div>
+    </div>
+
     <div style="text-align:center;padding:8px 0 16px;">
       <h2 style="font-size:22px;font-weight:900;">Vasooli bhi smart, app bhi Pro 😄</h2>
       <p style="font-size:13px;color:var(--text-secondary);margin-top:4px;">Watermark hatao, unlimited messages banao.</p>
     </div>
+
     <div class="pro-plan-card">
       <div class="pro-plan-title">BaatBanao Pro</div>
       <div class="pro-plan-price">₹149 <span>lifetime</span></div>
@@ -614,6 +576,7 @@ function viewPro() {
       </ul>
       <button class="btn-primary" onclick="bbStartPurchase('pro')">₹149 mein Unlock Karo</button>
     </div>
+
     <div class="pro-plan-card" style="margin-top:12px;">
       <div class="pro-plan-title">Business Pack</div>
       <div class="pro-plan-price">₹499 <span>lifetime</span></div>
@@ -624,6 +587,7 @@ function viewPro() {
       </ul>
       <button class="btn-primary" onclick="bbStartPurchase('business')">₹499 mein Unlock Karo</button>
     </div>
+
     <div id="bb-pay-step" style="display:none;margin-top:16px;">
       <div class="pro-step">
         <b>Step 1</b> — UPI se Payment Karo<br>
@@ -641,10 +605,10 @@ function viewPro() {
         <div id="bb-redeem-msg" style="margin-top:8px;font-size:13px;font-weight:700;"></div>
       </div>
     </div>
+
     <p style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:16px;">
       🙏 BaatBanao ek writing assistant hai. Payment 100% manual-verified hai.
-    </p>
-  </div>`;
+    </p>`;
 }
 
 let bbSelectedPlan = 'pro';
@@ -665,9 +629,9 @@ function bbStartPurchase(plan) {
 }
 
 function bbRedeemCode() {
-  const phone  = document.getElementById('bb-phone-input').value.replace(/\D/g,'');
-  const code   = document.getElementById('bb-code-input').value.trim().toUpperCase();
-  const msgEl  = document.getElementById('bb-redeem-msg');
+  const phone = document.getElementById('bb-phone-input').value.replace(/\D/g,'');
+  const code  = document.getElementById('bb-code-input').value.trim().toUpperCase();
+  const msgEl = document.getElementById('bb-redeem-msg');
   if (phone.length !== 10) { msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color='#C0392B'; return; }
   if (bbGenerateRedeemCode(phone, bbSelectedPlan) === code) {
     localStorage.setItem(BB_PRO_KEY,'1');
@@ -676,7 +640,7 @@ function bbRedeemCode() {
     msgEl.style.color = '#247C32';
     setTimeout(() => navigate('profile'), 1400);
   } else {
-    msgEl.textContent = '❌ Code galat hai. Sahi phone number check karo.';
+    msgEl.textContent = '❌ Code galat hai.';
     msgEl.style.color = '#C0392B';
   }
 }
@@ -684,11 +648,17 @@ function bbRedeemCode() {
 /* ===========================================================
    MENU DRAWER
    =========================================================== */
-function openMenu()  { document.getElementById('overlay').classList.add('show'); document.getElementById('drawer').classList.add('show'); }
-function closeMenu() { document.getElementById('overlay').classList.remove('show'); document.getElementById('drawer').classList.remove('show'); }
+function openMenu()  {
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeMenu() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
 
 /* ===========================================================
-   RENDER ENGINE
+   RENDER ENGINE — sirf #content update karta hai
    =========================================================== */
 const ROUTES = {
   home:     viewHome,
@@ -705,6 +675,7 @@ const ROUTES = {
 function renderApp() {
   const route = state.route || 'home';
 
+  // Chat — Firebase handles it
   if (route === 'chat' || route === 'connect') {
     if (typeof window.BB_loadFirebase === 'function') window.BB_loadFirebase();
     document.getElementById('content').innerHTML = '';
@@ -717,14 +688,20 @@ function renderApp() {
           <p style="margin-top:14px;font-weight:700;color:#75615C;">Chat connect ho raha hai...</p>
         </div>`;
     }
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.route==='chat'));
+    document.querySelectorAll('.nav-item').forEach(el =>
+      el.classList.toggle('active', el.dataset.route === 'chat'));
     return;
   }
 
+  // Normal route — sirf content inject karo
   const fn = ROUTES[route] || viewHome;
   document.getElementById('content').innerHTML = fn();
+
+  // Bottom nav active state
   document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile','chat'].includes(route) ? route : ''));
+    const navRoutes = ['home','khata','history','profile','chat'];
+    el.classList.toggle('active',
+      el.dataset.route === (navRoutes.includes(route) ? route : ''));
   });
 }
 
