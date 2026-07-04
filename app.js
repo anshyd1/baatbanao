@@ -32,6 +32,17 @@ function persist(){
 function uid(){ return 'id-' + Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
 
 function fmtMoney(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+function hasValidAmount(v){
+  if(v === undefined || v === null || String(v).trim() === '') return false;
+  return Number(String(v).replace(/,/g, '')) > 0;
+}
+function amountOrPayment(v, language){
+  if(hasValidAmount(v)) return fmtMoney(Number(String(v).replace(/,/g, '')));
+  if(language === 'English') return 'payment';
+  if(language === 'Bhojpuri') return 'rakam';
+  return 'payment';
+}
+function displayAmount(v){ return hasValidAmount(v) ? fmtMoney(Number(String(v).replace(/,/g, ''))) : 'Amount not set'; }
 
 function timeAgo(ts){
   const diff = Date.now() - ts;
@@ -60,12 +71,12 @@ function isUnsafe(text){
    MESSAGE GENERATION ENGINE (rule-based, per plan spec)
    =========================================================== */
 function generateMessages({name, amount, relation, language, tone, note}){
-  const amt = fmtMoney(amount);
+  const lang = language || 'Hinglish';
+  const amt = amountOrPayment(amount, lang);
   const n = name && name.trim() ? name.trim() : 'Bhai';
   const noteLine = note && note.trim() ? note.trim() : '';
   const emojiOn = state.settings.emojiEnabled;
   const e = (s) => emojiOn ? s : '';
-  const lang = language || 'Hinglish';
   function rnd3(arr){ return [...arr].sort(()=>Math.random()-.5).slice(0,3); }
 
   const FUNNY = {
@@ -141,7 +152,8 @@ function generateMessages({name, amount, relation, language, tone, note}){
 }
 
 function safeAlternative(name, amount){
-  return `${name || 'Bhai'}, payment kaafi din se pending hai (${fmtMoney(amount||0)}). Kripya aaj clear kar do. Dosti apni jagah, hisaab apni jagah 🙏`;
+  const amtText = hasValidAmount(amount) ? ` (${fmtMoney(Number(String(amount).replace(/,/g, '')))})` : '';
+  return `${name || 'Bhai'}, payment kaafi din se pending hai${amtText}. Kripya aaj clear kar do. Dosti apni jagah, hisaab apni jagah 🙏`;
 }
 
 /* ===========================================================
@@ -271,12 +283,12 @@ function viewVasooli(){
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
       <h1>Vasooli Mode 💸</h1>
     </div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Professional flow: sirf amount required hai. Naam/number optional — direct WhatsApp bhejne ke liye number daalein.</p>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Professional flow: amount bhi optional hai. Naam/number daaloge toh message aur direct WhatsApp better chalega.</p>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block">
-        <label class="field-label">Amount <span style="color:var(--coral);">*</span></label>
-        <input type="number" id="f-amount" inputmode="decimal" placeholder="2500" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
+        <label class="field-label">Amount (optional)</label>
+        <input type="number" id="f-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
       </div>
 
       <div class="field-block">
@@ -399,10 +411,11 @@ async function pickPhoneContact(){
 
 function handleGenerate(){
   const s = state.vasooliForm || {};
-  const amount = Number(String(s.amount || '').replace(/,/g, ''));
-  if(!amount || amount <= 0){ showToast('Amount required hai — jaise 2500'); return; }
+  const amountRaw = String(s.amount || '').trim();
+  const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
+  if(amountRaw && (!amount || amount <= 0)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
 
-  // Naam optional rakha hai: user amount daal ke turant message bana sake.
+  // Naam aur amount dono optional hain: user generic reminder bhi bana sake.
   // Phone India/local aur international dono support karta hai.
   const cleanPhone = normalizeWhatsAppPhone(s.phone);
   if(cleanPhone === null){
@@ -448,7 +461,7 @@ function handleGenerate(){
     // save to history
     messages.forEach(m => {
       state.history.unshift({
-        id: uid(), message:m.text, name:formData.name, amount:Number(formData.amount)||0,
+        id: uid(), message:m.text, name:formData.name, amount:formData.amount || '',
         language:formData.language, tone:m.label, action:'generated', copied:false, shared:false,
         createdAt: Date.now()
       });
@@ -516,7 +529,7 @@ function saveOutputToKhata(m, formSnapshot, taId){
     id: uid(),
     name: formSnapshot.name || 'Bhai',
     phone: formSnapshot.phone || '',
-    amount: Number(formSnapshot.amount) || 0,
+    amount: formSnapshot.amount || '',
     relation: formSnapshot.relation || 'General',
     status:'pending',
     dueDate:null,
@@ -572,7 +585,7 @@ function khataCard(k){
     <div class="list-card">
       <div class="row-top">
         <span class="name">${escapeHtml(k.name)}</span>
-        <span class="amount">${fmtMoney(k.amount)}</span>
+        <span class="amount">${displayAmount(k.amount)}</span>
       </div>
       <div class="meta">${escapeHtml(k.relation||'General')} · ${k.status==='paid' ? 'Paid '+timeAgo(k.updatedAt) : (k.note ? escapeHtml(k.note) : 'Pending')}</div>
       <div class="row-top">
@@ -622,7 +635,7 @@ function showPaidCelebration(name, amount){
     <div class="bb-celebrate-card">
       <img src="assets/mascot-paid.webp" alt="" width="180" height="180" loading="eager" decoding="async"/>
       <h2>Paisa aa gaya! 🎉</h2>
-      <p><b>${escapeHtml(name)}</b> ne <b>${fmtMoney(amount)}</b> clear kiya</p>
+      <p><b>${escapeHtml(name)}</b> ne <b>${displayAmount(amount)}</b> clear kiya</p>
       <p class="bb-celebrate-tag">Dosti safe, hisaab clear ✨</p>
     </div>`;
   document.body.appendChild(el);
