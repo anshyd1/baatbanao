@@ -178,7 +178,7 @@ body{
 /* Form elements */
 .field-label{ font-size:13px; font-weight:800; color:var(--text-brown); margin-bottom:6px; display:block; }
 .field-block{ display:flex; flex-direction:column; gap:6px; }
-input[type=text], input[type=number], textarea, select{
+input[type=text], input[type=number], input[type=tel], textarea, select{
   width:100%; padding:13px 16px; border-radius:16px; border:1px solid var(--border-soft);
   background:var(--card-cream); font-family:inherit; font-size:14px; font-weight:600; color:var(--text-main);
   outline:none;
@@ -222,6 +222,7 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 
 /* Safety banner */
 .safety-banner{ background:#FFF0C7; border:1px solid #F0DFCF; color:#9A6810; border-radius:14px; padding:12px 14px; font-size:12.5px; font-weight:700; }
+#vasooli-output{ scroll-margin-top:14px; }
 
 /* Khata */
 .summary-card{ background:linear-gradient(135deg,var(--coral) 0%, var(--coral-2) 100%); border-radius:20px; padding:18px 20px; color:#fff; box-shadow:0 15px 25px rgba(232,89,75,0.25); }

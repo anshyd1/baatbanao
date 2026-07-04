@@ -206,7 +206,7 @@ function viewHome(){
   const latestPending = state.khata.find(k => k.status === 'pending');
   return `
     <div class="hero-greeting">
-      <h1>Namaste! 🙏<br/>Aaj kya likhna hai?</h1>
+      <h1>Namaste! 🙏<br/>Payment reminder banao</h1>
       ${MASCOT}
     </div>
 
@@ -214,41 +214,35 @@ function viewHome(){
       <img class="hero-banner-img" src="assets/vasooli-hero-banner.webp" alt="" loading="eager" decoding="async" fetchpriority="high"/>
       <div class="hero-card-content">
         <h2>Vasooli Mode 💸</h2>
-        <p>Paisa bhi wapas, rishta bhi safe 😄</p>
-        <span class="hero-cta-pill">Shuru karo →</span>
+        <p>Naam optional hai — amount daalo, WhatsApp-ready message lo.</p>
+        <span class="hero-cta-pill">Message banao →</span>
       </div>
     </button>
 
-    <div class="secondary-row">
-      <button class="sec-card" onclick="showToast('Business Reply — Coming soon 💼')">
-        <h3>Business<br/>Reply 💼</h3>
-        <p>Draft professional polite replies</p>
-      </button>
-      <button class="sec-card" onclick="showToast('Masti Message — Coming soon 😄')">
-        <h3>Masti<br/>Message 😄</h3>
-        <p>Fun chat &amp; sticker ideas</p>
-      </button>
-    </div>
-
     <button class="input-pill" onclick="navigate('vasooli')">
-      <span>Bolo ya type karo...</span>
-      <div class="mic-btn">${ICONS.mic}</div>
+      <span>Amount + tone select karke reminder banao...</span>
+      <div class="mic-btn">→</div>
     </button>
 
-    <div class="chip-row" id="home-lang-chips">
-      ${['Hinglish','Hindi','Bhojpuri','English'].map(l => `
-        <div class="chip ${state.settings.defaultLanguage===l?'active':''}" onclick="setDefaultLanguage('${l}')">${l}</div>
-      `).join('')}
+    <div class="secondary-row">
+      <button class="sec-card" onclick="navigate('vasooli')">
+        <h3>Polite<br/>Reminder 🙏</h3>
+        <p>Customer/client ke liye professional payment follow-up.</p>
+      </button>
+      <button class="sec-card" onclick="navigate('khata')">
+        <h3>Udhaar<br/>Khata 📒</h3>
+        <p>Pending entries save karo aur repeat reminder bhejo.</p>
+      </button>
     </div>
 
     ${latestPending ? `
     <div class="khata-strip" onclick="navigate('khata')">
-      <div class="khata-title"><span>Khata</span>${ICONS.bell}</div>
-      <div class="khata-row">📒 <b>${latestPending.name}</b> — <span class="amt">${fmtMoney(latestPending.amount)}</span> pending — Remind karo</div>
+      <div class="khata-title"><span>Latest pending</span>${ICONS.bell}</div>
+      <div class="khata-row">📒 <b>${escapeHtml(latestPending.name)}</b> — <span class="amt">${fmtMoney(latestPending.amount)}</span> pending — Remind karo</div>
     </div>` : `
     <div class="khata-strip" onclick="navigate('khata')">
       <div class="khata-title"><span>Khata</span>${ICONS.bell}</div>
-      <div class="khata-row">Koi pending nahi hai. Sab clear! ✅</div>
+      <div class="khata-row">Koi pending nahi hai. Pehla reminder save karo ✅</div>
     </div>`}
   `;
 }
@@ -277,22 +271,22 @@ function viewVasooli(){
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
       <h1>Vasooli Mode 💸</h1>
     </div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, phone, amount aur language select karo — WhatsApp-ready reminder milega.</p>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Professional flow: sirf amount required hai. Naam/number optional — direct WhatsApp bhejne ke liye number daalein.</p>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block">
-        <label class="field-label">Naam</label>
-        <input type="text" id="f-name" placeholder="Ramesh bhai" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
+        <label class="field-label">Amount <span style="color:var(--coral);">*</span></label>
+        <input type="number" id="f-amount" inputmode="decimal" placeholder="2500" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
       </div>
 
       <div class="field-block">
-        <label class="field-label">WhatsApp Number (optional, direct chat open karne ke liye)</label>
-        <input type="tel" id="f-phone" placeholder="9876543210 (10 digits)" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
+        <label class="field-label">Naam (optional)</label>
+        <input type="text" id="f-name" placeholder="Ramesh bhai / Customer" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
       </div>
 
       <div class="field-block">
-        <label class="field-label">Amount</label>
-        <input type="number" id="f-amount" placeholder="2500" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)"/>
+        <label class="field-label">WhatsApp Number (optional)</label>
+        <input type="tel" id="f-phone" inputmode="numeric" placeholder="9876543210" value="${escapeHtml(s.phone)}" oninput="updateForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="13"/>
       </div>
 
       <div class="field-block">
@@ -326,7 +320,7 @@ function viewVasooli(){
 
     <button class="primary-btn" onclick="handleGenerate()">Message Banao ✨</button>
 
-    <div class="safety-banner">BaatBanao sirf respectful reminders banata hai. Message bhejne se pehle check/edit kar lein.</div>
+    <div class="safety-banner">Tip: Naam blank chhodoge toh message “Bhai/Customer” style mein banega. Message bhejne se pehle check/edit kar lein.</div>
 
     <div id="vasooli-output"></div>
   `;
@@ -342,9 +336,25 @@ function updateForm(field, value){
 }
 
 function handleGenerate(){
-  const s = state.vasooliForm;
-  if(!s.name || !s.name.trim()){ showToast('Naam daalna zaroori hai'); return; }
-  if(!s.amount || Number(s.amount) <= 0){ showToast('Sahi amount daalein'); return; }
+  const s = state.vasooliForm || {};
+  const amount = Number(String(s.amount || '').replace(/,/g, ''));
+  if(!amount || amount <= 0){ showToast('Amount required hai — jaise 2500'); return; }
+
+  // Naam optional rakha hai: user amount daal ke turant message bana sake.
+  // Isse mobile par “button kaam nahi kar raha” wali confusion nahi hoti.
+  const cleanPhone = s.phone ? String(s.phone).replace(/[^0-9]/g, '') : '';
+  if(cleanPhone && !(cleanPhone.length === 10 || cleanPhone.length === 12)){
+    showToast('WhatsApp number 10 digit daalo, ya blank chhod do');
+    return;
+  }
+
+  const formData = {
+    ...s,
+    name: (s.name && s.name.trim()) ? s.name.trim() : 'Bhai',
+    amount,
+    phone: cleanPhone
+  };
+  state.vasooliForm = formData;
 
   const limitCheck = bbCanGenerate();
   if (!limitCheck.allowed){
@@ -353,7 +363,7 @@ function handleGenerate(){
     return;
   }
 
-  const combinedText = (s.name||'') + ' ' + (s.note||'');
+  const combinedText = (formData.name||'') + ' ' + (formData.note||'');
   const outputDiv = document.getElementById('vasooli-output');
 
   outputDiv.innerHTML = `
@@ -368,16 +378,16 @@ function handleGenerate(){
     let unsafeNotice = '';
     if(isUnsafe(combinedText)){
       unsafeNotice = `<div class="safety-banner">Gaali ke bina bhi strong message ban sakta hai. Yeh respectful version try karein:</div>`;
-      messages = [{ label:'Strong but Respectful', text: safeAlternative(s.name, s.amount) }];
+      messages = [{ label:'Strong but Respectful', text: safeAlternative(formData.name, formData.amount) }];
     } else {
-      messages = generateMessages(s);
+      messages = generateMessages(formData);
     }
 
     // save to history
     messages.forEach(m => {
       state.history.unshift({
-        id: uid(), message:m.text, name:s.name, amount:Number(s.amount)||0,
-        language:s.language, tone:m.label, action:'generated', copied:false, shared:false,
+        id: uid(), message:m.text, name:formData.name, amount:Number(formData.amount)||0,
+        language:formData.language, tone:m.label, action:'generated', copied:false, shared:false,
         createdAt: Date.now()
       });
     });
@@ -394,9 +404,10 @@ function handleGenerate(){
       ${unsafeNotice}
       ${limitNotice}
       <div class="section-title">Ready Messages</div>
-      ${messages.map((m,i) => outputCard(m, i, s)).join('')}
+      ${messages.map((m,i) => outputCard(m, i, formData)).join('')}
     `;
-  }, 700);
+    setTimeout(()=> outputDiv.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+  }, 500);
 }
 
 function outputCard(m, idx, formSnapshot){
@@ -405,7 +416,7 @@ function outputCard(m, idx, formSnapshot){
   return `
     <div class="output-card">
       <span class="tag">${m.label}</span>
-      <textarea id="${taId}" rows="4">${m.text}</textarea>
+      <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
@@ -441,7 +452,7 @@ function saveOutputToKhata(m, formSnapshot, taId){
   const ta = document.getElementById(taId);
   const entry = {
     id: uid(),
-    name: formSnapshot.name || 'Unknown',
+    name: formSnapshot.name || 'Bhai',
     phone: formSnapshot.phone || '',
     amount: Number(formSnapshot.amount) || 0,
     relation: formSnapshot.relation || 'General',
