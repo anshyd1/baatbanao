@@ -216,6 +216,8 @@ const MASCOT = `<img class="mascot-img" src="assets/mascot-coin.webp" alt="BaatB
    =========================================================== */
 function viewHome(){
   const latestPending = state.khata.find(k => k.status === 'pending');
+  const pendingCount = state.khata.filter(k => k.status === 'pending').length;
+  const pendingTotal = state.khata.filter(k => k.status === 'pending').reduce((sum,k)=>sum + (hasValidAmount(k.amount) ? Number(k.amount) : 0), 0);
   return `
     <div class="hero-greeting">
       <h1>Namaste! 🙏<br/>Payment reminder banao</h1>
@@ -226,15 +228,20 @@ function viewHome(){
       <img class="hero-banner-img" src="assets/vasooli-hero-banner.webp" alt="" loading="eager" decoding="async" fetchpriority="high"/>
       <div class="hero-card-content">
         <h2>Vasooli Mode 💸</h2>
-        <p>Naam optional hai — amount daalo, WhatsApp-ready message lo.</p>
+        <p>Naam/amount optional — WhatsApp-ready payment reminder lo.</p>
         <span class="hero-cta-pill">Message banao →</span>
       </div>
     </button>
 
     <button class="input-pill" onclick="navigate('vasooli')">
-      <span>Amount + tone select karke reminder banao...</span>
+      <span>Naam, number ya sirf tone se reminder banao...</span>
       <div class="mic-btn">→</div>
     </button>
+
+    <div class="mini-stats">
+      <div><b>${pendingCount}</b><span>Pending</span></div>
+      <div><b>${pendingTotal ? fmtMoney(pendingTotal) : 'No amount'}</b><span>Total</span></div>
+    </div>
 
     <div class="secondary-row">
       <button class="sec-card" onclick="navigate('vasooli')">
@@ -384,7 +391,7 @@ function normalizeWhatsAppPhone(raw){
   return v;
 }
 
-async function pickPhoneContact(){
+async function pickPhoneContact(target='vasooli'){
   if(!('contacts' in navigator) || !navigator.contacts.select){
     showToast('Contact picker is browser mein supported nahi hai. Number manually paste karo.');
     return;
@@ -393,15 +400,27 @@ async function pickPhoneContact(){
     const contacts = await navigator.contacts.select(['name','tel'], { multiple:false });
     const c = contacts && contacts[0];
     if(!c || !c.tel || !c.tel.length){ showToast('Is contact mein number nahi mila'); return; }
-    const phone = c.tel[0];
+    const phone = c.tel[0].replace(/[^0-9+]/g,'');
     const name = c.name && c.name[0] ? c.name[0] : '';
-    updateForm('phone', phone.replace(/[^0-9+]/g,''));
-    const phoneEl = document.getElementById('f-phone');
-    if(phoneEl) phoneEl.value = state.vasooliForm.phone;
-    if(name && (!state.vasooliForm.name || !state.vasooliForm.name.trim())){
-      updateForm('name', name);
-      const nameEl = document.getElementById('f-name');
-      if(nameEl) nameEl.value = name;
+
+    if(target === 'khata'){
+      updateKhataForm('phone', phone);
+      const phoneEl = document.getElementById('kf-phone');
+      if(phoneEl) phoneEl.value = state.khataForm.phone;
+      if(name && (!state.khataForm.name || !state.khataForm.name.trim())){
+        updateKhataForm('name', name);
+        const nameEl = document.getElementById('kf-name');
+        if(nameEl) nameEl.value = name;
+      }
+    } else {
+      updateForm('phone', phone);
+      const phoneEl = document.getElementById('f-phone');
+      if(phoneEl) phoneEl.value = state.vasooliForm.phone;
+      if(name && (!state.vasooliForm.name || !state.vasooliForm.name.trim())){
+        updateForm('name', name);
+        const nameEl = document.getElementById('f-name');
+        if(nameEl) nameEl.value = name;
+      }
     }
     showToast('Contact select ho gaya ✅');
   }catch(e){
@@ -546,8 +565,130 @@ function saveOutputToKhata(m, formSnapshot, taId){
   showToast('Khata mein save ho gaya 📒');
 }
 
+function defaultKhataForm(){
+  return {
+    _editId:'', name:'', phone:'', amount:'', relation:'Dost', status:'pending',
+    language: state.settings.defaultLanguage || 'Hinglish',
+    tone: state.settings.defaultTone || 'Friendly', note:''
+  };
+}
+
+function openKhataForm(id=''){
+  const existing = id ? state.khata.find(k => k.id === id) : null;
+  state.khataForm = existing ? {
+    _editId: existing.id,
+    name: existing.name || '', phone: existing.phone || '', amount: existing.amount || '',
+    relation: existing.relation || 'Dost', status: existing.status || 'pending',
+    language: existing.language || state.settings.defaultLanguage || 'Hinglish',
+    tone: existing.tone || state.settings.defaultTone || 'Friendly', note: existing.note || ''
+  } : defaultKhataForm();
+  navigate('khata-form');
+}
+
+function viewKhataForm(){
+  const f = state.khataForm || defaultKhataForm();
+  state.khataForm = f;
+  const isEdit = !!f._editId;
+  const relations = ['Dost','Customer','Client','Student/Parent','Tenant','Shop Khata','Relative','General'];
+  const languages = ['Hinglish','Hindi','Bhojpuri','English'];
+  const tones = ['Friendly','Polite','Funny','Strong'];
+  return `
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button>
+      <h1>${isEdit ? 'Edit Khata' : 'Add Khata'}</h1>
+    </div>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, phone, amount sab optional hain. Number hoga toh direct WhatsApp khulega.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block">
+        <label class="field-label">Naam (optional)</label>
+        <input type="text" id="kf-name" placeholder="Ramesh bhai / Customer" value="${escapeHtml(f.name)}" oninput="updateKhataForm('name', this.value)"/>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Amount (optional)</label>
+        <input type="number" id="kf-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(f.amount)}" oninput="updateKhataForm('amount', this.value)"/>
+      </div>
+      <div class="field-block">
+        <label class="field-label">WhatsApp Number (optional)</label>
+        <div class="phone-row">
+          <input type="tel" id="kf-phone" inputmode="tel" placeholder="+91 9876543210 / +971..." value="${escapeHtml(f.phone)}" oninput="updateKhataForm('phone', this.value.replace(/[^0-9+]/g,''))" maxlength="18"/>
+          <button type="button" class="ghost-btn contact-btn" onclick="pickPhoneContact('khata')">Contacts</button>
+        </div>
+        <small class="field-hint">India 10 digit chalega. International ke liye +country code lagao.</small>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Relation</label>
+        <select onchange="updateKhataForm('relation', this.value)">
+          ${relations.map(r => `<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block">
+        <label class="field-label">Language</label>
+        <div class="chip-row">${languages.map(l => `<div class="chip ${f.language===l?'active':''}" onclick="selectKhataOption('language','${l}',this)">${l}</div>`).join('')}</div>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Tone</label>
+        <div class="chip-row">${tones.map(t => `<div class="chip ${f.tone===t?'active':''}" onclick="selectKhataOption('tone','${t}',this)">${t}</div>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="field-block">
+      <label class="field-label">Note (optional)</label>
+      <textarea placeholder="Example: last month ka pending" oninput="updateKhataForm('note', this.value)">${escapeHtml(f.note)}</textarea>
+    </div>
+
+    <button class="primary-btn" onclick="saveKhataForm()">${isEdit ? 'Update Khata ✅' : 'Save Khata 📒'}</button>
+    ${isEdit ? `<button class="ghost-btn danger" onclick="deleteKhata('${f._editId}')">Delete Entry</button>` : ''}
+  `;
+}
+
+function updateKhataForm(field, value){
+  if(!state.khataForm) state.khataForm = defaultKhataForm();
+  state.khataForm[field] = value;
+}
+
+function selectKhataOption(field, value, el){
+  updateKhataForm(field, value);
+  if(el && el.parentElement){
+    el.parentElement.querySelectorAll('.chip').forEach(ch => ch.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+
+function saveKhataForm(){
+  const f = state.khataForm || defaultKhataForm();
+  const amountRaw = String(f.amount || '').trim();
+  const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
+  if(amountRaw && (!amount || amount <= 0)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
+  const phone = normalizeWhatsAppPhone(f.phone);
+  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do'); return; }
+
+  const entry = {
+    id: f._editId || uid(),
+    name: (f.name && f.name.trim()) ? f.name.trim() : 'Bhai',
+    phone: phone || '', amount: amount || '', relation: f.relation || 'General',
+    status: f.status || 'pending', language: f.language || 'Hinglish', tone: f.tone || 'Friendly',
+    note: f.note || '', message: '',
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+
+  if(f._editId){
+    const idx = state.khata.findIndex(k => k.id === f._editId);
+    if(idx !== -1) state.khata[idx] = { ...state.khata[idx], ...entry, createdAt: state.khata[idx].createdAt || Date.now(), updatedAt: Date.now() };
+  } else {
+    state.khata.unshift(entry);
+  }
+  persist();
+  state.khataForm = null;
+  showToast(f._editId ? 'Khata update ho gaya ✅' : 'Khata save ho gaya 📒');
+  navigate('khata');
+}
+
 function viewKhata(){
-  const total = state.khata.filter(k=>k.status==='pending').reduce((a,b)=>a+Number(b.amount||0),0);
+  const total = state.khata.filter(k=>k.status==='pending').reduce((a,b)=>a+(hasValidAmount(b.amount) ? Number(b.amount) : 0),0);
   const pendingCount = state.khata.filter(k=>k.status==='pending').length;
   const filter = state.khataFilter || 'all';
   const list = state.khata.filter(k => filter==='all' ? true : k.status===filter);
@@ -559,11 +700,14 @@ function viewKhata(){
     </div>
 
     <div class="summary-card">
-      <div class="amt">${fmtMoney(total)}</div>
+      <div class="amt">${total ? fmtMoney(total) : 'Amount optional'}</div>
       <div class="sub">${pendingCount} pending payment${pendingCount===1?'':'s'}</div>
     </div>
 
-    <button class="primary-btn" onclick="navigate('vasooli')">Reminder Message Banao 🔔</button>
+    <div class="btn-row">
+      <button class="primary-btn" style="flex:1;" onclick="navigate('vasooli')">Reminder Banao 🔔</button>
+      <button class="ghost-btn save" style="flex:1;" onclick="openKhataForm()">+ Add Khata</button>
+    </div>
 
     <div class="chip-row">
       ${['all','pending','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':'Paid'}</div>`).join('')}
@@ -593,6 +737,7 @@ function khataCard(k){
         <div class="btn-row" style="margin-top:0;">
           ${k.status==='pending' ? `<button class="ghost-btn" onclick="remindKhata('${k.id}')">🔔 Remind</button>
           <button class="ghost-btn save" onclick="markPaid('${k.id}')">${ICONS.check} Paid</button>` : ''}
+          <button class="ghost-btn" onclick="openKhataForm('${k.id}')">Edit</button>
           <button class="ghost-btn danger" onclick="deleteKhata('${k.id}')">${ICONS.trash}</button>
         </div>
       </div>
@@ -644,9 +789,10 @@ function showPaidCelebration(name, amount){
 }
 
 function deleteKhata(id){
+  if(!confirm('Ye khata entry delete karni hai?')) return;
   state.khata = state.khata.filter(x=>x.id!==id);
   persist();
-  renderApp();
+  if(state.route === 'khata-form') navigate('khata'); else renderApp();
   showToast('Entry delete ho gayi');
 }
 
@@ -944,6 +1090,7 @@ const ROUTES = {
   home: viewHome,
   vasooli: viewVasooli,
   khata: viewKhata,
+  'khata-form': viewKhataForm,
   history: viewHistory,
   profile: viewProfile,
   settings: viewSettings,
