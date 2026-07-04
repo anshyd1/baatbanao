@@ -649,6 +649,11 @@ function whatsappOutput(taId){
   openWhatsAppWithText(ta.value, state.vasooliForm && state.vasooliForm.phone);
 }
 
+function whatsappGeneric(taId){
+  const ta = document.getElementById(taId);
+  openWhatsAppWithText(ta ? ta.value : '', '');
+}
+
 function whatsappHistory(id, taId){
   const ta = document.getElementById(taId);
   const h = state.history.find(x => x.id === id);
@@ -676,6 +681,159 @@ function saveOutputToKhata(m, formSnapshot, taId){
   state.khata.unshift(entry);
   persist();
   showToast('Khata mein save ho gaya 📒');
+}
+
+
+function genericOutputCard(m, idx, prefix){
+  const taId = `${prefix}-${idx}`;
+  return `
+    <div class="output-card">
+      <span class="tag">${escapeHtml(m.label)}</span>
+      <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+      <div class="btn-row">
+        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
+        <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp</button>
+      </div>
+    </div>
+  `;
+}
+
+function defaultBusinessForm(){
+  return { context:'', language: state.settings.defaultLanguage || 'Hinglish', tone:'Professional', relation:'Customer' };
+}
+function updateBusinessForm(field, value){
+  if(!state.businessForm) state.businessForm = defaultBusinessForm();
+  state.businessForm[field] = value;
+}
+function selectBusinessOption(field, value, el){
+  updateBusinessForm(field, value);
+  if(el && el.parentElement){
+    el.parentElement.querySelectorAll('.chip').forEach(ch => ch.classList.remove('active'));
+    el.classList.add('active');
+  }
+}
+function generateBusinessReplies({context, language, tone, relation}){
+  const lang = language || 'Hinglish';
+  const rel = relation || 'Customer';
+  const hasContext = context && context.trim();
+  const ref = hasContext ? 'Aapka message receive ho gaya hai.' : 'Aapke message ke liye dhanyavaad.';
+  const bank = {
+    Hinglish: {
+      Professional: [
+        `Namaste, ${ref} Main isko check karke aapko jaldi update karta/karti hoon. Dhanyavaad 🙏`,
+        `Hello, thanks for reaching out. Main details verify karke aapko next update share kar dunga/dungi.`,
+        `Namaste ${rel}, aapki baat note kar li hai. Main is par kaam karke aaj hi update dene ki koshish karunga/karungi.`
+      ],
+      Short: [`Noted, main check karke update karta/karti hoon.`, `Received. Jaldi update share karta/karti hoon.`, `Okay, isko check karke reply deta/deti hoon.`],
+      Apology: [`Sorry for the inconvenience. Main issue check karke jaldi resolve/update karta/karti hoon.`, `Maafi chahta/chahti hoon. Aapki baat note kar li hai, main priority par check kar raha/rahi hoon.`, `Sorry, delay ke liye khed hai. Main abhi check karke update deta/deti hoon.`]
+    },
+    Hindi: {
+      Professional: [`Namaste, aapka sandesh prapt ho gaya hai. Main janch karke jald update dunga/dungi. Dhanyavaad 🙏`, `Namaste ${rel}, aapki baat note kar li hai. Main is par kaam karke aaj update dene ki koshish karunga/karungi.`, `Dhanyavaad. Main details verify karke agla update share karunga/karungi.`],
+      Short: [`Note kar liya, janch karke update dunga/dungi.`, `Sandesh prapt hua. Jaldi update share karunga/karungi.`, `Theek hai, main check karke batata/batati hoon.`],
+      Apology: [`Asuvidha ke liye khed hai. Main issue check karke jald update dunga/dungi.`, `Maafi chahta/chahti hoon. Main isko priority par check kar raha/rahi hoon.`, `Delay ke liye khed hai. Main abhi janch karke update deta/deti hoon.`]
+    },
+    Bhojpuri: {
+      Professional: [`Pranam, aapke message mil gail ba. Hum check karke jaldi update deb. Dhanyavaad 🙏`, `${rel} ji, aapke baat note kar lele bani. Jaldi update deb.`, `Dhanyavaad. Details verify karke agla update share karab.`],
+      Short: [`Note kar lele bani, check karke update deb.`, `Message mil gail ba. Jaldi batayib.`, `Theek ba, check karke reply deb.`],
+      Apology: [`Asuvidha ke liye khed ba. Hum issue check karke jaldi update deb.`, `Maafi chaht bani. Isko priority par check karat bani.`, `Delay ke liye khed ba. Abhi check karke batayib.`]
+    },
+    English: {
+      Professional: [`Hi, thanks for reaching out. I’ve received your message and will check the details before sharing an update.`, `Hello, noted. I’ll review this and get back to you shortly.`, `Thank you for your message. I’ll verify the details and share the next update as soon as possible.`],
+      Short: [`Noted, I’ll check and update you shortly.`, `Received. I’ll get back to you soon.`, `Okay, I’ll review this and reply shortly.`],
+      Apology: [`Sorry for the inconvenience. I’ll check this on priority and update you shortly.`, `Apologies for the delay. I’m checking this now and will get back to you soon.`, `Sorry about that. I’ll review the issue and share an update as soon as possible.`]
+    }
+  };
+  const toneKey = tone === 'Polite' ? 'Professional' : (tone || 'Professional');
+  const pool = (bank[lang] && (bank[lang][toneKey] || bank[lang].Professional)) || bank.Hinglish.Professional;
+  return pool.map(text => ({ label: tone || 'Professional', text }));
+}
+function viewBusinessReply(){
+  const f = state.businessForm || defaultBusinessForm();
+  state.businessForm = f;
+  const languages = ['Hinglish','Hindi','Bhojpuri','English'];
+  const tones = ['Professional','Short','Apology'];
+  const relations = ['Customer','Client','Team','Vendor','Student/Parent','General'];
+  return `
+    <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Business Reply 💼</h1></div>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Professional reply draft karo — customer/client ko polite response bhejne ke liye.</p>
+    <div class="field-block">
+      <label class="field-label">Incoming message / context (optional)</label>
+      <textarea placeholder="Customer ne kya bola? Paste ya short note..." oninput="updateBusinessForm('context', this.value)">${escapeHtml(f.context)}</textarea>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block"><label class="field-label">Relation</label><select onchange="updateBusinessForm('relation', this.value)">${relations.map(r=>`<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}</select></div>
+      <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectBusinessOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
+      <div class="field-block"><label class="field-label">Tone</label><div class="chip-row">${tones.map(t=>`<div class="chip ${f.tone===t?'active':''}" onclick="selectBusinessOption('tone','${t}',this)">${t}</div>`).join('')}</div></div>
+    </div>
+    <button class="primary-btn" onclick="handleBusinessGenerate()">Reply Banao ✨</button>
+    <div class="safety-banner">Professional tip: reply bhejne se pehle name/order/detail manually add kar sakte ho.</div>
+    <div id="business-output"></div>
+  `;
+}
+function handleBusinessGenerate(){
+  const f = state.businessForm || defaultBusinessForm();
+  const out = document.getElementById('business-output');
+  const messages = generateBusinessReplies(f);
+  out.innerHTML = `<div class="section-title">Ready Replies</div>${messages.map((m,i)=>genericOutputCard(m,i,'biz-text')).join('')}`;
+  setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+}
+
+function defaultMastiForm(){ return { name:'', language: state.settings.defaultLanguage || 'Hinglish', mood:'Friendly' }; }
+function updateMastiForm(field, value){ if(!state.mastiForm) state.mastiForm = defaultMastiForm(); state.mastiForm[field] = value; }
+function selectMastiOption(field, value, el){
+  updateMastiForm(field, value);
+  if(el && el.parentElement){ el.parentElement.querySelectorAll('.chip').forEach(ch=>ch.classList.remove('active')); el.classList.add('active'); }
+}
+function generateMastiMessages({name, language, mood}){
+  const n = (name && name.trim()) ? name.trim() : 'Dost';
+  const lang = language || 'Hinglish';
+  const bank = {
+    Friendly:{
+      Hinglish:[`Oye ${n}, bas yaad aa gaya tu 😄 Kya haal hai?`, `${n}, chai pending hai aur gossip bhi. Kab mil raha hai? ☕`, `Hello ${n}! Aaj mood fresh hai, tu bhi smile kar 😄`],
+      Hindi:[`${n}, bas aapki yaad aa gayi 😄 Kaise ho?`, `${n}, chai aur baatein pending hain. Kab mil rahe hain? ☕`, `Namaste ${n}! Aaj muskurao, din achha jayega 😄`],
+      Bhojpuri:[`${n}, bas tohar yaad aa gail 😄 Ka haal ba?`, `${n}, chai aur baat pending ba. Kab milat bani? ☕`, `Pranam ${n}! Aaj muskura da, din mast jaai 😄`],
+      English:[`Hey ${n}, just thought of you 😄 How’s it going?`, `${n}, coffee and gossip are pending. When are we meeting? ☕`, `Hello ${n}! Smile today, it suits you 😄`]
+    },
+    Birthday:{
+      Hinglish:[`Happy Birthday ${n}! Khush raho, mast raho, party pending rahegi 🎂`, `${n}, janamdin mubarak! Aaj ka din full dhamaka ho 🎉`, `Birthday wishes ${n}! Cake tumhara, party hamari 😄🎂`],
+      Hindi:[`Janamdin mubarak ${n}! Khush raho aur hamesha muskurate raho 🎂`, `${n}, aapka din bahut shubh aur mast ho 🎉`, `Happy Birthday ${n}! Bhagwan aapko bahut khushiyan de 🎂`],
+      Bhojpuri:[`Janamdin mubarak ${n}! Khush raha, mast raha 🎂`, `${n}, aaj ke din full dhamaka ho 🎉`, `Happy Birthday ${n}! Cake tohar, party hamar 😄🎂`],
+      English:[`Happy Birthday ${n}! Stay happy, stay awesome 🎂`, `${n}, wishing you a day full of smiles and good vibes 🎉`, `Birthday wishes ${n}! Your cake, our party 😄🎂`]
+    },
+    Sorry:{
+      Hinglish:[`${n}, sorry yaar. Galti ho gayi, mood thoda theek kar lein? 🙏`, `${n}, maaf kar do. Next chai meri pakki ☕`, `Sorry ${n}, dil se. Baat ko yahin khatam karte hain?`],
+      Hindi:[`${n}, maaf kijiye. Galti ho gayi, dil se khed hai 🙏`, `${n}, sorry. Agli chai meri taraf se ☕`, `${n}, kripya maaf kar dein. Baat ko yahin theek karte hain.`],
+      Bhojpuri:[`${n}, maaf kari. Galti ho gail, dil se sorry 🙏`, `${n}, sorry. Agila chai hamar taraf se ☕`, `${n}, maaf kar da. Baat yahin theek kar le tani.`],
+      English:[`Sorry ${n}. My bad — hope we can fix this 🙏`, `${n}, apologies. Coffee is on me next time ☕`, `Sorry ${n}, sincerely. Let’s sort this out?`]
+    }
+  };
+  const moodKey = bank[mood] ? mood : 'Friendly';
+  const pool = (bank[moodKey][lang] || bank[moodKey].Hinglish);
+  return pool.map(text => ({ label:moodKey, text }));
+}
+function viewMastiMessage(){
+  const f = state.mastiForm || defaultMastiForm();
+  state.mastiForm = f;
+  const languages = ['Hinglish','Hindi','Bhojpuri','English'];
+  const moods = ['Friendly','Birthday','Sorry'];
+  return `
+    <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Masti Message 😄</h1></div>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Friends/family ke liye light, fun aur share-ready messages.</p>
+    <div class="field-block"><label class="field-label">Naam (optional)</label><input type="text" placeholder="Dost ka naam" value="${escapeHtml(f.name)}" oninput="updateMastiForm('name', this.value)"/></div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+      <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectMastiOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
+      <div class="field-block"><label class="field-label">Mood</label><div class="chip-row">${moods.map(m=>`<div class="chip ${f.mood===m?'active':''}" onclick="selectMastiOption('mood','${m}',this)">${m}</div>`).join('')}</div></div>
+    </div>
+    <button class="primary-btn" onclick="handleMastiGenerate()">Masti Message Banao ✨</button>
+    <div id="masti-output"></div>
+  `;
+}
+function handleMastiGenerate(){
+  const f = state.mastiForm || defaultMastiForm();
+  const out = document.getElementById('masti-output');
+  const messages = generateMastiMessages(f);
+  out.innerHTML = `<div class="section-title">Ready Messages</div>${messages.map((m,i)=>genericOutputCard(m,i,'masti-text')).join('')}`;
+  setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
 }
 
 function defaultKhataForm(){
@@ -1242,6 +1400,8 @@ function closeMenu(){
 const ROUTES = {
   home: viewHome,
   vasooli: viewVasooli,
+  business: viewBusinessReply,
+  masti: viewMastiMessage,
   khata: viewKhata,
   'khata-form': viewKhataForm,
   history: viewHistory,
