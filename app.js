@@ -530,20 +530,26 @@ function buildUpiLink(data={}){
   return params ? 'upi://pay?' + params.toString() : '';
 }
 function buildUpiWebLink(data={}){
-  const params = buildUpiParams(data);
-  if(!params) return '';
+  if(!canUseUpi()) return '';
+  const params = new URLSearchParams();
+  params.set('u', getSavedUpiId());
+  const displayName = getSavedUpiName();
+  if(displayName && displayName !== 'BaatBanao User') params.set('n', displayName);
+  if(hasValidAmount(data.amount)) params.set('a', String(Number(String(data.amount).replace(/,/g,''))));
   return `${location.origin}${location.pathname.replace(/index\.html$/,'')}pay.html?${params.toString()}`;
 }
 function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
   if(!state.settings.upiAttachEnabled || !canUseUpi()) return base;
+  const payLink = buildUpiWebLink(data);
+  if(!payLink) return base;
   const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}
 ` : '';
   return `${base}
 
 Payment option:
-${amountLine}UPI ID: ${getSavedUpiId()}
-Scan QR or pay with any UPI app.`;
+${amountLine}Pay here 👇
+${payLink}`;
 }
 function buildUpiLinkFromPayParams(pay={}){
   const pa = normalizeUpiId(pay.pa || '');
@@ -558,9 +564,14 @@ function buildUpiLinkFromPayParams(pay={}){
 }
 function parsePayParams(){
   const hash = (location.hash || '').replace(/^#/, '');
-  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : '';
+  const qs = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : location.search.replace(/^\?/, '');
   const p = new URLSearchParams(qs);
-  return { pa:p.get('pa')||'', pn:p.get('pn')||'', am:p.get('am')||'', tn:p.get('tn')||'' };
+  return {
+    pa:p.get('pa') || p.get('u') || '',
+    pn:p.get('pn') || p.get('n') || '',
+    am:p.get('am') || p.get('a') || '',
+    tn:p.get('tn') || p.get('t') || ''
+  };
 }
 function showUpiQr(data={}){
   if(!canUseUpi()){
@@ -1588,14 +1599,14 @@ function viewSettings(){
     <div class="field-block">
       <label class="field-label">Your UPI ID / VPA</label>
       <input type="text" placeholder="example@upi" value="${escapeHtml(s.upiId||'')}" oninput="updateSettingValue('upiId', this.value)"/>
-      <small class="field-hint">QR isi UPI ID par banega. Example: name@oksbi, mobile@paytm</small>
+      <small class="field-hint">Payment link aur QR isi UPI ID par banega. Example: name@oksbi, mobile@paytm</small>
     </div>
     <div class="field-block">
       <label class="field-label">UPI display name</label>
       <input type="text" placeholder="Your business/name" value="${escapeHtml(s.upiName||'')}" oninput="updateSettingValue('upiName', this.value)"/>
     </div>
     <div class="settings-item">
-      <span class="label">WhatsApp reminder mein UPI ID attach karo</span>
+      <span class="label">WhatsApp reminder mein payment link attach karo</span>
       <div class="toggle ${s.upiAttachEnabled?'on':''}" onclick="toggleSetting('upiAttachEnabled')"><div class="knob"></div></div>
     </div>
     <button class="ghost-btn" onclick="showUpiQr({note:'Test UPI QR'})">📲 Test UPI QR</button>
