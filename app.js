@@ -532,20 +532,18 @@ function buildUpiLink(data={}){
 function buildUpiWebLink(data={}){
   const params = buildUpiParams(data);
   if(!params) return '';
-  return `${location.origin}${location.pathname}#pay?${params.toString()}`;
+  return `${location.origin}${location.pathname.replace(/index\.html$/,'')}pay.html?${params.toString()}`;
 }
 function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
   if(!state.settings.upiAttachEnabled || !canUseUpi()) return base;
-  const webLink = buildUpiWebLink(data);
-  if(!webLink) return base;
   const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}
 ` : '';
   return `${base}
 
 Payment option:
 ${amountLine}UPI ID: ${getSavedUpiId()}
-Pay link: ${webLink}`;
+Scan QR or pay with any UPI app.`;
 }
 function buildUpiLinkFromPayParams(pay={}){
   const pa = normalizeUpiId(pay.pa || '');
@@ -592,9 +590,10 @@ function showUpiQr(data={}){
       </div>
       <div class="btn-row" style="margin-top:14px;">
         <button class="ghost-btn copy" onclick="copyUpiLink('${encodeURIComponent(upiLink)}')">Copy Link</button>
+        <button class="ghost-btn" onclick="shareUpiQr('${encodeURIComponent(upiLink)}','${encodeURIComponent(getSavedUpiName())}','${encodeURIComponent(amountText)}')">Share QR</button>
         <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI</button>
       </div>
-      <small class="field-hint" style="display:block;margin-top:10px;">QR image online service se render hota hai. UPI link app mein local generate hota hai.</small>
+      <small class="field-hint" style="display:block;margin-top:10px;">QR share karo ya UPI ID copy karke bhejo. WhatsApp message mein long link nahi bheja jayega.</small>
     </div>`;
   document.body.appendChild(el);
 }
@@ -604,6 +603,33 @@ function copyUpiLink(encoded){
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(link).then(()=>showToast('UPI link copied ✅')).catch(()=>showToast('Copy failed'));
   } else showToast('UPI link: ' + link);
+}
+async function shareUpiQr(encodedUpi, encodedName='', encodedAmount=''){
+  const upi = decodeURIComponent(encodedUpi || '');
+  const name = decodeURIComponent(encodedName || 'UPI Payment');
+  const amount = decodeURIComponent(encodedAmount || '');
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&margin=18&data=${encodeURIComponent(upi)}`;
+  const shareText = `${name}\n${amount ? amount + '\n' : ''}UPI QR / Pay link:\n${upi}`;
+  try{
+    if(navigator.share && navigator.canShare){
+      const res = await fetch(qrSrc);
+      const blob = await res.blob();
+      const file = new File([blob], 'baatbanao-upi-qr.png', { type: blob.type || 'image/png' });
+      if(navigator.canShare({ files:[file] })){
+        await navigator.share({ title:'UPI QR', text:shareText, files:[file] });
+        return;
+      }
+    }
+    if(navigator.share){
+      await navigator.share({ title:'UPI QR', text:shareText, url:qrSrc });
+      return;
+    }
+    window.open(qrSrc, '_blank');
+    showToast('QR image open ho gaya — share/download kar lo');
+  }catch(e){
+    window.open(qrSrc, '_blank');
+    showToast('QR image open ho gaya — share/download kar lo');
+  }
 }
 function showUpiQrForKhata(id){
   const k = state.khata.find(x=>x.id===id);
@@ -1562,14 +1588,14 @@ function viewSettings(){
     <div class="field-block">
       <label class="field-label">Your UPI ID / VPA</label>
       <input type="text" placeholder="example@upi" value="${escapeHtml(s.upiId||'')}" oninput="updateSettingValue('upiId', this.value)"/>
-      <small class="field-hint">QR aur UPI pay link isi ID par banega. Example: name@oksbi, mobile@paytm</small>
+      <small class="field-hint">QR isi UPI ID par banega. Example: name@oksbi, mobile@paytm</small>
     </div>
     <div class="field-block">
       <label class="field-label">UPI display name</label>
       <input type="text" placeholder="Your business/name" value="${escapeHtml(s.upiName||'')}" oninput="updateSettingValue('upiName', this.value)"/>
     </div>
     <div class="settings-item">
-      <span class="label">WhatsApp reminder mein UPI ID/link attach karo</span>
+      <span class="label">WhatsApp reminder mein UPI ID attach karo</span>
       <div class="toggle ${s.upiAttachEnabled?'on':''}" onclick="toggleSetting('upiAttachEnabled')"><div class="knob"></div></div>
     </div>
     <button class="ghost-btn" onclick="showUpiQr({note:'Test UPI QR'})">📲 Test UPI QR</button>
