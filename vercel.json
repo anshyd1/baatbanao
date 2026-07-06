@@ -1,0 +1,508 @@
+{
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/gt-vs-csk-memes-captions-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/gt-vs-rr-qualifier-2-viral-captions-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/gujarat-titans-captions-memes-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-2026-final-captions-english-international-cricket-fans.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-2026-final-predictions-memes-captions.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-2026-final-rcb-pbks-captions-memes.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-2026-opening-match-viral-captions.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/rcb-ipl-2026-champions-back-to-back-winning-story.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/rcb-ipl-2026-final-defending-champions-captions.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/rcb-trophy-for-the-lost-emotional-tribute-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/rcb-vs-gt-ipl-2026-final-preview-prediction.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/virat-kohli-ipl-final-captions-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-playoffs-captions-instagram.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/gt-vs-rr-qualifier-2-prediction-captions-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/rcb-vs-gt-toss-prediction-final-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ipl-2026-opening-match-captions.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/ipl-2026-final-captions-english-international-cricket-fans.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blogs/ipl-2026-final-predictions-memes-captions.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/shubman-gill-104-fastest-playoff-century-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/vaibhav-sooryavanshi-65-sixes-record-2026.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.captionstudio.in"
+        }
+      ],
+      "destination": "https://captionstudio.in/$1",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/earning.html",
+      "destination": "/earning.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/about.html",
+      "destination": "/about.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/contact.html",
+      "destination": "/contact.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/privacy.html",
+      "destination": "/privacy.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/terms.html",
+      "destination": "/terms.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/guide.html",
+      "destination": "/guide.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/relax.html",
+      "destination": "/relax.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/disclaimer.html",
+      "destination": "/disclaimer.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/support.html",
+      "destination": "/support.html",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/index.html",
+      "destination": "/:path",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/tools",
+      "destination": "/tools",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/tools/:rest*",
+      "destination": "/tools/:rest*",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/blog",
+      "destination": "/blog",
+      "permanent": true
+    },
+    {
+      "source": "/:path+/blog/:rest*",
+      "destination": "/blog/:rest*",
+      "permanent": true
+    },
+    {
+      "source": "/blog/category/captions.html",
+      "destination": "/blog/ultimate-instagram-captions.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/category/instagram-growth.html",
+      "destination": "/blog/instagram-growth-0-to-10k.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/category/shayari.html",
+      "destination": "/blog/english-vs-shayari-captions-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/category/cricket",
+      "destination": "/blog/womens-t20-world-cup-2026-captions-english.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/category/cricket/",
+      "destination": "/blog/womens-t20-world-cup-2026-captions-english.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/favicon.png",
+      "destination": "/favicon.png",
+      "permanent": true
+    },
+    {
+      "source": "/blog/attitude-captions-for-reels-2026.html",
+      "destination": "/blog/attitude-captions-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/best-hashtags-reels.html",
+      "destination": "/blog/trending-hashtags-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/data",
+      "destination": "/data/homepage-blogs.json",
+      "permanent": false
+    },
+    {
+      "source": "/data/",
+      "destination": "/data/homepage-blogs.json",
+      "permanent": false
+    },
+    {
+      "source": "/blog/blog",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/blog/",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/tools",
+      "destination": "/tools",
+      "permanent": true
+    },
+    {
+      "source": "/blog/tools/",
+      "destination": "/tools",
+      "permanent": true
+    },
+    {
+      "source": "/blog/guide.html",
+      "destination": "/guide.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/earning.html",
+      "destination": "/earning.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/about.html",
+      "destination": "/about.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/contact.html",
+      "destination": "/contact.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/support.html",
+      "destination": "/support.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/privacy.html",
+      "destination": "/privacy.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/terms.html",
+      "destination": "/terms.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/relax.html",
+      "destination": "/relax.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/sitemap.xml",
+      "destination": "/sitemap.xml",
+      "permanent": true
+    },
+    {
+      "source": "/blog/data",
+      "destination": "/data/homepage-blogs.json",
+      "permanent": true
+    },
+    {
+      "source": "/blog/mobikwik-loot-2026.html",
+      "destination": "/blog/instagram-reels-se-paise-kaise-kamaye-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/best-hashtags-for-reels-2026.html",
+      "destination": "/blog/trending-hashtags-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/birthday-captions-2026.html",
+      "destination": "/blog/english-vs-shayari-captions-2026.html#birthday",
+      "permanent": true
+    },
+    {
+      "source": "/blog/ai-content-creation.html",
+      "destination": "/blog/ai-tools-instagram-reach.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/hashtag-strategy.html",
+      "destination": "/blog/trending-hashtags-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/instagram-bio-ideas.html",
+      "destination": "/blog/instagram-bio-ideas-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/short-attitude-captions-one-word.html",
+      "destination": "/blog/100-killer-attitude-captions-hinglish-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/viral-attitude-trendy-captions-hacks-2026.html",
+      "destination": "/blog/100-killer-attitude-captions-hinglish-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/how-to-make-reels-viral.html",
+      "destination": "/blog/viral-reels-strategy-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/viral-reels-ideas.html",
+      "destination": "/blog/viral-captions-for-reels-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/capcut-reels-editing-guide.html",
+      "destination": "/guide.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/how-to-make-youtube-shorts.html",
+      "destination": "/guide.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/biggest-money-loot-offers-april-2026.html",
+      "destination": "/blog/instagram-reels-se-paise-kaise-kamaye-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/professional-development-guide/",
+      "destination": "/blog/professional-development-guide.html",
+      "permanent": true
+    },
+    {
+      "source": "/favicon.jpg",
+      "destination": "/favicon.png",
+      "permanent": true
+    },
+    {
+      "source": "/blog/best-earning-apps-students-2026.html",
+      "destination": "/blog/instagram-reels-se-paise-kaise-kamaye-2026.html",
+      "permanent": true
+    },
+    {
+      "source": "/blog/sad-shayari-hindi-2026.html",
+      "destination": "/blog/sad-shayari-breakup-captions-hindi-2026.html",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), browsing-topics=()"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://*.googletagmanager.com https://*.google-analytics.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.googletagservices.com https://*.doubleclick.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://captionstudio.in https://www.captionstudio.in https://images.unsplash.com https://www.google-analytics.com https://*.googletagmanager.com https://*.google-analytics.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.googleusercontent.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.google-analytics.com https://*.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://formspree.io https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; frame-src 'self' https://drive.google.com https://t.me https://www.youtube.com https://www.youtube-nocookie.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://formspree.io; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/data/(.*).json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, s-maxage=300, must-revalidate"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, s-maxage=300, stale-while-revalidate=604800, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).(jpg|jpeg|png|gif|webp|avif|svg|ico)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, s-maxage=300, stale-while-revalidate=604800, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap(.*).xml",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/playbook",
+      "destination": "/playbook.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/404.html"
+    }
+  ]
+}
