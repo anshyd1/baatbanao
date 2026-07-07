@@ -481,3 +481,34 @@ img[width][height]{ height:auto; max-width:100%; }
   0%,100%{ box-shadow:0 0 0 0 rgba(34,197,94,0.5); }
   50%{ box-shadow:0 0 0 5px rgba(34,197,94,0); }
 }
+
+/* ===========================================================
+   v1.1.0 — Next Level Khata + Relationship Safe Score
+   =========================================================== */
+input[type=date]{
+  width:100%; padding:13px 16px; border-radius:16px; border:1px solid var(--border-soft);
+  background:var(--card-cream); font-family:inherit; font-size:14px; font-weight:600; color:var(--text-main);
+  outline:none;
+}
+input[type=date]:focus{ border-color:var(--coral); }
+.safe-score{
+  align-self:flex-start;
+  background:#EFFFF3;
+  color:#247C32;
+  border:1px solid #CBEFD0;
+  border-radius:12px;
+  padding:6px 10px;
+  font-size:11.5px;
+  font-weight:800;
+  line-height:1.25;
+}
+.status-badge.partial{ background:#FFEACC; color:#A65300; }
+.status-badge.overdue{ background:#FFE7E3; color:#B23A2C; }
+.list-card.overdue-card{
+  border-color:#FFD3CB;
+  box-shadow:0 8px 18px rgba(178,58,44,0.10);
+}
+@media(max-width:420px){
+  .safe-score{ font-size:11px; }
+  .btn-row .ghost-btn{ min-width:86px; }
+}

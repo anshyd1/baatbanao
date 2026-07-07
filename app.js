@@ -55,6 +55,78 @@ function timeAgo(ts){
   return day + ' din pehle';
 }
 
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function parseDateOnly(v){
+  if(!v) return null;
+  const d = new Date(String(v) + 'T23:59:59');
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+function isOverdue(k){
+  if(!k || k.status === 'paid') return false;
+  const d = parseDateOnly(k.dueDate);
+  return !!(d && d.getTime() < Date.now());
+}
+function outstandingAmount(k){
+  const amount = hasValidAmount(k && k.amount) ? Number(String(k.amount).replace(/,/g,'')) : 0;
+  const paid = hasValidAmount(k && k.paidAmount) ? Number(String(k.paidAmount).replace(/,/g,'')) : 0;
+  return Math.max(amount - paid, 0);
+}
+function statusText(k){
+  if(!k) return 'Pending';
+  if(k.status === 'paid') return 'Paid ✅';
+  if(k.status === 'partial') return 'Partial 🟠';
+  if(isOverdue(k)) return 'Overdue 🔴';
+  return 'Pending';
+}
+function statusClass(k){
+  if(!k) return 'pending';
+  if(k.status === 'paid') return 'paid';
+  if(k.status === 'partial') return 'partial';
+  if(isOverdue(k)) return 'overdue';
+  return 'pending';
+}
+function dueLabel(k){
+  if(!k || !k.dueDate) return '';
+  return `${isOverdue(k) ? 'Overdue since' : 'Due'} ${k.dueDate}`;
+}
+function relationshipSafeScore(text){
+  const t = String(text || '').toLowerCase();
+  let score = 94;
+  if(t.includes('final reminder')) score -= 12;
+  if(t.includes('last chance') || t.includes('deadline')) score -= 14;
+  if(t.includes('problem') || t.includes('dikkat')) score -= 10;
+  if(t.includes('overdue') || t.includes('bahut din')) score -= 6;
+  if(t.includes('please') || t.includes('kripya') || t.includes('🙏') || t.includes('dhanyavaad')) score += 4;
+  if(t.includes('😂') || t.includes('😄') || t.includes('😊')) score += 3;
+  if(isUnsafe(t)) score = Math.min(score, 45);
+  return Math.max(30, Math.min(99, score));
+}
+function relationshipSafeLabel(score){
+  if(score >= 90) return 'Rishta Safe 💚';
+  if(score >= 75) return 'Safe but direct 🟡';
+  if(score >= 60) return 'Thoda strong 🟠';
+  return 'Risky — softer karo 🔴';
+}
+function getFormSnapshotFromEncoded(encoded){
+  try{ return JSON.parse(decodeURIComponent(encoded || '')); }catch(e){ return {}; }
+}
+function improveOutput(taId, mode, encodedForm){
+  const ta = document.getElementById(taId);
+  if(!ta) return;
+  const data = getFormSnapshotFromEncoded(encodedForm);
+  const toneMap = { softer:'Polite', funny:'Funny', professional:'Polite', savage:'Savage Safe' };
+  data.tone = toneMap[mode] || 'Friendly';
+  const msg = generateMessages(data)[0];
+  ta.value = msg.text;
+  const card = ta.closest('.output-card');
+  if(card){
+    const score = relationshipSafeScore(ta.value);
+    const scoreEl = card.querySelector('.safe-score');
+    if(scoreEl) scoreEl.innerHTML = `Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}`;
+  }
+  showToast(mode === 'funny' ? 'Funnier version ready 😄' : mode === 'savage' ? 'Savage safe version ready 🔥' : 'Softer version ready 🙏');
+}
+
 /* ===========================================================
    SAFETY FILTER
    =========================================================== */
@@ -79,6 +151,47 @@ function generateMessages({name, amount, relation, language, tone, note}){
   const e = (s) => emojiOn ? s : '';
   if(!hasValidAmount(amount)) return generateGenericReminderMessages({ name:n, language:lang, tone, note:noteLine });
   function rnd3(arr){ return [...arr].sort(()=>Math.random()-.5).slice(0,3); }
+
+  const SPECIAL_TONES = {
+    'Savage Safe': {
+      Hinglish:[
+        `${n} bhai, dosti apni jagah aur ${amt} apni jagah 😄 Aaj bhej do, dono safe rahenge.`,
+        `${n}, ${amt} itna pending hai ki reminder bhi thak gaya 😄 Aaj clear kar do boss.`,
+        `${n} bhai, rishta premium hai — bas ${amt} ka pending bug fix kar do 🔧😄`
+      ],
+      Hindi:[
+        `${n} ji, rishta apni jagah aur ${amt} ka hisaab apni jagah 😄 Aaj clear kar dein.`,
+        `${n}, ${amt} ka reminder bhi ab thak gaya hai 😄 Kripya aaj bhej dein.`,
+        `${n} ji, baat seedhi hai par respect ke saath — ${amt} aaj clear kar dein.`
+      ],
+      Bhojpuri:[
+        `${n} bhaiya, dosti alag ba, ${amt} ke hisaab alag ba 😄 Aaj clear kar da.`,
+        `${n} bhai, reminder bhi thak gail ba 😄 ${amt} aaj bhej da.`,
+        `${n} bhaiya, rishta safe rahe — bas ${amt} clear ho jaawe 🙏`
+      ],
+      English:[
+        `${n}, friendship is premium — just the ${amt} payment needs a bug fix 😄 Please clear today.`,
+        `${n}, no drama, just accounts — ${amt} today would be great 😄`,
+        `${n}, respectful reminder: ${amt} is pending. Let's close it today.`
+      ]
+    },
+    'Mummy Style': {
+      Hinglish:[`${n} beta, ${amt} wapas kar do. Achhe bachche udhaar time pe clear karte hain 😄`, `${n}, mummy bol rahi hain — ${amt} aaj bhej do, warna agli baar udhaar band 😄`, `${n} beta, pyar apni jagah par hisaab clear hona chahiye. ${amt} aaj bhej do 🙏`],
+      Hindi:[`${n} beta, ${amt} wapas kar do. Achhe log hisaab time par clear karte hain 😄`, `${n}, mummy style reminder — ${amt} aaj bhej do beta 🙏`, `${n} beta, pyaar alag hai par hisaab clear hona zaroori hai. ${amt} aaj bhej do.`],
+      Bhojpuri:[`${n} beta, ${amt} wapas kar da. Achha bachcha hisaab time pe clear karela 😄`, `${n}, mummy bolat ba — ${amt} aaj bhej da beta 🙏`, `${n} beta, pyaar alag ba, hisaab alag ba. ${amt} clear kar da.`],
+      English:[`${n} beta, please return ${amt}. Good people clear accounts on time 😄`, `${n}, mummy-style reminder — please send ${amt} today 🙏`, `${n}, love is one thing, accounts are another — ${amt} today please.`]
+    },
+    'Sharma Ji': {
+      Hinglish:[`Sharma ji ke bete ne toh same day ${amt} wapas kar diya tha 😄 ${n}, aap bhi record bana do!`, `${n}, Sharma ji ka benchmark high hai — ${amt} aaj bhej ke match kar do 😄`, `${n} bhai, comparison nahi kar raha... bas ${amt} yaad dila raha hun 😄`],
+      Hindi:[`Sharma ji ke bete ne same day ${amt} wapas kar diya tha 😄 ${n} ji, aap bhi kar dein.`, `${n} ji, Sharma ji benchmark set kar chuke hain — ${amt} aaj clear kar dein 😄`, `${n}, tulna nahi kar raha... bas ${amt} ki yaad dila raha hoon 😄`],
+      Bhojpuri:[`Sharma ji ke beta same day ${amt} wapas kar dehlas 😄 ${n} bhaiya, aap bhi kar da.`, `${n} bhai, Sharma ji benchmark set kar dele baa — ${amt} aaj clear kar da 😄`, `${n}, comparison na ba... bas ${amt} yaad dilaile bani 😄`],
+      English:[`Sharma ji's son returned ${amt} the same day 😄 ${n}, your turn to set a record!`, `${n}, Sharma ji has set the benchmark — clear ${amt} today 😄`, `${n}, not comparing... just reminding about ${amt} 😄`]
+    }
+  };
+  if(SPECIAL_TONES[tone]){
+    const pool = SPECIAL_TONES[tone][lang] || SPECIAL_TONES[tone].Hinglish;
+    return rnd3(pool).map(text => ({ label:tone, text }));
+  }
 
   const FUNNY = {
     Hinglish:[
@@ -438,7 +551,7 @@ function viewVasooli(){
       <div class="field-block">
         <label class="field-label">Tone</label>
         <div class="chip-row">
-          ${['Friendly','Polite','Funny','Strong'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="selectFormOption('tone','${t}',this)">${t}</div>`).join('')}
+          ${['Friendly','Polite','Funny','Strong','Savage Safe','Mummy Style','Sharma Ji'].map(t => `<div class="chip ${s.tone===t?'active':''}" onclick="selectFormOption('tone','${t}',this)">${t}</div>`).join('')}
         </div>
       </div>
     </div>
@@ -767,11 +880,18 @@ function handleGenerate(){
 
 function outputCard(m, idx, formSnapshot){
   const taId = 'out-text-' + idx;
-  const payload = encodeURIComponent(JSON.stringify(formSnapshot));
+  const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
+  const score = relationshipSafeScore(m.text);
   return `
     <div class="output-card">
       <span class="tag">${m.label}</span>
+      <div class="safe-score">Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}</div>
       <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+      <div class="btn-row">
+        <button class="ghost-btn" onclick="improveOutput('${taId}','softer','${payload}')">🙏 Softer</button>
+        <button class="ghost-btn" onclick="improveOutput('${taId}','funny','${payload}')">😄 Funnier</button>
+        <button class="ghost-btn" onclick="improveOutput('${taId}','savage','${payload}')">🔥 Savage Safe</button>
+      </div>
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
@@ -829,7 +949,9 @@ function saveOutputToKhata(m, formSnapshot, taId){
     amount: formSnapshot.amount || '',
     relation: formSnapshot.relation || 'General',
     status:'pending',
-    dueDate:null,
+    dueDate: formSnapshot.dueDate || '',
+    paidAmount: 0,
+    reminderCount: 0,
     lastReminderAt: Date.now(),
     language: formSnapshot.language,
     tone: m.label,
@@ -1054,7 +1176,7 @@ function handleMastiGenerate(){
 
 function defaultKhataForm(){
   return {
-    _editId:'', name:'', phone:'', amount:'', relation:'Dost', status:'pending',
+    _editId:'', name:'', phone:'', amount:'', paidAmount:'', dueDate:'', relation:'Dost', status:'pending',
     language: state.settings.defaultLanguage || 'Hinglish',
     tone: state.settings.defaultTone || 'Friendly', note:''
   };
@@ -1064,7 +1186,7 @@ function openKhataForm(id=''){
   const existing = id ? state.khata.find(k => k.id === id) : null;
   state.khataForm = existing ? {
     _editId: existing.id,
-    name: existing.name || '', phone: existing.phone || '', amount: existing.amount || '',
+    name: existing.name || '', phone: existing.phone || '', amount: existing.amount || '', paidAmount: existing.paidAmount || '', dueDate: existing.dueDate || '',
     relation: existing.relation || 'Dost', status: existing.status || 'pending',
     language: existing.language || state.settings.defaultLanguage || 'Hinglish',
     tone: existing.tone || state.settings.defaultTone || 'Friendly', note: existing.note || ''
@@ -1078,7 +1200,7 @@ function viewKhataForm(){
   const isEdit = !!f._editId;
   const relations = ['Dost','Customer','Client','Student/Parent','Tenant','Shop Khata','Relative','General'];
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
-  const tones = ['Friendly','Polite','Funny','Strong'];
+  const tones = ['Friendly','Polite','Funny','Strong','Savage Safe','Mummy Style','Sharma Ji'];
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button>
@@ -1094,6 +1216,15 @@ function viewKhataForm(){
       <div class="field-block">
         <label class="field-label">Amount (optional)</label>
         <input type="number" id="kf-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(f.amount)}" oninput="updateKhataForm('amount', this.value)"/>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Paid Amount (optional)</label>
+        <input type="number" id="kf-paid" inputmode="decimal" placeholder="0 / partial paid" value="${escapeHtml(f.paidAmount)}" oninput="updateKhataForm('paidAmount', this.value)"/>
+        <small class="field-hint">Partial payment track karne ke liye. Full amount paid hoga toh status Paid ho jayega.</small>
+      </div>
+      <div class="field-block">
+        <label class="field-label">Due Date (optional)</label>
+        <input type="date" id="kf-due" value="${escapeHtml(f.dueDate)}" oninput="updateKhataForm('dueDate', this.value)"/>
       </div>
       <div class="field-block">
         <label class="field-label">WhatsApp Number (optional)</label>
@@ -1152,13 +1283,20 @@ function saveKhataForm(){
   if(amountRaw && (!amount || amount <= 0)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do'); return; }
+  const paidRaw = String(f.paidAmount || '').trim();
+  const paidAmount = paidRaw ? Number(paidRaw.replace(/,/g,'')) : 0;
+  if(paidRaw && (Number.isNaN(paidAmount) || paidAmount < 0)){ showToast('Paid amount sahi daalo, ya blank chhod do'); return; }
+  let computedStatus = f.status || 'pending';
+  if(amount && paidAmount >= amount) computedStatus = 'paid';
+  else if(paidAmount > 0) computedStatus = 'partial';
+  else computedStatus = 'pending';
 
   const entry = {
     id: f._editId || uid(),
     name: (f.name && f.name.trim()) ? f.name.trim() : 'Bhai',
-    phone: phone || '', amount: amount || '', relation: f.relation || 'General',
-    status: f.status || 'pending', language: f.language || 'Hinglish', tone: f.tone || 'Friendly',
-    note: f.note || '', message: '',
+    phone: phone || '', amount: amount || '', paidAmount: paidAmount || '', dueDate: f.dueDate || '', relation: f.relation || 'General',
+    status: computedStatus, language: f.language || 'Hinglish', tone: f.tone || 'Friendly',
+    note: f.note || '', message: '', reminderCount: f.reminderCount || 0, lastReminderAt: f.lastReminderAt || null,
     createdAt: Date.now(), updatedAt: Date.now()
   };
 
@@ -1175,55 +1313,105 @@ function saveKhataForm(){
 }
 
 function viewKhata(){
-  const total = state.khata.filter(k=>k.status==='pending').reduce((a,b)=>a+(hasValidAmount(b.amount) ? Number(b.amount) : 0),0);
+  const pendingItems = state.khata.filter(k=>k.status!=='paid');
+  const total = pendingItems.reduce((a,b)=>a+outstandingAmount(b),0);
+  const paidTotal = state.khata.filter(k=>k.status==='paid').reduce((a,b)=>a+(hasValidAmount(b.amount) ? Number(b.amount) : 0),0);
   const pendingCount = state.khata.filter(k=>k.status==='pending').length;
+  const partialCount = state.khata.filter(k=>k.status==='partial').length;
+  const overdueCount = state.khata.filter(k=>isOverdue(k)).length;
   const filter = state.khataFilter || 'all';
-  const list = state.khata.filter(k => filter==='all' ? true : k.status===filter);
+  const list = state.khata.filter(k => {
+    if(filter==='all') return true;
+    if(filter==='overdue') return isOverdue(k);
+    return k.status===filter;
+  });
 
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
-      <h1>Udhaar Khata</h1>
+      <h1>Udhaar Khata 2.0</h1>
     </div>
 
     <div class="summary-card">
       <div class="amt">${total ? fmtMoney(total) : 'Amount optional'}</div>
-      <div class="sub">${pendingCount} pending payment${pendingCount===1?'':'s'}</div>
+      <div class="sub">${pendingCount} pending · ${partialCount} partial · ${overdueCount} overdue · ${paidTotal ? fmtMoney(paidTotal) + ' paid' : 'No paid yet'}</div>
+    </div>
+
+    <div class="mini-stats">
+      <div><b>${pendingCount}</b><span>Pending</span></div>
+      <div><b>${partialCount}</b><span>Partial</span></div>
+      <div><b>${overdueCount}</b><span>Overdue</span></div>
+      <div><b>${paidTotal ? fmtMoney(paidTotal) : '₹0'}</b><span>Paid</span></div>
     </div>
 
     <div class="btn-row">
       <button class="primary-btn" style="flex:1;" onclick="navigate('vasooli')">Reminder Banao 🔔</button>
       <button class="ghost-btn save" style="flex:1;" onclick="openKhataForm()">+ Add Khata</button>
     </div>
+    <div class="btn-row">
+      <button class="ghost-btn" onclick="shareKhataSummary()">📤 Share Summary</button>
+      <button class="ghost-btn" onclick="exportKhataCSV()">⬇️ Export CSV</button>
+    </div>
 
     <div class="chip-row">
-      ${['all','pending','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':'Paid'}</div>`).join('')}
+      ${['all','pending','partial','overdue','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':f==='partial'?'Partial':f==='overdue'?'Overdue':'Paid'}</div>`).join('')}
     </div>
 
     ${list.length===0 ? `
       <div class="empty-state">
         <img class="empty-mascot" src="assets/mascot-sleeping.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
-        <p><b>Sab clear!</b> ✨<br>Coin so raha hai — koi udhaar pending nahi.</p>
+        <p><b>Sab clear!</b> ✨<br>Coin so raha hai — is filter mein koi entry nahi.</p>
       </div>
     ` : list.map(k => khataCard(k)).join('')}
   `;
 }
 
+function shareKhataSummary(){
+  const pending = state.khata.filter(k=>k.status!=='paid');
+  const total = pending.reduce((a,b)=>a+outstandingAmount(b),0);
+  const overdue = pending.filter(k=>isOverdue(k)).length;
+  const lines = pending.slice(0,12).map((k,i)=>`${i+1}. ${k.name} — ${displayAmount(outstandingAmount(k) || k.amount)} — ${statusText(k)}${k.dueDate ? ' — Due: '+k.dueDate : ''}`);
+  const text = `BaatBanao Khata Summary\nPending Total: ${total ? fmtMoney(total) : 'Amount optional'}\nOverdue: ${overdue}\n\n${lines.join('\n') || 'No pending entries ✅'}`;
+  if(navigator.share) navigator.share({title:'BaatBanao Khata Summary', text});
+  else if(navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('Summary copied ✅'));
+  else showToast('Summary ready');
+}
+function exportKhataCSV(){
+  const header = ['Name','Phone','Amount','PaidAmount','Outstanding','Status','DueDate','ReminderCount','LastReminder','Note'];
+  const rows = state.khata.map(k => [k.name,k.phone||'',k.amount||'',k.paidAmount||'',outstandingAmount(k)||'',statusText(k),k.dueDate||'',k.reminderCount||0,k.lastReminderAt?new Date(k.lastReminderAt).toLocaleString():'',k.note||'']);
+  const csv = [header,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'baatbanao-khata.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  showToast('CSV export ho gaya ✅');
+}
+
 function setKhataFilter(f){ state.khataFilter = f; renderApp(); }
 
 function khataCard(k){
+  const outstanding = outstandingAmount(k);
+  const amountText = k.status==='paid' ? displayAmount(k.amount) : (outstanding ? fmtMoney(outstanding) : displayAmount(k.amount));
+  const metaBits = [escapeHtml(k.relation||'General')];
+  if(k.note) metaBits.push(escapeHtml(k.note));
+  if(k.dueDate) metaBits.push(escapeHtml(dueLabel(k)));
+  metaBits.push(`Reminders: ${Number(k.reminderCount||0)}`);
+  if(k.lastReminderAt) metaBits.push(`Last: ${timeAgo(k.lastReminderAt)}`);
   return `
-    <div class="list-card">
+    <div class="list-card ${isOverdue(k)?'overdue-card':''}">
       <div class="row-top">
         <span class="name">${escapeHtml(k.name)}</span>
-        <span class="amount">${displayAmount(k.amount)}</span>
+        <span class="amount">${amountText}</span>
       </div>
-      <div class="meta">${escapeHtml(k.relation||'General')} · ${k.status==='paid' ? 'Paid '+timeAgo(k.updatedAt) : (k.note ? escapeHtml(k.note) : 'Pending')}</div>
+      <div class="meta">${metaBits.join(' · ')}</div>
+      ${k.paidAmount ? `<div class="meta">Paid: ${displayAmount(k.paidAmount)} · Outstanding: ${outstanding ? fmtMoney(outstanding) : '₹0'}</div>` : ''}
       <div class="row-top">
-        <span class="status-badge ${k.status}">${k.status==='paid'?'Paid ✅':'Pending'}</span>
+        <span class="status-badge ${statusClass(k)}">${statusText(k)}</span>
         <div class="btn-row" style="margin-top:0;">
-          ${k.status==='pending' ? `<button class="ghost-btn" onclick="remindKhata('${k.id}')">🔔 Remind</button>
+          ${k.status!=='paid' ? `<button class="ghost-btn" onclick="remindKhata('${k.id}')">🔔 Remind</button>
           <button class="ghost-btn" onclick="showUpiQrForKhata('${k.id}')">📲 UPI QR</button>
+          <button class="ghost-btn" onclick="quickPartialPaid('${k.id}')">₹ Partial</button>
           <button class="ghost-btn save" onclick="markPaid('${k.id}')">${ICONS.check} Paid</button>` : ''}
           <button class="ghost-btn" onclick="openKhataForm('${k.id}')">Edit</button>
           <button class="ghost-btn danger" onclick="deleteKhata('${k.id}')">${ICONS.trash}</button>
@@ -1238,15 +1426,37 @@ function remindKhata(id){
   if(!k) return;
   const text = k.message || generateMessages(k)[0].text;
   k.lastReminderAt = Date.now();
+  k.reminderCount = Number(k.reminderCount || 0) + 1;
+  state.history.unshift({ id: uid(), message:text, name:k.name, amount:k.amount || '', language:k.language, tone:k.tone, phone:k.phone || '', note:k.note || '', action:'reminded', createdAt: Date.now() });
+  if(state.history.length > 200) state.history = state.history.slice(0,200);
   persist();
   openWhatsAppWithText(text, k.phone, k);
-  showToast('WhatsApp khul raha hai...');
+  showToast(`Reminder #${k.reminderCount} WhatsApp par khul raha hai...`);
+}
+
+function quickPartialPaid(id){
+  const k = state.khata.find(x=>x.id===id);
+  if(!k) return;
+  const current = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
+  const val = prompt('Kitna amount receive hua?', current ? String(current) : '');
+  if(val === null) return;
+  const paid = Number(String(val).replace(/,/g,''));
+  if(Number.isNaN(paid) || paid < 0){ showToast('Amount sahi nahi hai'); return; }
+  k.paidAmount = paid;
+  if(hasValidAmount(k.amount) && paid >= Number(k.amount)) k.status = 'paid';
+  else if(paid > 0) k.status = 'partial';
+  else k.status = 'pending';
+  k.updatedAt = Date.now();
+  persist();
+  renderApp();
+  showToast('Partial payment update ho gaya ✅');
 }
 
 function markPaid(id){
   const k = state.khata.find(x=>x.id===id);
   if(!k) return;
   k.status = 'paid';
+  if(hasValidAmount(k.amount)) k.paidAmount = Number(String(k.amount).replace(/,/g,''));
   k.updatedAt = Date.now();
   persist();
   showPaidCelebration(k.name, k.amount);
