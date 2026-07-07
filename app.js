@@ -127,6 +127,77 @@ function improveOutput(taId, mode, encodedForm){
   showToast(mode === 'funny' ? 'Funnier version ready 😄' : mode === 'savage' ? 'Savage safe version ready 🔥' : 'Softer version ready 🙏');
 }
 
+function copyTextValue(textValue, successMsg='Copied ✅'){
+  const text = String(textValue || '');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>showToast(successMsg)).catch(()=>showToast('Copy failed'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    showToast(successMsg);
+  }
+}
+function shareTextValue(title, textValue){
+  const text = String(textValue || '');
+  if(navigator.share) navigator.share({title:title || 'BaatBanao', text});
+  else copyTextValue(text, 'Share text copied ✅');
+}
+function khataReminderText(k){
+  if(!k) return '';
+  return k.message || generateMessages({
+    name:k.name, amount: outstandingAmount(k) || k.amount, relation:k.relation,
+    language:k.language || state.settings.defaultLanguage || 'Hinglish',
+    tone:k.tone || state.settings.defaultTone || 'Friendly', note:k.note || ''
+  })[0].text;
+}
+function sortedPendingKhata(){
+  return state.khata.filter(k=>k.status !== 'paid').sort((a,b)=>{
+    const ao = isOverdue(a) ? 0 : 1;
+    const bo = isOverdue(b) ? 0 : 1;
+    if(ao !== bo) return ao - bo;
+    const ad = a.dueDate || '9999-12-31';
+    const bd = b.dueDate || '9999-12-31';
+    if(ad !== bd) return ad.localeCompare(bd);
+    return outstandingAmount(b) - outstandingAmount(a);
+  });
+}
+function buildBulkSummary(limit=50){
+  const items = sortedPendingKhata().slice(0, limit);
+  const total = items.reduce((sum,k)=>sum+outstandingAmount(k),0);
+  const overdue = items.filter(k=>isOverdue(k)).length;
+  const rows = items.map((k,i)=>`${i+1}. ${k.name} — ${outstandingAmount(k)?fmtMoney(outstandingAmount(k)):displayAmount(k.amount)} — ${statusText(k)}${k.dueDate?' — Due: '+k.dueDate:''}`);
+  return `BaatBanao Bulk Reminder Summary\nPending entries: ${items.length}\nOverdue: ${overdue}\nOutstanding: ${total?fmtMoney(total):'Amount optional'}\n\n${rows.join('\n') || 'No pending entries ✅'}`;
+}
+function parseQuickKhataText(text){
+  const raw = String(text || '').trim();
+  if(!raw) return null;
+  const amountMatch = raw.match(/(?:₹|rs\.?|inr)?\s*(\d{2,}(?:,\d{3})*)/i);
+  const amount = amountMatch ? Number(amountMatch[1].replace(/,/g,'')) : '';
+  let name = raw.replace(/(?:₹|rs\.?|inr)?\s*\d{2,}(?:,\d{3})*/ig,'').replace(/\b(kal|today|aaj|tomorrow|parso|due|pending|baaki)\b/ig,'').trim();
+  name = name || 'Bhai';
+  let dueDate = '';
+  const lower = raw.toLowerCase();
+  const d = new Date();
+  if(/\b(aaj|today)\b/.test(lower)) dueDate = todayISO();
+  else if(/\b(kal|tomorrow)\b/.test(lower)){ d.setDate(d.getDate()+1); dueDate = d.toISOString().slice(0,10); }
+  else if(/\bparso\b/.test(lower)){ d.setDate(d.getDate()+2); dueDate = d.toISOString().slice(0,10); }
+  return {name, amount, dueDate};
+}
+function quickAddKhataFromText(){
+  const input = document.getElementById('quick-khata-text');
+  const data = parseQuickKhataText(input && input.value);
+  if(!data){ showToast('Example: Ramesh 2500 kal'); return; }
+  state.khata.unshift({
+    id:uid(), name:data.name, phone:'', amount:data.amount || '', paidAmount:'', dueDate:data.dueDate || '', relation:'General',
+    status:'pending', language:state.settings.defaultLanguage || 'Hinglish', tone:state.settings.defaultTone || 'Friendly',
+    note:'Quick add', message:'', reminderCount:0, lastReminderAt:null, createdAt:Date.now(), updatedAt:Date.now()
+  });
+  persist();
+  if(input) input.value='';
+  showToast('Quick Khata add ho gaya ⚡');
+  renderApp();
+}
+
 /* ===========================================================
    SAFETY FILTER
    =========================================================== */
@@ -471,6 +542,17 @@ function viewHome(){
       <button class="sec-card" onclick="navigate('khata')">
         <h3>Udhaar<br/>Khata 📒</h3>
         <p>Pending entries save karo aur repeat reminder bhejo.</p>
+      </button>
+    </div>
+
+    <div class="secondary-row">
+      <button class="sec-card" onclick="navigate('templates')">
+        <h3>Smart<br/>Templates 🧩</h3>
+        <p>Client, rent, tuition, freelance aur shop udhaar ready formats.</p>
+      </button>
+      <button class="sec-card" onclick="navigate('bulk')">
+        <h3>Bulk<br/>Reminder 🚀</h3>
+        <p>Overdue-first queue, summary copy aur one-by-one WhatsApp flow.</p>
       </button>
     </div>
 
@@ -980,6 +1062,80 @@ function genericOutputCard(m, idx, prefix){
   `;
 }
 
+const BB_TEMPLATE_CATEGORIES = [
+  {id:'friend', title:'Friend Loan Reminder', emoji:'🤝', relation:'Dost', tone:'Friendly', note:'friendly loan reminder'},
+  {id:'client', title:'Client Payment Follow-up', emoji:'💼', relation:'Client', tone:'Polite', note:'invoice/payment follow-up'},
+  {id:'shop', title:'Shop Udhaar Reminder', emoji:'📒', relation:'Shop Khata', tone:'Polite', note:'shop udhaar pending'},
+  {id:'rent', title:'Rent Reminder', emoji:'🏠', relation:'Tenant', tone:'Strong', note:'rent due reminder'},
+  {id:'tuition', title:'Tuition Fee Reminder', emoji:'🎓', relation:'Student/Parent', tone:'Polite', note:'tuition fee pending'},
+  {id:'freelance', title:'Freelance Payment', emoji:'💻', relation:'Client', tone:'Polite', note:'freelance project payment pending'},
+  {id:'family', title:'Family Safe Reminder', emoji:'👨‍👩‍👧', relation:'Relative', tone:'Mummy Style', note:'family friendly reminder'},
+  {id:'savage', title:'Savage But Safe', emoji:'🔥', relation:'Dost', tone:'Savage Safe', note:'funny but respectful reminder'}
+];
+function defaultTemplateForm(){
+  return { category:'friend', name:'', phone:'', amount:'', language:state.settings.defaultLanguage || 'Hinglish' };
+}
+function updateTemplateForm(field,value){ if(!state.templateForm) state.templateForm = defaultTemplateForm(); state.templateForm[field]=value; }
+function selectTemplateCategory(id, el){
+  updateTemplateForm('category', id);
+  if(el && el.parentElement){ el.parentElement.querySelectorAll('.template-card').forEach(x=>x.classList.remove('active')); el.classList.add('active'); }
+}
+function viewTemplates(){
+  const f = state.templateForm || defaultTemplateForm();
+  state.templateForm = f;
+  const languages = ['Hinglish','Hindi','Bhojpuri','English'];
+  return `
+    <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Smart Templates 🧩</h1></div>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Ready categories choose karo — message instantly professional banega.</p>
+    <div class="template-grid">
+      ${BB_TEMPLATE_CATEGORIES.map(c=>`<button class="template-card ${f.category===c.id?'active':''}" onclick="selectTemplateCategory('${c.id}',this)"><span>${c.emoji}</span><b>${c.title}</b><small>${c.relation} · ${c.tone}</small></button>`).join('')}
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+      <div class="field-block"><label class="field-label">Naam (optional)</label><input type="text" placeholder="Ramesh / Client" value="${escapeHtml(f.name)}" oninput="updateTemplateForm('name',this.value)"/></div>
+      <div class="field-block"><label class="field-label">Amount (optional)</label><input type="number" inputmode="decimal" placeholder="2500" value="${escapeHtml(f.amount)}" oninput="updateTemplateForm('amount',this.value)"/></div>
+      <div class="field-block"><label class="field-label">WhatsApp Number (optional)</label><input type="tel" inputmode="tel" placeholder="+91..." value="${escapeHtml(f.phone)}" oninput="updateTemplateForm('phone',this.value.replace(/[^0-9+]/g,''))"/></div>
+    </div>
+    <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="updateTemplateForm('language','${l}'); renderApp();">${l}</div>`).join('')}</div></div>
+    <button class="primary-btn" onclick="handleTemplateGenerate()">Template Message Banao ✨</button>
+    <div id="template-output"></div>
+  `;
+}
+function handleTemplateGenerate(){
+  const f = state.templateForm || defaultTemplateForm();
+  const cat = BB_TEMPLATE_CATEGORIES.find(c=>c.id===f.category) || BB_TEMPLATE_CATEGORIES[0];
+  const amountRaw = String(f.amount || '').trim();
+  const amount = amountRaw ? Number(amountRaw.replace(/,/g,'')) : '';
+  const phone = normalizeWhatsAppPhone(f.phone);
+  if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
+  const data = {name:f.name || 'Bhai', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:cat.note};
+  state.vasooliForm = data;
+  const messages = generateMessages(data);
+  const out = document.getElementById('template-output');
+  out.innerHTML = `<div class="section-title">${cat.emoji} ${cat.title}</div>${messages.map((m,i)=>outputCard(m,i,data)).join('')}`;
+  setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
+}
+function viewBulkReminders(){
+  const items = sortedPendingKhata();
+  const summary = buildBulkSummary();
+  return `
+    <div class="page-header"><button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button><h1>Bulk Reminder 🚀</h1></div>
+    <div class="safety-banner">WhatsApp auto-spam allowed nahi hai. BaatBanao safe flow use karta hai: summary copy/share ya ek-ek reminder open.</div>
+    <div class="summary-card"><div class="amt">${items.length}</div><div class="sub">pending entries queue mein · ${items.filter(k=>isOverdue(k)).length} overdue first</div></div>
+    <div class="btn-row">
+      <button class="ghost-btn copy" onclick="copyTextValue(buildBulkSummary(), 'Bulk summary copied ✅')">${ICONS.copy} Copy Summary</button>
+      <button class="ghost-btn whatsapp" onclick="shareTextValue('BaatBanao Bulk Summary', buildBulkSummary())">📤 Share Summary</button>
+    </div>
+    ${items.length ? `<button class="primary-btn" onclick="remindKhata('${items[0].id}')">Open Next Reminder 🔔</button>` : ''}
+    <div class="section-title">Reminder Queue</div>
+    ${items.length ? items.map((k,i)=>`
+      <div class="list-card ${isOverdue(k)?'overdue-card':''}">
+        <div class="row-top"><span class="name">${i+1}. ${escapeHtml(k.name)}</span><span class="amount">${outstandingAmount(k)?fmtMoney(outstandingAmount(k)):displayAmount(k.amount)}</span></div>
+        <div class="meta">${statusText(k)}${k.dueDate?' · Due: '+escapeHtml(k.dueDate):''} · Reminders: ${Number(k.reminderCount||0)}</div>
+        <div class="btn-row"><button class="ghost-btn copy" onclick="copyTextValue(khataReminderText(state.khata.find(x=>x.id==='${k.id}')), 'Reminder copied ✅')">Copy</button><button class="ghost-btn whatsapp" onclick="remindKhata('${k.id}')">WhatsApp</button><button class="ghost-btn save" onclick="markPaid('${k.id}')">Paid</button></div>
+      </div>`).join('') : `<div class="empty-state"><img class="empty-mascot" src="assets/mascot-paid.webp" alt="" width="180" height="180"/><p><b>Sab clear!</b><br/>Bulk queue empty hai ✅</p></div>`}
+  `;
+}
+
 function defaultBusinessForm(){
   return { context:'', language: state.settings.defaultLanguage || 'Hinglish', tone:'Professional', relation:'Customer' };
 }
@@ -1337,6 +1493,11 @@ function viewKhata(){
       <div class="sub">${pendingCount} pending · ${partialCount} partial · ${overdueCount} overdue · ${paidTotal ? fmtMoney(paidTotal) + ' paid' : 'No paid yet'}</div>
     </div>
 
+    <div class="quick-add-box">
+      <input type="text" id="quick-khata-text" placeholder="Quick add: Ramesh 2500 kal" onkeydown="if(event.key==='Enter') quickAddKhataFromText()"/>
+      <button class="ghost-btn save" onclick="quickAddKhataFromText()">⚡ Add</button>
+    </div>
+
     <div class="mini-stats">
       <div><b>${pendingCount}</b><span>Pending</span></div>
       <div><b>${partialCount}</b><span>Partial</span></div>
@@ -1349,6 +1510,7 @@ function viewKhata(){
       <button class="ghost-btn save" style="flex:1;" onclick="openKhataForm()">+ Add Khata</button>
     </div>
     <div class="btn-row">
+      <button class="ghost-btn" onclick="navigate('bulk')">🚀 Bulk Remind</button>
       <button class="ghost-btn" onclick="shareKhataSummary()">📤 Share Summary</button>
       <button class="ghost-btn" onclick="exportKhataCSV()">⬇️ Export CSV</button>
     </div>
@@ -1875,6 +2037,8 @@ function closeMenu(){
 const ROUTES = {
   home: viewHome,
   vasooli: viewVasooli,
+  templates: viewTemplates,
+  bulk: viewBulkReminders,
   business: viewBusinessReply,
   masti: viewMastiMessage,
   khata: viewKhata,
