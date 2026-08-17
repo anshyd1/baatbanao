@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://baatbanao.vercel.app/sitemap.xml
+Sitemap: https://anshyd1.github.io/baatbanao/sitemap.xml
