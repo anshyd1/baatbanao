@@ -89,6 +89,35 @@ function dueLabel(k){
   if(!k || !k.dueDate) return '';
   return `${isOverdue(k) ? 'Overdue since' : 'Due'} ${k.dueDate}`;
 }
+function khataSignal(k){
+  if(!k) return { level:'green', label:'Pending' };
+  if(k.status === 'paid') return { level:'green', label:'Paid ✅' };
+  if(isOverdue(k)) return { level:'red', label:'Overdue' + (k.dueDate ? ' since '+k.dueDate : '') };
+  const d = parseDateOnly(k.dueDate);
+  if(d){
+    const days = Math.ceil((d.getTime() - Date.now())/86400000);
+    if(days <= 3) return { level:'yellow', label: days <= 0 ? 'Due aaj' : 'Due in '+days+' din' };
+    return { level:'green', label:'Due '+k.dueDate };
+  }
+  const age = Math.floor((Date.now() - (k.createdAt || Date.now()))/86400000);
+  if(age >= 14) return { level:'red', label: age+' din se pending' };
+  if(age >= 7)  return { level:'yellow', label: age+' din se pending' };
+  return { level:'green', label: age <= 0 ? 'Aaj diya' : age+' din pehle' };
+}
+function remindFromHome(id){
+  const k = state.khata.find(x => x.id === id);
+  if(!k){ showToast('Entry nahi mili'); return; }
+  state.vasooliForm = {
+    name: k.name || '', phone: k.phone || '',
+    amount: (hasValidAmount(k.amount) ? k.amount : '') || '',
+    relation: k.relation || 'General',
+    language: k.language || 'Hinglish',
+    tone: 'Friendly',
+    note: k.note || ''
+  };
+  state._deepApplied = true;
+  navigate('vasooli');
+}
 function relationshipSafeScore(text){
   const t = String(text || '').toLowerCase();
   let score = 94;
@@ -506,7 +535,11 @@ const MASCOT = `<img class="mascot-img" src="assets/mascot-coin.webp" alt="BaatB
    VIEWS
    =========================================================== */
 function viewHome(){
-  const latestPending = state.khata.find(k => k.status === 'pending');
+  const sigOrder = { red:0, yellow:1, green:2 };
+  const pendingList = state.khata.filter(k => k.status !== 'paid')
+    .map(k => ({ k, sg: khataSignal(k) }))
+    .sort((a,b) => sigOrder[a.sg.level] - sigOrder[b.sg.level] || ((b.k.updatedAt||b.k.createdAt||0) - (a.k.updatedAt||a.k.createdAt||0)))
+    .map(x => x.k);
   const pendingCount = state.khata.filter(k => k.status === 'pending').length;
   const pendingTotal = state.khata.filter(k => k.status === 'pending').reduce((sum,k)=>sum + (hasValidAmount(k.amount) ? Number(k.amount) : 0), 0);
   return `
@@ -556,10 +589,22 @@ function viewHome(){
       </button>
     </div>
 
-    ${latestPending ? `
-    <div class="khata-strip" onclick="navigate('khata')">
-      <div class="khata-title"><span>Latest pending</span>${ICONS.bell}</div>
-      <div class="khata-row">📒 <b>${escapeHtml(latestPending.name)}</b> — <span class="amt">${fmtMoney(latestPending.amount)}</span> pending — Remind karo</div>
+    ${pendingList.length ? `
+    <div class="signal-card">
+      <div class="signal-title">⏰ Pending Reminders
+        <span class="sig-legend"><i class="sig-dot g"></i>Safe &nbsp;<i class="sig-dot y"></i>Due soon &nbsp;<i class="sig-dot r"></i>Overdue</span>
+      </div>
+      ${pendingList.slice(0,5).map(k => {
+        const sg = khataSignal(k);
+        const amt = outstandingAmount(k) || k.amount;
+        return `<div class="sig-row sig-${sg.level}" onclick="remindFromHome('${k.id}')">
+          <span class="sig-dot ${sg.level[0]}"></span>
+          <div class="sig-info"><b>${escapeHtml(k.name)}</b><span>${displayAmount(amt)} · ${escapeHtml(sg.label)}</span></div>
+          <span class="sig-cta">Remind →</span>
+        </div>`;
+      }).join('')}
+      ${pendingList.length > 5 ? `<div class="signal-more">+ ${pendingList.length - 5} aur khata me</div>` : ''}
+      <div class="signal-all" onclick="navigate('khata')">Full khata dekho (${pendingList.length}) →</div>
     </div>` : `
     <div class="khata-strip" onclick="navigate('khata')">
       <div class="khata-title"><span>Khata</span>${ICONS.bell}</div>

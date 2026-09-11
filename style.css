@@ -559,3 +559,26 @@ input[type=date]:focus{ border-color:var(--coral); }
   .template-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .quick-add-box{ flex-direction:column; }
 }
+
+/* ===== Pending Reminders signal card (home) ===== */
+.signal-card{ background:#fff; border:1.5px solid #f0e7dd; border-radius:20px; padding:14px 14px 10px; box-shadow:0 6px 18px rgba(43,36,32,.05); }
+.signal-title{ display:flex; align-items:center; justify-content:space-between; font-weight:900; font-size:15px; color:#2b2420; margin-bottom:10px; }
+.sig-legend{ font-weight:600; font-size:11px; color:#8a8078; display:flex; align-items:center; gap:4px; }
+.sig-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; flex:none; }
+.sig-dot.g{ background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.15); }
+.sig-dot.y{ background:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+.sig-dot.r{ background:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.15); }
+.sig-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; cursor:pointer; margin-bottom:7px; border:1.5px solid transparent; transition:transform .1s ease; }
+.sig-row:active{ transform:scale(.985); }
+.sig-row.sig-red{ background:#fef2f2; border-color:#fecaca; }
+.sig-row.sig-yellow{ background:#fffbeb; border-color:#fde68a; }
+.sig-row.sig-green{ background:#f0fdf4; border-color:#bbf7d0; }
+.sig-info{ flex:1; min-width:0; }
+.sig-info b{ display:block; font-size:14px; color:#2b2420; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sig-info span{ display:block; font-size:12px; font-weight:700; color:#8a8078; margin-top:1px; }
+.sig-row.sig-red .sig-info span{ color:#b91c1c; }
+.sig-row.sig-yellow .sig-info span{ color:#b45309; }
+.sig-row.sig-green .sig-info span{ color:#15803d; }
+.sig-cta{ font-size:12px; font-weight:800; color:#FF4E42; white-space:nowrap; }
+.signal-more{ text-align:center; font-size:12px; font-weight:700; color:#8a8078; padding:2px 0 6px; }
+.signal-all{ text-align:center; font-size:12.5px; font-weight:800; color:#8a3b32; padding:8px 0 4px; cursor:pointer; border-top:1px dashed #f0e7dd; margin-top:4px; }
