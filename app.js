@@ -1063,21 +1063,18 @@ function handleGenerate(){
 }
 
 const BB_CARD_THEMES = [
-  {id:'simple', chip:'\uD83D\uDCDD Simple', head:'\uD83D\uDCB8 Vasooli Mode', stamp:'', art:'assets/mascot-coin.webp'},
-  {id:'munna', chip:'\uD83D\uDE0E Munna Bhaiya', head:'\uD83D\uDE0E MUNNA BHAIYA STYLE', stamp:'SAMAJH RHE HO NA?', art:'assets/theme-munna-pistol.jpg', dialogue:'\u275D Udhaar pyaar se diya tha... vasooli bhaukaal se hogi! \u275E'},
-  {id:'villain', chip:'\uD83D\uDE08 Villain', head:'\uD83D\uDE08 VILLAIN MODE', stamp:'MUAHAHA', art:'assets/theme-villain.jpg'},
-  {id:'emotional', chip:'\uD83E\uDD7A Emotional', head:'\uD83E\uDD7A DIL SE', stamp:'\uD83D\uDC94 DIL TOD DIYA'},
-  {id:'shayari', chip:'\uD83C\uDFAD Shayari', head:'\uD83C\uDFAD MUSHAIRA-E-VASOOLI', stamp:'WAH WAH', art:'assets/theme-shayari.jpg'},
-  {id:'sarkari', chip:'\uD83C\uDFDB Sarkari Notice', head:'\uD83C\uDFDB BAATBANAO VASOOLI VIBHAG', stamp:'ANTIM CHETAVNI'},
-  {id:'news', chip:'\uD83D\uDCF0 Breaking News', head:'\uD83D\uDCF0 BREAKING NEWS', stamp:'\uD83D\uDD34 LIVE', art:'assets/theme-news.jpg'},
-  {id:'wanted', chip:'\uD83E\uDD20 Wanted', head:'\uD83E\uDD20 WANTED', stamp:'INAAM: 1 CUTTING CHAI'},
-  {id:'meme', chip:'\uD83E\uDD23 Meme', head:'\uD83E\uDD23 MEME MODE', stamp:'POV: 3 MAHINE HO GAYE', dialogue:'DOST: kal pakka de dunga \uD83E\uDD1D'},
-  {id:'filmy', chip:'\uD83C\uDFAC Filmy Drama', head:'\uD83C\uDFAC FILMY DRAMA', stamp:'PICTURE ABHI BAAKI HAI'},
-  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE', art:'assets/theme-cricket.jpg'},
-  {id:'kadvi', chip:'\uD83C\uDF36\uFE0F Kadvi Sacchai', head:'\uD83C\uDF36\uFE0F KADVI SACCHAI', stamp:'KADVI PAR SACCHI', dialogue:'\u275D Apne hi paise maangne me sharam aaye... yehi kalyug hai! \u275E'},
-  {id:'adalat', chip:'\u2696\uFE0F Adalat', head:'\u2696\uFE0F ADALAT-E-VASOOLI', stamp:'NEXT DATE: KAL', dialogue:'\u275D My Lord, mulzim ne phir KAL ki tareekh maangi hai! \u275E'}
+  {id:'p1', chip:'\uD83D\uDC8E Classic Band', head:'\uD83D\uDCB8 Vasooli Mode', stamp:'', art:''},
+  {id:'p2', chip:'\uD83D\uDD25 Coral Blast', head:'\uD83D\uDCB8 VASOOLI MODE', stamp:'', art:''},
+  {id:'p3', chip:'\uD83C\uDF19 Midnight Gold', head:'\u2726 PAYMENT REMINDER \u2726', stamp:'', art:''},
+  {id:'p4', chip:'\uD83D\uDCD2 Khata Ledger', head:'\uD83D\uDCD2 UDHAAR KHATA', stamp:'PENDING', art:''},
+  {id:'p5', chip:'\uD83D\uDCAC Chat Style', head:'\uD83D\uDCAC WhatsApp Style', stamp:'SEEN \u2713\u2713', art:''},
+  {id:'p6', chip:'\uD83E\uDD0D Soft Luxury', head:'\uD83D\uDCB8 VASOOLI MODE', stamp:'', art:''},
+  {id:'p7', chip:'\uD83C\uDF9F\uFE0F Vasooli Ticket', head:'\uD83C\uDF9F\uFE0F ADMIT ONE \u00B7 VASOOLI', stamp:'NO REFUND', art:''},
+  {id:'p8', chip:'\uD83C\uDF03 Neon Night', head:'\uD83D\uDCB8 VASOOLI MODE', stamp:'', art:''},
+  {id:'p9', chip:'\uD83D\uDC51 Gold Minimal', head:'PAYMENT REMINDER', stamp:'', art:''},
+  {id:'p10', chip:'\uD83C\uDF89 Festive Pop', head:'\uD83E\uDE99 FESTIVE VASOOLI', stamp:'', art:''}
 ];
-function bbTheme(){ return BB_CARD_THEMES.find(t=>t.id===(state.settings.cardTheme||'simple')) || BB_CARD_THEMES[0]; }
+function bbTheme(){ return BB_CARD_THEMES.find(t=>t.id===(state.settings.cardTheme||'p1')) || BB_CARD_THEMES[0]; }
 function setCardTheme(id){
   state.settings.cardTheme = id; persist();
   const t = bbTheme();
@@ -1134,10 +1131,11 @@ function outputCard(m, idx, formSnapshot){
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
-        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDE80 Card</button>
+        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDCE4 Photo</button>
         ${upiOutputButton(formSnapshot)}
         <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
       </div>
+      <div class="rc-hint">\uD83D\uDCA1 Photo WhatsApp pe bhejne ke liye <b>\uD83D\uDCE4 Photo</b> dabao \u2192 WhatsApp chuno</div>
     </div>
   `;
 }
@@ -1148,6 +1146,11 @@ async function shareCardImage(taId){
   if(!card){ showToast('Card nahi mila'); return; }
   if(!window.html2canvas){ showToast('Image library load ho rahi hai... 2 sec me dobara dabao \u23F3'); return; }
   showToast('Card image ban rahi hai... \uD83D\uDE80');
+  const dlPng = (blob)=>{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'baatbanao-card.png'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+  };
   try{
     const clone = card.cloneNode(true);
     const taClone = clone.querySelector('textarea');
@@ -1158,25 +1161,28 @@ async function shareCardImage(taId){
       div.style.whiteSpace = 'pre-wrap';
       taClone.replaceWith(div);
     }
-    clone.querySelectorAll('.btn-row').forEach(b=>b.remove());
+    clone.querySelectorAll('.btn-row,.rc-hint').forEach(b=>b.remove());
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + (card.offsetWidth || 420) + 'px;background:#FFF9E8;padding:16px;';
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
-    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2, useCORS:true });
+    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2, useCORS:true, logging:false });
     wrap.remove();
     const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
     if(!blob){ showToast('Image nahi bani — dobara try karo'); return; }
     const file = new File([blob], 'baatbanao-card.png', { type:'image/png' });
     if(navigator.canShare && navigator.canShare({ files:[file] })){
-      await navigator.share({ files:[file], title:'BaatBanao Card' });
+      try{
+        await navigator.share({ files:[file], title:'BaatBanao Card', text:'BaatBanao Reminder \uD83D\uDCB8' });
+      }catch(shareErr){
+        if(shareErr && shareErr.name==='AbortError'){ showToast('Share cancel kiya'); }
+        else{ dlPng(blob); showToast('Share nahi khula — photo download kar di \u2B07\uFE0F WhatsApp me attach karo'); }
+      }
     } else {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = 'baatbanao-card.png'; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+      dlPng(blob);
       showToast('Card download ho gayi \u2B07\uFE0F — WhatsApp pe bhejo!');
     }
-  }catch(err){ console.warn('shareCardImage', err); showToast('Share cancel — dobara try karo'); }
+  }catch(err){ console.warn('shareCardImage', err); showToast('Image nahi bani — dobara try karo'); }
 }
 
 function copyOutput(taId){
@@ -1254,8 +1260,9 @@ function genericOutputCard(m, idx, prefix){
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp</button>
-        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDE80 Card</button>
+        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDCE4 Photo</button>
       </div>
+      <div class="rc-hint">\uD83D\uDCA1 Photo WhatsApp pe bhejne ke liye <b>\uD83D\uDCE4 Photo</b> dabao \u2192 WhatsApp chuno</div>
     </div>
   `;
 }
