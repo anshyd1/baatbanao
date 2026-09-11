@@ -621,11 +621,12 @@ function setDefaultLanguage(l){
 
 function viewVasooli(){
   const s = state.vasooliForm || {
-    name:'', phone:'', amount:'', relation:'Dost',
+    name:'', phone:'', amount:'', relation:'Dost', dueDate:'',
     language: state.settings.defaultLanguage || 'Hinglish',
     tone: state.settings.defaultTone || 'Friendly',
     note:''
   };
+  if(s.dueDate === undefined) s.dueDate = '' ;
   if(s.phone === undefined) s.phone = '';
   state.vasooliForm = s;
 
@@ -659,6 +660,12 @@ function viewVasooli(){
       <div class="field-block">
         <label class="field-label">Amount (optional)</label>
         <input type="number" id="f-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
+      </div>
+
+      <div class="field-block">
+        <label class="field-label">Due date (optional)</label>
+        <input type="date" id="f-due" value="${escapeHtml(s.dueDate)}" oninput="updateForm('dueDate', this.value)"/>
+        <div class="field-hint">Home pe 🟢🔴 signal is date se decide hoga</div>
       </div>
 
       <div class="field-block">
