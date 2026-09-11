@@ -1908,7 +1908,6 @@ function viewPrivacy(){
         • Contacts button sirf selected contact ka naam/number leta hai. Full contact book upload/read nahi hoti.<br/>
         • Saved UPI ID/display name bhi local device storage mein save hota hai. QR/pay link isi data se banta hai.<br/>
         • Contact picker browser permission ke saath kaam karta hai; unsupported browser mein manual number paste karna hoga.<br/>
-        • Firebase chat feature use karne par anonymous auth/chat data Firebase mein store ho sakta hai.<br/>
         • Payment/Pro verification currently manual UPI + WhatsApp screenshot flow par based hai.
       </div>
     </div>
@@ -2049,41 +2048,17 @@ const ROUTES = {
   privacy: viewPrivacy,
   terms: viewTerms,
   pay: viewPay,
-  pro: viewPro,
-  chat: () => '<div id="chatMount"></div>',
-  connect: () => '<div id="chatMount"></div>'
+  pro: viewPro
 };
 
 function renderApp(){
   const route = state.route || 'home';
-  // Chat routes handled by chat-ui.js separately
-  if (route === 'chat' || route === 'connect') {
-    // Make sure Firebase starts loading the moment the user navigates to
-    // Chat, in case it hasn't already (e.g. idle callback hasn't fired
-    // yet on a very slow connection).
-    if (typeof window.BB_loadFirebase === 'function') window.BB_loadFirebase();
-    document.getElementById('content').innerHTML = '';
-    if (typeof window.renderChatView === 'function') {
-      window.renderChatView(route === 'connect' ? 'connect' : 'list');
-    } else {
-      // Firebase not loaded yet — show loader
-      document.getElementById('content').innerHTML = `
-        <div style="text-align:center; padding:60px 20px;">
-          <img src="assets/mascot-thinking.webp" alt="" width="100" height="100"/>
-          <p style="margin-top:14px; font-weight:700; color:#75615C;">Chat connect ho raha hai...</p>
-        </div>`;
-    }
-    document.querySelectorAll('.nav-item').forEach(el=>{
-      el.classList.toggle('active', el.dataset.route === 'chat');
-    });
-    return;
-  }
   const viewFn = ROUTES[route] || viewHome;
   document.getElementById('content').innerHTML = viewFn();
 
   // bottom nav active state
   document.querySelectorAll('.nav-item').forEach(el=>{
-    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile','chat'].includes(route) ? route : ''));
+    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile'].includes(route) ? route : ''));
   });
 }
 

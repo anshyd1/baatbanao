@@ -27,12 +27,12 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="BaatBanao — Vasooli Mode 💸">
 <meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄">
-<meta property="og:image" content="assets/icon-512.png">
+<meta property="og:image" content="https://baatbanao.vercel.app/brand/og-share-card.png">
 <meta property="og:locale" content="hi_IN">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="BaatBanao">
 <meta name="twitter:description" content="Paisa bhi wapas, rishta bhi safe 😄">
-<meta name="twitter:image" content="assets/icon-512.png">
+<meta name="twitter:image" content="https://baatbanao.vercel.app/brand/og-share-card.png">
 
 <!-- Preload critical mascot for instant splash -->
 <link rel="preload" as="image" href="assets/mascot-coin.webp" fetchpriority="high">
@@ -225,32 +225,11 @@
 <!-- style.css stays render-blocking on purpose: it's small and needed
      immediately to avoid a flash of unstyled home page. -->
 <link rel="stylesheet" href="style.css">
-<!-- BUGFIX: install.css (install-banner) and chat-styles.css (chat
-     screen) are NOT needed for the very first paint of the Home page.
-     Loading them as blocking stylesheets was adding 2 more slow,
-     sequential network round-trips before ANY deferred <script> could
-     run — on a 15 KB/s connection this alone added 5-8+ seconds of
-     blank screen. Loading them non-blocking removes that delay; both
-     screens still get their styles the moment the CSS arrives, well
-     before a user could realistically navigate there. -->
 <link rel="stylesheet" href="install.css" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="chat-styles.css" media="print" onload="this.media='all'">
 <noscript>
   <link rel="stylesheet" href="install.css">
-  <link rel="stylesheet" href="chat-styles.css">
-</noscript>
+  </noscript>
 
-<!-- BUGFIX: Firebase (Auth + Firestore + Realtime DB SDKs) is ~880 KB
-     total, only needed for the Chat feature — yet it used to load
-     eagerly on every single page visit, competing for bandwidth with
-     app.js/style.css that build the Home page. On a slow connection
-     (~15 KB/s, common on budget phones / rural India) that's 45-60+
-     extra seconds before Home could even render, since browsers only
-     open a handful of parallel connections. It's now lazy-loaded: once
-     right after Home paints (via requestIdleCallback, so it doesn't
-     compete for the critical path) and immediately if the user jumps
-     straight to #chat/#connect. See lazy-firebase.js. -->
-<script src="lazy-firebase.js" defer></script>
 </head>
 <body class="bb-splash-lock">
 
@@ -372,10 +351,6 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>Khata</span>
     </button>
-    <button class="nav-item" data-route="chat" onclick="navigate('chat')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Chat</span>
-    </button>
     <button class="nav-item" data-route="profile" onclick="navigate('profile')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>Profile</span>
@@ -393,8 +368,7 @@
   </div>
   <div class="drawer-link" onclick="navigate('home');closeMenu()">Home</div>
   <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">Vasooli Mode 💸</div>
-  <div class="drawer-link" onclick="navigate('chat');closeMenu()">Chat 💬 <span class="badge badge-new">NEW</span></div>
-  <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
+    <div class="drawer-link" onclick="navigate('khata');closeMenu()">Udhaar Khata</div>
   <div class="drawer-link" onclick="navigate('templates');closeMenu()">Smart Templates 🧩 <span class="badge badge-new">NEW</span></div>
   <div class="drawer-link" onclick="navigate('bulk');closeMenu()">Bulk Reminder 🚀 <span class="badge badge-new">NEW</span></div>
   <div class="drawer-link" onclick="navigate('history');closeMenu()">History</div>
@@ -414,8 +388,6 @@
 <div id="toast"></div>
 
 <script src="app.js" defer></script>
-<script src="chat-app.js" defer></script>
-<script src="chat-ui.js" defer></script>
 <script src="install.js" defer></script>
 <script>
 function shareApp(){
