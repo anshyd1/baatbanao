@@ -4,7 +4,7 @@
    maskable icons to precache list, which were missing before)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.27';
+const CACHE_VERSION = 'baatbanao-v1.0.28';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   './pay/index.html',
   './style.css',
   './app.js',
+  './vendor/html2canvas.min.js',
   './install.js',
   './install.css',
   './manifest.json',

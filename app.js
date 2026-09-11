@@ -1144,7 +1144,11 @@ async function shareCardImage(taId){
   const ta = document.getElementById(taId);
   const card = ta && ta.closest('.output-card');
   if(!card){ showToast('Card nahi mila'); return; }
-  if(!window.html2canvas){ showToast('Image library load ho rahi hai... 2 sec me dobara dabao \u23F3'); return; }
+  if(!window.html2canvas){
+    showToast('Photo library load ho rahi hai... ruko \u23F3');
+    for(let i=0;i<60 && !window.html2canvas;i++){ await new Promise(r=>setTimeout(r,500)); }
+    if(!window.html2canvas){ showToast('Net bahut slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
+  }
   showToast('Card image ban rahi hai... \uD83D\uDE80');
   const dlPng = (blob)=>{
     const a = document.createElement('a');
