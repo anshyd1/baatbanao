@@ -584,6 +584,22 @@ function viewVasooli(){
   if(s.phone === undefined) s.phone = '';
   state.vasooliForm = s;
 
+  // SEO deep-link prefill: /#vasooli?rel=Tenant&lang=Hindi&tone=Funny&amt=5000
+  // (from static template pages) — apply once, only fields present in URL.
+  if(!state._deepApplied){
+    state._deepApplied = true;
+    const q = (window.location.hash || '').split('?')[1] || '';
+    if(q){
+      const p = new URLSearchParams(q);
+      const rel = p.get('rel'), lang = p.get('lang'), tone = p.get('tone'), amt = p.get('amt');
+      if(rel) s.relation = rel;
+      if(lang) s.language = lang;
+      if(tone) s.tone = tone;
+      if(amt) s.amount = amt;
+      state.vasooliForm = s;
+    }
+  }
+
   const relations = ['Dost','Customer','Client','Student/Parent','Tenant','Shop Khata','Relative','General'];
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
 
@@ -932,6 +948,11 @@ function handleGenerate(){
     } else {
       messages = generateMessages(formData);
     }
+
+    // Free tier: small watermark at message end (viral loop + Pro upsell).
+    // Pro users: never added. Can also be toggled off in Settings.
+    const bbWm = (!isBBPro() && state.settings.watermarkEnabled) ? '\n\n— via baatbanao.in' : '';
+    if(bbWm) messages.forEach(m => { m.text = (m.text || '').trimEnd() + bbWm; });
 
     // save to history
     messages.forEach(m => {
