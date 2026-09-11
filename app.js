@@ -1101,9 +1101,10 @@ function cardThemePicker(){
 function rcardHead(formSnapshot, label){
   const t = bbTheme();
   const nm = stripHonorific(formSnapshot && formSnapshot.name);
-  const rel = (formSnapshot && formSnapshot.relation) ? formSnapshot.relation : '';
+  const relRaw = (formSnapshot && formSnapshot.relation) ? formSnapshot.relation : '';
+  const rel = /^(dost|general|friend)s?$/i.test(relRaw.trim()) ? '' : relRaw;
   const amt = (formSnapshot && hasValidAmount(formSnapshot.amount)) ? fmtMoney(Number(String(formSnapshot.amount).replace(/,/g,''))) : '';
-  const who = [nm, rel].filter(Boolean).join(' · ') || 'Dost';
+  const who = [nm, rel].filter(Boolean).join(' · ') || 'Reminder';
   return `
       <div class="rc-stamp"${t.stamp?'':' style="display:none"'}>${escapeHtml(t.stamp)}</div>
       <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span><span class="rc-tone">${escapeHtml(optionLabel(label)||label||'')}</span></div>
