@@ -725,3 +725,36 @@ input[type=date]:focus{ border-color:var(--coral); }
 .t-cricket .rc-msg{ background:rgba(255,255,255,.08); border:2px solid #ffd60a; color:#f2fff5; font-weight:600; }
 .t-cricket .rc-foot{ color:#9fd3ae; }
 .t-cricket .ghost-btn{ border-color:#ffd60a; color:#fff; background:rgba(255,214,10,.12); font-weight:900; }
+
+/* ===== Card art + dialogue ===== */
+.rc-art-wrap{ border-radius:14px; overflow:hidden; }
+.rc-art{ width:100%; height:150px; object-fit:cover; display:block; border-radius:14px; }
+.rc-dialogue{ font-size:13px; font-weight:700; font-style:italic; text-align:center; padding:10px 12px; border-radius:12px; border:1.5px dashed currentColor; }
+.t-simple .rc-art{ height:120px; object-fit:contain; background:#FFF3DC; border:2px solid #F0DFCF; }
+.t-munna .rc-art{ border:2px solid #8a6a2a; }
+.t-munna .rc-dialogue{ color:#FFE9A8; background:rgba(232,180,75,.08); border-style:solid; border-color:#8a6a2a; }
+.t-meme .rc-dialogue{ color:#ffe600; font-style:normal; font-family:Impact,'Arial Black',sans-serif; letter-spacing:.5px; }
+.t-kadvi .rc-dialogue{ color:#ffb3b3; }
+.t-adalat .rc-dialogue{ color:#f5d576; font-family:Georgia,serif; }
+
+/* 12 kadvi */
+.t-kadvi{ background:linear-gradient(170deg,#141010,#1f0a0a); border:1.5px solid #c0272d; }
+.t-kadvi .rc-stamp{ background:#c0272d; color:#fff; }
+.t-kadvi .rc-mode{ color:#ff6b6b; } .t-kadvi .rc-tone{ background:rgba(192,39,45,.2); color:#ffb3b3; border:1px solid #c0272d; }
+.t-kadvi .rc-to{ color:#a08080; } .t-kadvi .rc-name{ color:#fff0e8; font-family:Georgia,serif; }
+.t-kadvi .rc-amt{ color:#ffd166; font-family:Georgia,serif; }
+.t-kadvi .safe-score{ color:#a08080; } .t-kadvi .safe-score b{ color:#ffd166; }
+.t-kadvi .rc-msg{ background:rgba(255,255,255,.04); border:1.5px solid #c0272d; color:#ffe8d6; font-family:Georgia,serif; font-style:italic; }
+.t-kadvi .rc-foot{ color:#a08080; }
+.t-kadvi .ghost-btn{ border-color:#c0272d; color:#ffb3b3; background:rgba(192,39,45,.1); }
+
+/* 13 adalat */
+.t-adalat{ background:linear-gradient(170deg,#191921,#0e0e14); border:1.5px solid #d4af37; }
+.t-adalat .rc-stamp{ background:#e63946; color:#fff; }
+.t-adalat .rc-mode{ color:#d4af37; } .t-adalat .rc-tone{ background:#d4af37; color:#191921; border-radius:6px; }
+.t-adalat .rc-to{ color:#8a8a9a; } .t-adalat .rc-name{ color:#fff; font-family:Georgia,serif; }
+.t-adalat .rc-amt{ color:#f5d576; font-family:Georgia,serif; }
+.t-adalat .safe-score{ color:#8a8a9a; } .t-adalat .safe-score b{ color:#f5d576; }
+.t-adalat .rc-msg{ background:rgba(212,175,55,.06); border:1.5px solid rgba(212,175,55,.7); color:#f2f0e8; font-family:Georgia,serif; }
+.t-adalat .rc-foot{ color:#8a8a9a; }
+.t-adalat .ghost-btn{ border-color:#d4af37; color:#f5d576; background:transparent; }

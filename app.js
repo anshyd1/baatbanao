@@ -1035,17 +1035,19 @@ function handleGenerate(){
 }
 
 const BB_CARD_THEMES = [
-  {id:'simple', chip:'\uD83D\uDCDD Simple', head:'\uD83D\uDCB8 Vasooli Mode', stamp:''},
-  {id:'munna', chip:'\uD83D\uDE0E Munna Bhaiya', head:'\uD83D\uDE0E MUNNA BHAIYA STYLE', stamp:'SAMAJH RHE HO NA?'},
+  {id:'simple', chip:'\uD83D\uDCDD Simple', head:'\uD83D\uDCB8 Vasooli Mode', stamp:'', art:'assets/mascot-coin.webp'},
+  {id:'munna', chip:'\uD83D\uDE0E Munna Bhaiya', head:'\uD83D\uDE0E MUNNA BHAIYA STYLE', stamp:'SAMAJH RHE HO NA?', art:'assets/theme-munna-pistol.jpg', dialogue:'\u275D Udhaar pyaar se diya tha... vasooli bhaukaal se hogi! \u275E'},
   {id:'villain', chip:'\uD83D\uDE08 Villain', head:'\uD83D\uDE08 VILLAIN MODE', stamp:'MUAHAHA'},
   {id:'emotional', chip:'\uD83E\uDD7A Emotional', head:'\uD83E\uDD7A DIL SE', stamp:'\uD83D\uDC94 DIL TOD DIYA'},
   {id:'shayari', chip:'\uD83C\uDFAD Shayari', head:'\uD83C\uDFAD MUSHAIRA-E-VASOOLI', stamp:'WAH WAH'},
   {id:'sarkari', chip:'\uD83C\uDFDB Sarkari Notice', head:'\uD83C\uDFDB BAATBANAO VASOOLI VIBHAG', stamp:'ANTIM CHETAVNI'},
   {id:'news', chip:'\uD83D\uDCF0 Breaking News', head:'\uD83D\uDCF0 BREAKING NEWS', stamp:'\uD83D\uDD34 LIVE'},
   {id:'wanted', chip:'\uD83E\uDD20 Wanted', head:'\uD83E\uDD20 WANTED', stamp:'INAAM: 1 CUTTING CHAI'},
-  {id:'meme', chip:'\uD83E\uDD23 Meme', head:'\uD83E\uDD23 MEME MODE', stamp:'POV: 3 MAHINE HO GAYE'},
+  {id:'meme', chip:'\uD83E\uDD23 Meme', head:'\uD83E\uDD23 MEME MODE', stamp:'POV: 3 MAHINE HO GAYE', dialogue:'DOST: kal pakka de dunga \uD83E\uDD1D'},
   {id:'filmy', chip:'\uD83C\uDFAC Filmy Drama', head:'\uD83C\uDFAC FILMY DRAMA', stamp:'PICTURE ABHI BAAKI HAI'},
-  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE'}
+  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE'},
+  {id:'kadvi', chip:'\uD83C\uDF36\uFE0F Kadvi Sacchai', head:'\uD83C\uDF36\uFE0F KADVI SACCHAI', stamp:'KADVI PAR SACCHI', dialogue:'\u275D Apne hi paise maangne me sharam aaye... yehi kalyug hai! \u275E'},
+  {id:'adalat', chip:'\u2696\uFE0F Adalat', head:'\u2696\uFE0F ADALAT-E-VASOOLI', stamp:'NEXT DATE: KAL', dialogue:'\u275D My Lord, mulzim ne phir KAL ki tareekh maangi hai! \u275E'}
 ];
 function bbTheme(){ return BB_CARD_THEMES.find(t=>t.id===(state.settings.cardTheme||'simple')) || BB_CARD_THEMES[0]; }
 function setCardTheme(id){
@@ -1057,6 +1059,10 @@ function setCardTheme(id){
     const mode = card.querySelector('.rc-mode'); if(mode) mode.textContent = t.head;
     const stamp = card.querySelector('.rc-stamp');
     if(stamp){ if(t.stamp){ stamp.style.display=''; stamp.textContent = t.stamp; } else stamp.style.display='none'; }
+    const wrap = card.querySelector('.rc-art-wrap');
+    if(wrap){ wrap.innerHTML = t.art ? `<img class="rc-art" src="${t.art}" alt="" loading="lazy"/>` : ''; wrap.style.display = t.art ? '' : 'none'; }
+    const dlg = card.querySelector('.rc-dialogue');
+    if(dlg){ dlg.textContent = t.dialogue || ''; dlg.style.display = t.dialogue ? '' : 'none'; }
   });
 }
 function cardThemePicker(){
@@ -1075,7 +1081,9 @@ function rcardHead(formSnapshot, label){
       <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span><span class="rc-tone">${escapeHtml(optionLabel(label)||label||'')}</span></div>
       <div class="rc-to">REMINDER FOR</div>
       <div class="rc-name">${escapeHtml(who)}</div>
-      ${amt?`<div class="rc-amt">${amt}</div>`:''}`;
+      ${amt?`<div class="rc-amt">${amt}</div>`:''}
+      <div class="rc-art-wrap"${t.art?'':' style="display:none"'}>${t.art?`<img class="rc-art" src="${t.art}" alt="" loading="lazy"/>`:''}</div>
+      <div class="rc-dialogue"${t.dialogue?'':' style="display:none"'}>${escapeHtml(t.dialogue||'')}</div>`;
 }
 
 function outputCard(m, idx, formSnapshot){
