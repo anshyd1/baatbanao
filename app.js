@@ -1027,21 +1027,68 @@ function handleGenerate(){
       ${unsafeNotice}
       ${limitNotice}
       <div class="section-title">Ready Messages</div>
+      ${cardThemePicker()}
       ${messages.map((m,i) => outputCard(m, i, formData)).join('')}
     `;
     setTimeout(()=> outputDiv.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
   }, 500);
 }
 
+const BB_CARD_THEMES = [
+  {id:'simple', chip:'\uD83D\uDCDD Simple', head:'\uD83D\uDCB8 Vasooli Mode', stamp:''},
+  {id:'munna', chip:'\uD83D\uDE0E Munna Bhaiya', head:'\uD83D\uDE0E MUNNA BHAIYA STYLE', stamp:'SAMAJH RHE HO NA?'},
+  {id:'villain', chip:'\uD83D\uDE08 Villain', head:'\uD83D\uDE08 VILLAIN MODE', stamp:'MUAHAHA'},
+  {id:'emotional', chip:'\uD83E\uDD7A Emotional', head:'\uD83E\uDD7A DIL SE', stamp:'\uD83D\uDC94 DIL TOD DIYA'},
+  {id:'shayari', chip:'\uD83C\uDFAD Shayari', head:'\uD83C\uDFAD MUSHAIRA-E-VASOOLI', stamp:'WAH WAH'},
+  {id:'sarkari', chip:'\uD83C\uDFDB Sarkari Notice', head:'\uD83C\uDFDB BAATBANAO VASOOLI VIBHAG', stamp:'ANTIM CHETAVNI'},
+  {id:'news', chip:'\uD83D\uDCF0 Breaking News', head:'\uD83D\uDCF0 BREAKING NEWS', stamp:'\uD83D\uDD34 LIVE'},
+  {id:'wanted', chip:'\uD83E\uDD20 Wanted', head:'\uD83E\uDD20 WANTED', stamp:'INAAM: 1 CUTTING CHAI'},
+  {id:'meme', chip:'\uD83E\uDD23 Meme', head:'\uD83E\uDD23 MEME MODE', stamp:'POV: 3 MAHINE HO GAYE'},
+  {id:'filmy', chip:'\uD83C\uDFAC Filmy Drama', head:'\uD83C\uDFAC FILMY DRAMA', stamp:'PICTURE ABHI BAAKI HAI'},
+  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE'}
+];
+function bbTheme(){ return BB_CARD_THEMES.find(t=>t.id===(state.settings.cardTheme||'simple')) || BB_CARD_THEMES[0]; }
+function setCardTheme(id){
+  state.settings.cardTheme = id; persist();
+  const t = bbTheme();
+  document.querySelectorAll('.theme-chip').forEach(c=>c.classList.toggle('active', c.dataset.theme===id));
+  document.querySelectorAll('.output-card.rcard').forEach(card=>{
+    card.className = 'output-card rcard t-' + t.id;
+    const mode = card.querySelector('.rc-mode'); if(mode) mode.textContent = t.head;
+    const stamp = card.querySelector('.rc-stamp');
+    if(stamp){ if(t.stamp){ stamp.style.display=''; stamp.textContent = t.stamp; } else stamp.style.display='none'; }
+  });
+}
+function cardThemePicker(){
+  const cur = bbTheme().id;
+  return `<div class="theme-pick"><div class="theme-pick-title">\uD83C\uDFA8 Card Style — tap karke badlo</div><div class="theme-chips">` +
+    BB_CARD_THEMES.map(t=>`<button class="theme-chip ${cur===t.id?'active':''}" data-theme="${t.id}" onclick="setCardTheme('${t.id}')">${t.chip}</button>`).join('') + `</div></div>`;
+}
+function rcardHead(formSnapshot, label){
+  const t = bbTheme();
+  const nm = (formSnapshot && formSnapshot.name) ? formSnapshot.name : '';
+  const rel = (formSnapshot && formSnapshot.relation) ? formSnapshot.relation : '';
+  const amt = (formSnapshot && hasValidAmount(formSnapshot.amount)) ? fmtMoney(Number(String(formSnapshot.amount).replace(/,/g,''))) : '';
+  const who = [nm, rel].filter(Boolean).join(' · ') || 'Dost';
+  return `
+      <div class="rc-stamp"${t.stamp?'':' style="display:none"'}>${escapeHtml(t.stamp)}</div>
+      <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span><span class="rc-tone">${escapeHtml(optionLabel(label)||label||'')}</span></div>
+      <div class="rc-to">REMINDER FOR</div>
+      <div class="rc-name">${escapeHtml(who)}</div>
+      ${amt?`<div class="rc-amt">${amt}</div>`:''}`;
+}
+
 function outputCard(m, idx, formSnapshot){
   const taId = 'out-text-' + idx;
   const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
   const score = relationshipSafeScore(m.text);
+  const t = bbTheme();
   return `
-    <div class="output-card">
-      <span class="tag">${m.label}</span>
+    <div class="output-card rcard t-${t.id}">
+      ${rcardHead(formSnapshot, m.label)}
       <div class="safe-score">Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}</div>
-      <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+      <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+      <div class="rc-foot">\u2014 via baatbanao</div>
       <div class="btn-row">
         <button class="ghost-btn" onclick="improveOutput('${taId}','softer','${payload}')">🙏 Softer</button>
         <button class="ghost-btn" onclick="improveOutput('${taId}','funny','${payload}')">😄 Funnier</button>
@@ -1123,10 +1170,12 @@ function saveOutputToKhata(m, formSnapshot, taId){
 
 function genericOutputCard(m, idx, prefix){
   const taId = `${prefix}-${idx}`;
+  const t = bbTheme();
   return `
-    <div class="output-card">
-      <span class="tag">${escapeHtml(optionLabel(m.label))}</span>
-      <textarea id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+    <div class="output-card rcard t-${t.id}">
+      ${rcardHead({}, m.label)}
+      <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
+      <div class="rc-foot">\u2014 via baatbanao</div>
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp</button>
@@ -1184,7 +1233,7 @@ function handleTemplateGenerate(){
   state.vasooliForm = data;
   const messages = generateMessages(data);
   const out = document.getElementById('template-output');
-  out.innerHTML = `<div class="section-title">${cat.emoji} ${cat.title}</div>${messages.map((m,i)=>outputCard(m,i,data)).join('')}`;
+  out.innerHTML = `<div class="section-title">${cat.emoji} ${cat.title}</div>${cardThemePicker()}${messages.map((m,i)=>outputCard(m,i,data)).join('')}`;
   setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
 }
 function viewBulkReminders(){
@@ -1313,7 +1362,7 @@ function handleBusinessGenerate(){
   const f = state.businessForm || defaultBusinessForm();
   const out = document.getElementById('business-output');
   const messages = generateBusinessReplies(f);
-  out.innerHTML = `<div class="section-title">Ready Replies</div>${messages.map((m,i)=>genericOutputCard(m,i,'biz-text')).join('')}`;
+  out.innerHTML = `<div class="section-title">Ready Replies</div>${cardThemePicker()}${messages.map((m,i)=>genericOutputCard(m,i,'biz-text')).join('')}`;
   setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
 }
 
@@ -1399,7 +1448,7 @@ function handleMastiGenerate(){
   const f = state.mastiForm || defaultMastiForm();
   const out = document.getElementById('masti-output');
   const messages = generateMastiMessages(f);
-  out.innerHTML = `<div class="section-title">Ready Messages</div>${messages.map((m,i)=>genericOutputCard(m,i,'masti-text')).join('')}`;
+  out.innerHTML = `<div class="section-title">Ready Messages</div>${cardThemePicker()}${messages.map((m,i)=>genericOutputCard(m,i,'masti-text')).join('')}`;
   setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
 }
 
