@@ -730,7 +730,12 @@ input[type=date]:focus{ border-color:var(--coral); }
 .rc-art-wrap{ border-radius:14px; overflow:hidden; }
 .rc-art{ width:100%; height:150px; object-fit:cover; display:block; border-radius:14px; }
 .rc-dialogue{ font-size:13px; font-weight:700; font-style:italic; text-align:center; padding:10px 12px; border-radius:12px; border:1.5px dashed currentColor; }
-.t-simple .rc-art{ height:120px; object-fit:contain; background:#FFF3DC; border:2px solid #F0DFCF; }
+.t-simple .rc-art-wrap{ text-align:center; }
+.t-simple .rc-art{ width:112px; height:112px; object-fit:cover; margin:2px auto; background:#FFF3DC; border:2px solid #F0DFCF; border-radius:26px; }
+.t-villain .rc-art{ border:2px solid #a855f7; }
+.t-shayari .rc-art{ border:2px solid #d4af37; }
+.t-news .rc-art{ border:2px solid #e63946; }
+.t-cricket .rc-art{ border:2px solid #ffd60a; }
 .t-munna .rc-art{ border:2px solid #8a6a2a; }
 .t-munna .rc-dialogue{ color:#FFE9A8; background:rgba(232,180,75,.08); border-style:solid; border-color:#8a6a2a; }
 .t-meme .rc-dialogue{ color:#ffe600; font-style:normal; font-family:Impact,'Arial Black',sans-serif; letter-spacing:.5px; }

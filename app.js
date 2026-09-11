@@ -248,14 +248,30 @@ function isUnsafe(text){
 function stripHonorific(name){
   let n = String(name || '').trim().replace(/\s+/g, ' ');
   if(/^(bhaiya|bhaiya|bahiya|bhaiyaji|bhaiji|bhai|sahab|sahab|saheb|ji|jee|sir|beta|didi)$/i.test(n)) return '';
-  n = n.replace(/\s+(bhaiya|bhaiya|bahiya|bhaiyaji|bhaiji|bhai|sahab|sahab|saheb|ji|jee|sir|beta|didi)\.?$/i, '').trim();
+  for(let i=0;i<3;i++){
+    const cut = n.replace(/\s+(bhaiya|bhaiya|bahiya|bhaiyaji|bhaiji|bhai|sahab|sahab|saheb|ji|jee|sir|beta|didi)\.?$/i, '').trim();
+    if(cut === n) break;
+    n = cut;
+  }
   return n;
+}
+/* No-name cleanup: empty name => templates emit " bhaiya, ..." — drop the
+   dangling honorific + fix spacing so message starts clean. */
+function cleanupNoName(t){
+  return String(t || '')
+    .replace(/^\s*(bhaiya|bhaiya|bhai|sahab|ji|beta)\b[,.\s]*/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .replace(/^[,.\s]+/, '')
+    .replace(/^([a-z\u00e0-\u02af])/, c=>c.toUpperCase());
 }
 
 function generateMessages({name, amount, relation, language, tone, note}){
   const lang = language || 'Hinglish';
   const amt = amountOrPayment(amount, lang);
-  const n = stripHonorific(name) || 'Bhai';
+  const rawName = stripHonorific(name);
+  const n = rawName || '';
+  const clean = (arr) => rawName ? arr : arr.map(m => ({ label:m.label, text: cleanupNoName(m.text) }));
   const noteLine = note && note.trim() ? note.trim() : '';
   const emojiOn = state.settings.emojiEnabled;
   const e = (s) => emojiOn ? s : '';
@@ -300,7 +316,7 @@ function generateMessages({name, amount, relation, language, tone, note}){
   };
   if(SPECIAL_TONES[tone]){
     const pool = SPECIAL_TONES[tone][lang] || SPECIAL_TONES[tone].Hinglish;
-    return rnd3(pool).map(text => ({ label:tone, text }));
+    return clean(rnd3(pool).map(text => ({ label:tone, text })));
   }
 
   const FUNNY = {
@@ -366,13 +382,13 @@ function generateMessages({name, amount, relation, language, tone, note}){
   const POLITE={Hinglish:[(n,a,nt)=>`${n}, aapka ${a} payment pending hai. Kripya jab time mile aaj bhej dein ${e('\u{1F64F}')}${nt?'. '+nt:''}`, (n,a,nt)=>`${n} ji, ek vinamra nivedan — ${a} aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Namaste ${n} ji, ${a} pending hai. Kripya aaj bhejne ka kast karein ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} sahab, ${a} abhi pending hai — suvidha anusaar aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} ji, ${a} abhi clear nahi hua. Kripya aaj bhejein ${e('\u{1F64F}')}${nt?' Note: '+nt:''}`, (n,a,nt)=>`Namaste ${n} ji. ${a} baaki hai — kripya aaj tak clear karein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`,],Hindi:[(n,a,nt)=>`${n} ji, ${a} abhi pending hai. Kripya aaj bhej dein ${e('\u{1F64F}')}${nt?'. '+nt:''}`, (n,a,nt)=>`${n}, aapka ${a} abhi clear nahi hua. Kripya aaj bhej dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Namaste ${n} ji, ek chhoti yaad — ${a} aaj bhejein ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n} sahab, ${a} ka bhugtan aaj kar dein ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} ji, aapse anurodh — ${a} aaj bhej dein. Dhanyavaad ${e('\u{1F64F}')}${nt?' '+nt:''}`,],Bhojpuri:[(n,a,nt)=>`${n} bhaiya, ${a} ke rakam abhi baaki ba. Aaj bhej diha ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} sahab, ek nivedan ba — ${a} aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`Pranam ${n} bhaiya, ${a} ke yaad dilaile ba. Aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} bhaiya, ${a} ke hisaab baaki ba — aaj bhej da ${e('\u{1F64F}')}`, (n,a,nt)=>`${n} bhaiya, ${a} ke payment abhi na aail ba. Aaj bhej diha ${e('\u{1F64F}')}`,],English:[(n,a,nt)=>`Hi ${n}, gentle reminder — ${a} is still pending. Please send today ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Dear ${n}, kindly note ${a} remains unpaid. Settlement today appreciated ${e('\u{1F64F}')}${nt?' '+nt:''}`, (n,a,nt)=>`${n}, gentle reminder — ${a} is pending. Today works? ${e('\u{1F64F}')}${nt?' ('+nt+')':''}`, (n,a,nt)=>`Hi ${n}, polite follow-up on ${a}. Please send today. Thanks ${e('\u{1F64F}')}${nt?' Note: '+nt:''}`,],};
   const STRONG={Hinglish:[(n,a,nt)=>`${n}, ${a} ka payment kaafi din se pending hai. Kripya aaj tak clear kar dein.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} bhai, ${a} bahut time se baaki hai. Aaj clear karna zaroori hai.${nt?' '+nt:''}`, (n,a,nt)=>`Final reminder ${n} — ${a} pending hai. Aaj tak nahi aaya toh problem hogi.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ab seedha bolunga — ${a} bahut din se pending hai. Aaj last chance hai.${nt?' '+nt:''}`, (n,a,nt)=>`${n} ji, ${a} ka payment overdue hai. Kripya aaj hi bhugtan karein.${nt?' ('+nt+')':''}`,],Hindi:[(n,a,nt)=>`${n} ji, ${a} kaafi samay se pending hai. Kripya aaj hi bhugtan kar dein.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ${a} ki payment bahut din se ruki hai. Aaj tak nahi aayi toh dikkat hogi.${nt?' ('+nt+')':''}`, (n,a,nt)=>`Final reminder ${n} ji — ${a} aaj tak clear karna zaroori hai.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n} bhai, ${a} clear karna aaj zaroori hai.${nt?' '+nt:''}`,],Bhojpuri:[(n,a,nt)=>`${n} bhaiya, ${a} bahut din se baaki ba. Aaj tak clear kar diha, jaruri ba.`, (n,a,nt)=>`Final reminder ${n} bhaiya — ${a} aaj clear karal jaruri ba.`, (n,a,nt)=>`${n} bhaiya, ${a} bahut din se pending ba. Aaj na aail ta aage dikkat hoi.`, (n,a,nt)=>`${n} bhaiya, ab seedha baat — ${a} bahut din se baaki ba. Aaj bhej da.`,],English:[(n,a,nt)=>`${n}, ${a} has been pending a while. Please clear it today.${nt?' ('+nt+')':''}`, (n,a,nt)=>`Hi ${n}, final reminder — ${a} is overdue. Please clear today.${nt?' '+nt:''}`, (n,a,nt)=>`${n}, ${a} needs to be cleared today.${nt?' ('+nt+')':''}`, (n,a,nt)=>`${n}, being direct — ${a} is long overdue. Please send today.${nt?' '+nt:''}`,],};
 
-  if(tone==='Funny'){const pool=FUNNY[lang]||FUNNY.Hinglish;const picks=rnd3(pool);return[{label:'Funny',text:picks[0](n,amt)},{label:'Funny',text:(picks[1]||picks[0])(n,amt)},{label:'Funny',text:(picks[2]||picks[0])(n,amt)}];}
-  if(tone==='Polite'){const pool=POLITE[lang]||POLITE.Hinglish;const picks=rnd3(pool);return picks.map(fn=>({label:'Polite',text:fn(n,amt,noteLine)}));}
-  if(tone==='Strong'||tone==='Strong but Respectful'){const pool=STRONG[lang]||STRONG.Hinglish;const picks=rnd3(pool);return picks.map(fn=>({label:'Strong but Respectful',text:fn(n,amt,noteLine)}));}
+  if(tone==='Funny'){const pool=FUNNY[lang]||FUNNY.Hinglish;const picks=rnd3(pool);return clean([{label:'Funny',text:picks[0](n,amt)},{label:'Funny',text:(picks[1]||picks[0])(n,amt)},{label:'Funny',text:(picks[2]||picks[0])(n,amt)}]);}
+  if(tone==='Polite'){const pool=POLITE[lang]||POLITE.Hinglish;const picks=rnd3(pool);return clean(picks.map(fn=>({label:'Polite',text:fn(n,amt,noteLine)})));}
+  if(tone==='Strong'||tone==='Strong but Respectful'){const pool=STRONG[lang]||STRONG.Hinglish;const picks=rnd3(pool);return clean(picks.map(fn=>({label:'Strong but Respectful',text:fn(n,amt,noteLine)})));}
   // Default = Friendly random
   const pool=FRIENDLY[lang]||FRIENDLY.Hinglish;
   const picks=rnd3(pool);
-  return picks.map(fn=>({label:'Friendly',text:fn(n,amt,noteLine)}));
+  return clean(picks.map(fn=>({label:'Friendly',text:fn(n,amt,noteLine)})));
 }
 
 function safeAlternative(name, amount){
@@ -381,7 +397,9 @@ function safeAlternative(name, amount){
 }
 
 function generateGenericReminderMessages({name, language, tone, note}){
-  const n = stripHonorific(name) || 'Bhai';
+  const rawNameG = stripHonorific(name);
+  const n = rawNameG || '';
+  const cleanG = (arr) => rawNameG ? arr : arr.map(m => ({ label:m.label, text: cleanupNoName(m.text) }));
   const nt = note ? ` ${note}` : '';
   const emojiOn = state.settings.emojiEnabled;
   const e = (s) => emojiOn ? s : '';
@@ -479,7 +497,7 @@ function generateGenericReminderMessages({name, language, tone, note}){
   };
   const toneKey = tone === 'Strong but Respectful' ? 'Strong' : (bank[tone] ? tone : 'Friendly');
   const pool = (bank[toneKey] && (bank[toneKey][lang] || bank[toneKey].Hinglish)) || bank.Friendly.Hinglish;
-  return pool.slice(0,3).map(text => ({ label, text }));
+  return cleanG(pool.slice(0,3).map(text => ({ label, text })));
 }
 
 /* ===========================================================
@@ -1047,15 +1065,15 @@ function handleGenerate(){
 const BB_CARD_THEMES = [
   {id:'simple', chip:'\uD83D\uDCDD Simple', head:'\uD83D\uDCB8 Vasooli Mode', stamp:'', art:'assets/mascot-coin.webp'},
   {id:'munna', chip:'\uD83D\uDE0E Munna Bhaiya', head:'\uD83D\uDE0E MUNNA BHAIYA STYLE', stamp:'SAMAJH RHE HO NA?', art:'assets/theme-munna-pistol.jpg', dialogue:'\u275D Udhaar pyaar se diya tha... vasooli bhaukaal se hogi! \u275E'},
-  {id:'villain', chip:'\uD83D\uDE08 Villain', head:'\uD83D\uDE08 VILLAIN MODE', stamp:'MUAHAHA'},
+  {id:'villain', chip:'\uD83D\uDE08 Villain', head:'\uD83D\uDE08 VILLAIN MODE', stamp:'MUAHAHA', art:'assets/theme-villain.jpg'},
   {id:'emotional', chip:'\uD83E\uDD7A Emotional', head:'\uD83E\uDD7A DIL SE', stamp:'\uD83D\uDC94 DIL TOD DIYA'},
-  {id:'shayari', chip:'\uD83C\uDFAD Shayari', head:'\uD83C\uDFAD MUSHAIRA-E-VASOOLI', stamp:'WAH WAH'},
+  {id:'shayari', chip:'\uD83C\uDFAD Shayari', head:'\uD83C\uDFAD MUSHAIRA-E-VASOOLI', stamp:'WAH WAH', art:'assets/theme-shayari.jpg'},
   {id:'sarkari', chip:'\uD83C\uDFDB Sarkari Notice', head:'\uD83C\uDFDB BAATBANAO VASOOLI VIBHAG', stamp:'ANTIM CHETAVNI'},
-  {id:'news', chip:'\uD83D\uDCF0 Breaking News', head:'\uD83D\uDCF0 BREAKING NEWS', stamp:'\uD83D\uDD34 LIVE'},
+  {id:'news', chip:'\uD83D\uDCF0 Breaking News', head:'\uD83D\uDCF0 BREAKING NEWS', stamp:'\uD83D\uDD34 LIVE', art:'assets/theme-news.jpg'},
   {id:'wanted', chip:'\uD83E\uDD20 Wanted', head:'\uD83E\uDD20 WANTED', stamp:'INAAM: 1 CUTTING CHAI'},
   {id:'meme', chip:'\uD83E\uDD23 Meme', head:'\uD83E\uDD23 MEME MODE', stamp:'POV: 3 MAHINE HO GAYE', dialogue:'DOST: kal pakka de dunga \uD83E\uDD1D'},
   {id:'filmy', chip:'\uD83C\uDFAC Filmy Drama', head:'\uD83C\uDFAC FILMY DRAMA', stamp:'PICTURE ABHI BAAKI HAI'},
-  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE'},
+  {id:'cricket', chip:'\uD83C\uDFCF Cricket', head:'\uD83C\uDFCF PAYMENT PREMIER LEAGUE', stamp:'MATCH LIVE', art:'assets/theme-cricket.jpg'},
   {id:'kadvi', chip:'\uD83C\uDF36\uFE0F Kadvi Sacchai', head:'\uD83C\uDF36\uFE0F KADVI SACCHAI', stamp:'KADVI PAR SACCHI', dialogue:'\u275D Apne hi paise maangne me sharam aaye... yehi kalyug hai! \u275E'},
   {id:'adalat', chip:'\u2696\uFE0F Adalat', head:'\u2696\uFE0F ADALAT-E-VASOOLI', stamp:'NEXT DATE: KAL', dialogue:'\u275D My Lord, mulzim ne phir KAL ki tareekh maangi hai! \u275E'}
 ];
@@ -1082,7 +1100,7 @@ function cardThemePicker(){
 }
 function rcardHead(formSnapshot, label){
   const t = bbTheme();
-  const nm = (formSnapshot && formSnapshot.name) ? formSnapshot.name : '';
+  const nm = stripHonorific(formSnapshot && formSnapshot.name);
   const rel = (formSnapshot && formSnapshot.relation) ? formSnapshot.relation : '';
   const amt = (formSnapshot && hasValidAmount(formSnapshot.amount)) ? fmtMoney(Number(String(formSnapshot.amount).replace(/,/g,''))) : '';
   const who = [nm, rel].filter(Boolean).join(' · ') || 'Dost';
@@ -1115,11 +1133,49 @@ function outputCard(m, idx, formSnapshot){
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
+        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDE80 Card</button>
         ${upiOutputButton(formSnapshot)}
         <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
       </div>
     </div>
   `;
+}
+
+async function shareCardImage(taId){
+  const ta = document.getElementById(taId);
+  const card = ta && ta.closest('.output-card');
+  if(!card){ showToast('Card nahi mila'); return; }
+  if(!window.html2canvas){ showToast('Image library load ho rahi hai... 2 sec me dobara dabao \u23F3'); return; }
+  showToast('Card image ban rahi hai... \uD83D\uDE80');
+  try{
+    const clone = card.cloneNode(true);
+    const taClone = clone.querySelector('textarea');
+    if(taClone){
+      const div = document.createElement('div');
+      div.className = taClone.className;
+      div.textContent = ta.value;
+      div.style.whiteSpace = 'pre-wrap';
+      taClone.replaceWith(div);
+    }
+    clone.querySelectorAll('.btn-row').forEach(b=>b.remove());
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + (card.offsetWidth || 420) + 'px;background:#FFF9E8;padding:16px;';
+    wrap.appendChild(clone);
+    document.body.appendChild(wrap);
+    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2, useCORS:true });
+    wrap.remove();
+    const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
+    if(!blob){ showToast('Image nahi bani — dobara try karo'); return; }
+    const file = new File([blob], 'baatbanao-card.png', { type:'image/png' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({ files:[file], title:'BaatBanao Card' });
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = 'baatbanao-card.png'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+      showToast('Card download ho gayi \u2B07\uFE0F — WhatsApp pe bhejo!');
+    }
+  }catch(err){ console.warn('shareCardImage', err); showToast('Share cancel — dobara try karo'); }
 }
 
 function copyOutput(taId){
@@ -1197,6 +1253,7 @@ function genericOutputCard(m, idx, prefix){
       <div class="btn-row">
         <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp</button>
+        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDE80 Card</button>
       </div>
     </div>
   `;
