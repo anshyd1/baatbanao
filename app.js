@@ -259,7 +259,14 @@ function stripHonorific(name){
    dangling honorific + fix spacing so message starts clean. */
 function cleanupNoName(t){
   return String(t || '')
-    .replace(/^\s*(bhaiya|bhaiya|bhai|sahab|ji|beta)\b[,.\s]*/i, '')
+    .replace(/^Hey\s*[,.\s]+/i, 'Hey! ')
+    .replace(/^Hi\s*[,.\s]+/i, 'Hi! ')
+    .replace(/^Hello\s*[,.\s]+/i, 'Hello! ')
+    .replace(/^Oye\s*[,.\s]+/i, 'Oye! ')
+    .replace(/^Namaste\s*(ji)?[,.\s]*/i, 'Namaste! ')
+    .replace(/^Pranam\s*(ji|bhaiya|bhai)?[,.\s]*/i, 'Pranam! ')
+    .replace(/^Dear\s*[,.\s]+/i, 'Hello, ')
+    .replace(/^\s*(bhaiya|bhai|sahab|ji|beta)\b[,.\s]*/i, '')
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.!?])/g, '$1')
     .replace(/^[,.\s]+/, '')
@@ -1102,12 +1109,15 @@ function rcardHead(formSnapshot, label){
   const relRaw = (formSnapshot && formSnapshot.relation) ? formSnapshot.relation : '';
   const rel = /^(dost|general|friend)s?$/i.test(relRaw.trim()) ? '' : relRaw;
   const amt = (formSnapshot && hasValidAmount(formSnapshot.amount)) ? fmtMoney(Number(String(formSnapshot.amount).replace(/,/g,''))) : '';
-  const who = [nm, rel].filter(Boolean).join(' · ') || 'Reminder';
+  const who = [nm, rel].filter(Boolean).join(' · ');
+  const targetHtml = who
+    ? `<div class="rc-to">REMINDER FOR</div><div class="rc-name">${escapeHtml(who)}</div>`
+    : `<div class="rc-to">PAYMENT REMINDER</div><div class="rc-name">Vasooli Alert 💸</div>`;
+
   return `
       <div class="rc-stamp"${t.stamp?'':' style="display:none"'}>${escapeHtml(t.stamp)}</div>
       <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span><span class="rc-tone">${escapeHtml(optionLabel(label)||label||'')}</span></div>
-      <div class="rc-to">REMINDER FOR</div>
-      <div class="rc-name">${escapeHtml(who)}</div>
+      ${targetHtml}
       ${amt?`<div class="rc-amt">${amt}</div>`:''}
       <div class="rc-art-wrap"${t.art?'':' style="display:none"'}>${t.art?`<img class="rc-art" src="${t.art}" alt="" loading="lazy"/>`:''}</div>
       <div class="rc-dialogue"${t.dialogue?'':' style="display:none"'}>${escapeHtml(t.dialogue||'')}</div>`;
@@ -1125,19 +1135,30 @@ function outputCard(m, idx, formSnapshot){
       <div class="safe-score">Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}</div>
       <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
       ${watermark}
-      <div class="btn-row">
-        <button class="ghost-btn" onclick="improveOutput('${taId}','softer','${payload}')">🙏 Softer</button>
-        <button class="ghost-btn" onclick="improveOutput('${taId}','funny','${payload}')">😄 Funnier</button>
-        <button class="ghost-btn" onclick="improveOutput('${taId}','savage','${payload}')">🔥 Savage Safe</button>
+
+      <div class="card-action-box">
+        <div class="tone-pills-row">
+          <span class="tone-pill-label">Tone:</span>
+          <button class="tone-pill" onclick="improveOutput('${taId}','softer','${payload}')">🙏 Softer</button>
+          <button class="tone-pill" onclick="improveOutput('${taId}','funny','${payload}')">😄 Funnier</button>
+          <button class="tone-pill" onclick="improveOutput('${taId}','savage','${payload}')">🔥 Savage</button>
+        </div>
+
+        <div class="main-btn-grid">
+          <button class="action-btn-main btn-wa-direct" onclick="whatsappOutput('${taId}')">
+            ${ICONS.whatsapp} <span>Direct WhatsApp</span>
+          </button>
+          <button class="action-btn-main btn-card-share" onclick="shareCardImage('${taId}')">
+            📸 <span>Photo Card Share</span>
+          </button>
+        </div>
+
+        <div class="sub-btn-row">
+          <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
+          ${upiOutputButton(formSnapshot)}
+          <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
+        </div>
       </div>
-      <button class="primary-card-btn whatsapp-photo-btn" onclick="shareCardImage('${taId}')">📸 WhatsApp Photo Card Bhejo</button>
-      <div class="btn-row">
-        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy Text</button>
-        <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp Text</button>
-        ${upiOutputButton(formSnapshot)}
-        <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
-      </div>
-      <div class="rc-hint">💡 Mobile par <b>📸 WhatsApp Photo Card</b> dabayein WhatsApp chune ke liye. PC par image copy aur download ho jayegi!</div>
     </div>
   `;
 }
@@ -1151,7 +1172,7 @@ async function shareCardImage(taId){
     for(let i=0;i<60 && !window.html2canvas;i++){ await new Promise(r=>setTimeout(r,500)); }
     if(!window.html2canvas){ showToast('Net slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
   }
-  showToast('📸 Photo card generate ho raha hai... 🚀');
+  showToast('📸 HD Photo card ban raha hai... 🚀');
   const dlPng = (blob)=>{
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'baatbanao-reminder.png'; a.click();
@@ -1162,18 +1183,35 @@ async function shareCardImage(taId){
     const taClone = clone.querySelector('textarea');
     if(taClone){
       const div = document.createElement('div');
-      div.className = taClone.className;
+      div.className = 'rc-msg-display';
       div.textContent = ta.value;
-      div.style.whiteSpace = 'pre-wrap';
       taClone.replaceWith(div);
     }
-    clone.querySelectorAll('.btn-row, .primary-card-btn, .rc-hint').forEach(b=>b.remove());
+    clone.querySelectorAll('.card-action-box, .btn-row, .primary-card-btn, .rc-hint, button').forEach(b=>b.remove());
+    
+    let ft = clone.querySelector('.rc-foot');
+    if(!ft && !isBBPro()){
+      ft = document.createElement('div');
+      ft.className = 'rc-foot';
+      clone.appendChild(ft);
+    }
+    if(ft && !isBBPro()){
+      ft.textContent = '⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸';
+    }
+
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + (card.offsetWidth || 420) + 'px;background:#FFF9E8;padding:16px;box-sizing:border-box;';
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:540px;background:#FFF9E8;padding:24px;box-sizing:border-box;';
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
-    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2.5, useCORS:true, logging:false });
+
+    const canvas = await window.html2canvas(clone, {
+      backgroundColor:'#FFF9E8',
+      scale: 3,
+      useCORS: true,
+      logging: false
+    });
     wrap.remove();
+    
     const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
     if(!blob){ showToast('Image nahi bani — dobara try karo'); return; }
     const file = new File([blob], 'baatbanao-reminder.png', { type:'image/png' });
@@ -1186,17 +1224,28 @@ async function shareCardImage(taId){
 
     if(navigator.canShare && navigator.canShare({ files:[file] })){
       try{
-        await navigator.share({ files:[file], title:'BaatBanao Reminder', text:'BaatBanao Reminder 💸\nhttps://baatbanao.vercel.app' });
-        showToast('Photo WhatsApp/Share drawer me open ho gayi! ✅');
+        await navigator.share({
+          files:[file],
+          title:'BaatBanao Reminder',
+          text:'BaatBanao Reminder 💸\nhttps://baatbanao.vercel.app'
+        });
+        showToast('Photo share drawer open ho gaya! ✅');
       }catch(shareErr){
-        if(shareErr && shareErr.name==='AbortError'){ showToast('Share cancel kiya'); }
-        else{ dlPng(blob); showToast('📸 Card download ho gaya & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karo ✅'); }
+        if(shareErr && shareErr.name==='AbortError'){
+          showToast('Share cancel kiya');
+        } else {
+          dlPng(blob);
+          showToast('📸 HD Card download ho gaya & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karo ✅');
+        }
       }
     } else {
       dlPng(blob);
-      showToast('📸 Card download & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karein ✅');
+      showToast('📸 HD Card download & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karein ✅');
     }
-  }catch(err){ console.warn('shareCardImage', err); showToast('Image nahi bani — dobara try karo'); }
+  }catch(err){
+    console.warn('shareCardImage', err);
+    showToast('Image nahi bani — dobara try karo');
+  }
 }
 
 function copyOutput(taId){
@@ -1272,25 +1321,33 @@ function genericOutputCard(m, idx, prefix){
       ${rcardHead({}, m.label)}
       <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
       ${watermark}
-      <button class="primary-card-btn whatsapp-photo-btn" onclick="shareCardImage('${taId}')">📸 WhatsApp Photo Card Bhejo</button>
-      <div class="btn-row">
-        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy Text</button>
-        <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp Text</button>
+
+      <div class="card-action-box">
+        <div class="main-btn-grid">
+          <button class="action-btn-main btn-wa-direct" onclick="whatsappGeneric('${taId}')">
+            ${ICONS.whatsapp} <span>Direct WhatsApp</span>
+          </button>
+          <button class="action-btn-main btn-card-share" onclick="shareCardImage('${taId}')">
+            📸 <span>Photo Card Share</span>
+          </button>
+        </div>
+        <div class="sub-btn-row">
+          <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
+        </div>
       </div>
-      <div class="rc-hint">💡 Mobile par <b>📸 WhatsApp Photo Card</b> dabayein WhatsApp chune ke liye. PC par image copy aur download ho jayegi!</div>
     </div>
   `;
 }
 
 const BB_TEMPLATE_CATEGORIES = [
-  {id:'friend', title:'Friend Loan Reminder', emoji:'🤝', relation:'Dost', tone:'Friendly', note:'friendly loan reminder'},
-  {id:'client', title:'Client Payment Follow-up', emoji:'💼', relation:'Client', tone:'Polite', note:'invoice/payment follow-up'},
-  {id:'shop', title:'Shop Udhaar Reminder', emoji:'📒', relation:'Shop Khata', tone:'Polite', note:'shop udhaar pending'},
-  {id:'rent', title:'Rent Reminder', emoji:'🏠', relation:'Tenant', tone:'Strong', note:'rent due reminder'},
-  {id:'tuition', title:'Tuition Fee Reminder', emoji:'🎓', relation:'Student/Parent', tone:'Polite', note:'tuition fee pending'},
-  {id:'freelance', title:'Freelance Payment', emoji:'💻', relation:'Client', tone:'Polite', note:'freelance project payment pending'},
-  {id:'family', title:'Family Safe Reminder', emoji:'👨‍👩‍👧', relation:'Relative', tone:'Mummy Style', note:'family friendly reminder'},
-  {id:'savage', title:'Savage But Safe', emoji:'🔥', relation:'Dost', tone:'Savage Safe', note:'funny but respectful reminder'}
+  {id:'friend', title:'Friend Loan Reminder', emoji:'🤝', relation:'Dost', tone:'Friendly', note:''},
+  {id:'client', title:'Client Payment Follow-up', emoji:'💼', relation:'Client', tone:'Polite', note:''},
+  {id:'shop', title:'Shop Udhaar Reminder', emoji:'📒', relation:'Shop Khata', tone:'Polite', note:''},
+  {id:'rent', title:'Rent Reminder', emoji:'🏠', relation:'Tenant', tone:'Strong', note:''},
+  {id:'tuition', title:'Tuition Fee Reminder', emoji:'🎓', relation:'Student/Parent', tone:'Polite', note:''},
+  {id:'freelance', title:'Freelance Payment', emoji:'💻', relation:'Client', tone:'Polite', note:''},
+  {id:'family', title:'Family Safe Reminder', emoji:'👨‍👩‍👧', relation:'Relative', tone:'Mummy Style', note:''},
+  {id:'savage', title:'Savage But Safe', emoji:'🔥', relation:'Dost', tone:'Savage Safe', note:''}
 ];
 function defaultTemplateForm(){
   return { category:'friend', name:'', phone:'', amount:'', language:state.settings.defaultLanguage || 'Hinglish' };
@@ -1327,7 +1384,7 @@ function handleTemplateGenerate(){
   const amount = amountRaw ? Number(amountRaw.replace(/,/g,'')) : '';
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
-  const data = {name:f.name || 'Bhai', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:cat.note};
+  const data = {name:f.name || '', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:''};
   state.vasooliForm = data;
   const messages = generateMessages(data);
   const out = document.getElementById('template-output');
