@@ -1,10 +1,9 @@
 /* ===========================================================
-   BaatBanao Service Worker v1.0.27
-   (v1.0.27: install-button audit fixes — added manifest.json +
-   maskable icons to precache list, which were missing before)
+   BaatBanao Service Worker v1.0.29
+   (v1.0.29: brand URL migration + cache refresh force)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.28';
+const CACHE_VERSION = 'baatbanao-v1.0.29';
 const CORE_ASSETS = [
   './',
   './index.html',

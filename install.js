@@ -1,5 +1,5 @@
 /* ===========================================================
-   BaatBanao — Install + Update Manager v1.0.6
+   BaatBanao — Install + Update Manager v1.0.7
    NUCLEAR TOAST FIX:
    - No queue — max 1 toast at a time (new replaces old)
    - "Installing..." toast REMOVED forever (only success shows)
@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.27';
+  const APP_VERSION = '1.0.29';
 
   /* ---------- NUKE ALL EXISTING TOASTS ON LOAD ---------- */
   function nukeAllToasts(){

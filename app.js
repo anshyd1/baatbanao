@@ -1039,7 +1039,7 @@ function handleGenerate(){
 
     // Free tier: small watermark at message end (viral loop + Pro upsell).
     // Pro users: never added. Can also be toggled off in Settings.
-    const bbWm = (!isBBPro() && state.settings.watermarkEnabled) ? '\n\n— via baatbanao.in' : '';
+    const bbWm = (!isBBPro() && state.settings.watermarkEnabled) ? '\n\n— via baatbanao.shop' : '';
     if(bbWm) messages.forEach(m => { m.text = (m.text || '').trimEnd() + bbWm; });
 
     // save to history
