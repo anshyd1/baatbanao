@@ -1,10 +1,77 @@
 {
-  "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/google4fd656e5d7ba5eb3.html",
-      "destination": "/google4fd656e5d7ba5eb3"
+      "source": "/about",
+      "destination": "/about.html"
+    },
+    {
+      "source": "/bhojpuri-udhaar-message",
+      "destination": "/bhojpuri-udhaar-message.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact.html"
+    },
+    {
+      "source": "/disclaimer",
+      "destination": "/disclaimer.html"
+    },
+    {
+      "source": "/dost-se-paise-wapas-message",
+      "destination": "/dost-se-paise-wapas-message.html"
+    },
+    {
+      "source": "/google4fd656e5d7ba5eb3",
+      "destination": "/google4fd656e5d7ba5eb3.html"
+    },
+    {
+      "source": "/kirana-shop-udhaar-reminder",
+      "destination": "/kirana-shop-udhaar-reminder.html"
+    },
+    {
+      "source": "/kirayedaar-rent-reminder-message",
+      "destination": "/kirayedaar-rent-reminder-message.html"
+    },
+    {
+      "source": "/paise-mangne-ke-message",
+      "destination": "/paise-mangne-ke-message.html"
+    },
+    {
+      "source": "/paise-wapas-mangne-ka-tarika",
+      "destination": "/paise-wapas-mangne-ka-tarika.html"
+    },
+    {
+      "source": "/pay",
+      "destination": "/pay.html"
+    },
+    {
+      "source": "/payment-reminder-customer-whatsapp",
+      "destination": "/payment-reminder-customer-whatsapp.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/tuition-fees-reminder-message",
+      "destination": "/tuition-fees-reminder-message.html"
+    },
+    {
+      "source": "/udhaar-khata-kaise-banaayein",
+      "destination": "/udhaar-khata-kaise-banaayein.html"
+    },
+    {
+      "source": "/udhar-funny-shayari",
+      "destination": "/udhar-funny-shayari.html"
+    },
+    {
+      "source": "/upi-payment-link-generator",
+      "destination": "/upi-payment-link-generator.html"
     }
   ]
 }
