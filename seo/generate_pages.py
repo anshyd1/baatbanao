@@ -2,7 +2,7 @@
 """BaatBanao static SEO page generator — writes Google-safe unique pages + sitemap."""
 import os, json, html
 
-BASE = "https://baatbanao.vercel.app"
+BASE = "https://www.baatbanao.shop"
 APP = BASE + "/#vasooli"
 
 CSS = """

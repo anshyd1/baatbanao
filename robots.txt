@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://baatbanao.vercel.app/sitemap.xml
+Sitemap: https://www.baatbanao.shop/sitemap.xml

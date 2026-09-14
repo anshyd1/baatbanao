@@ -838,7 +838,7 @@ function buildUpiWebLink(data={}){
 }
 function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
-  const viralFooter = '\n\n— ⚡ Apna reminder banao: https://baatbanao.vercel.app';
+  const viralFooter = '\n\n— ⚡ Apna reminder banao: https://www.baatbanao.shop';
   if(!state.settings.upiAttachEnabled || !canUseUpi()) return base + viralFooter;
   const upiLink = buildUpiLink(data);
   if(!upiLink) return base + viralFooter;
@@ -1127,7 +1127,7 @@ function outputCard(m, idx, formSnapshot){
   const taId = 'out-text-' + idx;
   const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
   const t = bbTheme();
-  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸</div>';
+  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ www.baatbanao.shop · Rishta Safe Vasooli 💸</div>';
   return `
     <div class="output-card rcard t-${t.id}">
       ${rcardHead(formSnapshot, m.label)}
@@ -1194,7 +1194,7 @@ async function shareCardImage(taId){
       clone.appendChild(ft);
     }
     if(ft && !isBBPro()){
-      ft.textContent = '⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸';
+      ft.textContent = '⚡ www.baatbanao.shop · Rishta Safe Vasooli 💸';
     }
 
     const wrap = document.createElement('div');
@@ -1225,7 +1225,7 @@ async function shareCardImage(taId){
         await navigator.share({
           files:[file],
           title:'BaatBanao Reminder',
-          text:'BaatBanao Reminder 💸\nhttps://baatbanao.vercel.app'
+          text:'BaatBanao Reminder 💸\nhttps://www.baatbanao.shop'
         });
         showToast('Photo share drawer open ho gaya! ✅');
       }catch(shareErr){
@@ -1313,7 +1313,7 @@ function saveOutputToKhata(m, formSnapshot, taId){
 function genericOutputCard(m, idx, prefix){
   const taId = `${prefix}-${idx}`;
   const t = bbTheme();
-  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸</div>';
+  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ www.baatbanao.shop · Rishta Safe Vasooli 💸</div>';
   return `
     <div class="output-card rcard t-${t.id}">
       ${rcardHead({}, m.label)}

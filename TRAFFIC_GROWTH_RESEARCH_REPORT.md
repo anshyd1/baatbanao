@@ -46,7 +46,7 @@ It also creates instant 1-tap UPI payment links & QR cards so they have zero exc
 
 Tech stack: Vanilla JS, pure CSS, PWA, 100% client-side (no data stored on any server).
 
-Link: https://baatbanao.vercel.app
+Link: https://www.baatbanao.shop
 Source: https://github.com/anshyd1/baatbanao
 
 Would love your feedback on the templates! What new tones or features should I add?
@@ -65,7 +65,7 @@ Twitter Indian tech and startup circles love indie tools that solve hyper-relata
 * **Tweet 2 (Core Features):**  
   *"Features: 1️⃣ 10+ Indian Tones (Polite, Filmy, Bhojpuri, Shayari) 2️⃣ Safe-Score algorithm (warns if message is too toxic) 3️⃣ Instant UPI link & QR embed 4️⃣ 100% free & client-side local khata."*
 * **Tweet 3 (Call to Action + Link):**  
-  *"Try it here: baatbanao.vercel.app | Built in pure Vanilla JS. Tag a friend who owes you money right now 💀"*
+  *"Try it here: www.baatbanao.shop | Built in pure Vanilla JS. Tag a friend who owes you money right now 💀"*
 
 ---
 
@@ -77,7 +77,7 @@ Target high-density group contexts where money splitting happens daily:
 * Office lunch / chai split circles
 
 **Broadcast Message Template:**
-> *"Bhai jiska bhi kisi par udhaar baaki hai aur maangne me sharm aati hai, ye tool use karo 😂: https://baatbanao.vercel.app — Filmy dialogue aur funny templates me WhatsApp message aur UPI link bana deta hai 🚀"*
+> *"Bhai jiska bhi kisi par udhaar baaki hai aur maangne me sharm aati hai, ye tool use karo 😂: https://www.baatbanao.shop — Filmy dialogue aur funny templates me WhatsApp message aur UPI link bana deta hai 🚀"*
 
 ---
 
@@ -94,7 +94,7 @@ To ensure every visitor brings in 1.2 to 2 new visitors automatically, refine th
            ▼ (Sent via WhatsApp)
 [User B Receives Message / Card / UPI Pay Link]
            │
-           ├──► 1. Reads footer: "Generated via baatbanao.vercel.app"
+           ├──► 1. Reads footer: "Generated via www.baatbanao.shop"
            ├──► 2. Opens Pay Link: Sees "Create Your Own Free Reminder" Banner
            └──► 3. Gets entertained by the tone / Safe Score -> Clicks to try on their friends!
 ```
@@ -104,17 +104,17 @@ To ensure every visitor brings in 1.2 to 2 new visitors automatically, refine th
 #### 1. Outbound Message Footer Optimization
 In `app.js` and `messages.js`, ensure the WhatsApp text and copied text clearly include an actionable call-to-action:
 * **Current:** `\u2014 via baatbanao`
-* **Upgraded:** `\n\n— ⚡ Khud ka funny payment reminder banao: baatbanao.vercel.app`
+* **Upgraded:** `\n\n— ⚡ Khud ka funny payment reminder banao: www.baatbanao.shop`
 
 #### 2. Pay Page (`/pay/index.html`) Viral Banner
 When the payer opens the UPI link or scans the QR code on the payment page:
 * Add a bottom card:  
   **"Kya aapka bhi kisi par udhaar baaki hai?"**  
-  *Button: "Apna Payment Reminder Banao (Free) 🚀"* -> Redirects to `https://baatbanao.vercel.app/#vasooli`
+  *Button: "Apna Payment Reminder Banao (Free) 🚀"* -> Redirects to `https://www.baatbanao.shop/#vasooli`
 
 #### 3. Image Share Card Watermark
 On the html2canvas generated cards (`shareCardImage`):
-* Make the bottom branding distinct with a mini QR code or readable text: `baatbanao.vercel.app | Rishta Safe Vasooli`. When shared on WhatsApp Status or Instagram Stories, viewers can immediately visit the URL.
+* Make the bottom branding distinct with a mini QR code or readable text: `www.baatbanao.shop | Rishta Safe Vasooli`. When shared on WhatsApp Status or Instagram Stories, viewers can immediately visit the URL.
 
 ---
 
@@ -128,7 +128,7 @@ Short-form video on Instagram Reels and YouTube Shorts is the highest ROI distri
 | :--- | :--- | :--- | :--- |
 | **#1: The Awkward Chai Split** | *"Dost se ₹150 maangne me jaan nikal jaati hai?"* | Screen recording: Showing generic text vs. BaatBanao's "Chai peete peete ₹150 bhej do" template + Safe Score 92/100. | *"Bio me link hai, aaj hi saare udhaar vasool karo!"* |
 | **#2: 5 Types of Udhaar Reminders** | *"How to ask for money based on your friendship level"* | Showcase: 1. Formal (Boss/Client), 2. Polite (Relative), 3. Savage Safe (Best Friend), 4. Bhojpuri Mode, 5. Crime Master Gogo mode. | *"Konsa friend yaad aaya? Tag karo comments me 😂"* |
-| **#3: The UPI Payment Link Trick** | *"Never share just your UPI ID again! Do this instead"* | Showing how BaatBanao generates a pre-filled amount UPI link + QR code in 5 seconds. | *"Free tool: baatbanao.vercel.app"* |
+| **#3: The UPI Payment Link Trick** | *"Never share just your UPI ID again! Do this instead"* | Showing how BaatBanao generates a pre-filled amount UPI link + QR code in 5 seconds. | *"Free tool: www.baatbanao.shop"* |
 | **#4: Flatmate Rent Vasooli** | *"Jab flatmate rent ke time gayab ho jaye 💀"* | Using the `Kirayedaar/Flatmate Rent` tone template with the 'Seen ✓✓' Chat Theme card. | *"Send this card to your roommate right now."* |
 | **#5: Bhojpuri Vasooli Dialogue** | *"Bhojpuri me paise wapas kaise maange? 😂"* | Playing Bhojpuri voiceover / displaying template: *"Bhaiya ₹500 baaki ba, dosti alag ba hisaab alag ba!"* | *"Comment 'VASOOLI' and I will DM you the link!"* (Use ManyChat automation). |
 

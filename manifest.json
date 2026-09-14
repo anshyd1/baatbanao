@@ -2,9 +2,9 @@
   "name": "BaatBanao",
   "short_name": "BaatBanao",
   "description": "WhatsApp payment reminder assistant. Vasooli Mode se Hindi, Hinglish, Bhojpuri aur English mein message 5 second mein. Paisa bhi wapas, rishta bhi safe.",
-  "start_url": "./index.html?utm_source=pwa",
-  "id": "/baatbanao/",
-  "scope": "./",
+  "start_url": "/?utm_source=pwa",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
@@ -45,21 +45,21 @@
       "name": "Vasooli Mode",
       "short_name": "Vasooli",
       "description": "Payment reminder message banao",
-      "url": "./index.html#vasooli",
+      "url": "/#vasooli",
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Udhaar Khata",
       "short_name": "Khata",
       "description": "Pending payments dekho",
-      "url": "./index.html#khata",
+      "url": "/#khata",
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "History",
       "short_name": "History",
       "description": "Purane messages dekho",
-      "url": "./index.html#history",
+      "url": "/#history",
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     }
   ]
