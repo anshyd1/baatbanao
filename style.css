@@ -209,6 +209,20 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 .primary-btn:active{ transform:scale(0.98); }
 .primary-btn:disabled{ opacity:0.6; cursor:default; transform:none; }
 
+.primary-card-btn{
+  width:100%; padding:13px 16px; border-radius:14px; font-weight:800; font-size:14px;
+  border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:inherit; transition:transform .15s ease, box-shadow .15s ease; margin-top:6px;
+}
+.primary-card-btn:active{ transform:scale(0.98); }
+.primary-card-btn.whatsapp-photo-btn{
+  background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  color:#fff; box-shadow:0 6px 16px rgba(37,211,102,0.35);
+}
+.primary-card-btn.whatsapp-photo-btn:hover{
+  box-shadow:0 8px 22px rgba(37,211,102,0.45);
+}
+
 .ghost-btn{
   padding:10px 14px; border-radius:14px; border:1px solid var(--border-soft); background:var(--card-cream);
   color:var(--text-main); font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer;
@@ -220,7 +234,7 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 .ghost-btn.save{ background:var(--coral); color:#fff; border-color:var(--coral); }
 .ghost-btn.danger{ background:#FFE7E3; color:#B23A2C; border-color:#FFD3CB; }
 
-.btn-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.btn-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
 .btn-row .ghost-btn{ flex:1; min-width:90px; }
 
 /* Loading */

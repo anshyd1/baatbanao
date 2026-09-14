@@ -831,16 +831,17 @@ function buildUpiWebLink(data={}){
 }
 function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
-  if(!state.settings.upiAttachEnabled || !canUseUpi()) return base;
+  const viralFooter = '\n\n— ⚡ Apna reminder banao: https://baatbanao.vercel.app';
+  if(!state.settings.upiAttachEnabled || !canUseUpi()) return base + viralFooter;
   const upiLink = buildUpiLink(data);
-  if(!upiLink) return base;
+  if(!upiLink) return base + viralFooter;
   const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}
 ` : '';
   return `${base}
 
 Payment option:
 ${amountLine}UPI Pay link 👇
-${upiLink}`;
+${upiLink}${viralFooter}`;
 }
 function buildUpiLinkFromPayParams(pay={}){
   const pa = normalizeUpiId(pay.pa || '');
@@ -1117,25 +1118,26 @@ function outputCard(m, idx, formSnapshot){
   const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
   const score = relationshipSafeScore(m.text);
   const t = bbTheme();
+  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸</div>';
   return `
     <div class="output-card rcard t-${t.id}">
       ${rcardHead(formSnapshot, m.label)}
       <div class="safe-score">Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}</div>
       <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
-      <div class="rc-foot">\u2014 via baatbanao</div>
+      ${watermark}
       <div class="btn-row">
         <button class="ghost-btn" onclick="improveOutput('${taId}','softer','${payload}')">🙏 Softer</button>
         <button class="ghost-btn" onclick="improveOutput('${taId}','funny','${payload}')">😄 Funnier</button>
         <button class="ghost-btn" onclick="improveOutput('${taId}','savage','${payload}')">🔥 Savage Safe</button>
       </div>
+      <button class="primary-card-btn whatsapp-photo-btn" onclick="shareCardImage('${taId}')">📸 WhatsApp Photo Card Bhejo</button>
       <div class="btn-row">
-        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
-        <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp</button>
-        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDCE4 Photo</button>
+        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy Text</button>
+        <button class="ghost-btn whatsapp" onclick="whatsappOutput('${taId}')">${ICONS.whatsapp} WhatsApp Text</button>
         ${upiOutputButton(formSnapshot)}
         <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
       </div>
-      <div class="rc-hint">\uD83D\uDCA1 Photo WhatsApp pe bhejne ke liye <b>\uD83D\uDCE4 Photo</b> dabao \u2192 WhatsApp chuno</div>
+      <div class="rc-hint">💡 Mobile par <b>📸 WhatsApp Photo Card</b> dabayein WhatsApp chune ke liye. PC par image copy aur download ho jayegi!</div>
     </div>
   `;
 }
@@ -1145,14 +1147,14 @@ async function shareCardImage(taId){
   const card = ta && ta.closest('.output-card');
   if(!card){ showToast('Card nahi mila'); return; }
   if(!window.html2canvas){
-    showToast('Photo library load ho rahi hai... ruko \u23F3');
+    showToast('Photo library load ho rahi hai... ruko ⏳');
     for(let i=0;i<60 && !window.html2canvas;i++){ await new Promise(r=>setTimeout(r,500)); }
-    if(!window.html2canvas){ showToast('Net bahut slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
+    if(!window.html2canvas){ showToast('Net slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
   }
-  showToast('Card image ban rahi hai... \uD83D\uDE80');
+  showToast('📸 Photo card generate ho raha hai... 🚀');
   const dlPng = (blob)=>{
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'baatbanao-card.png'; a.click();
+    a.href = URL.createObjectURL(blob); a.download = 'baatbanao-reminder.png'; a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
   };
   try{
@@ -1165,26 +1167,34 @@ async function shareCardImage(taId){
       div.style.whiteSpace = 'pre-wrap';
       taClone.replaceWith(div);
     }
-    clone.querySelectorAll('.btn-row,.rc-hint').forEach(b=>b.remove());
+    clone.querySelectorAll('.btn-row, .primary-card-btn, .rc-hint').forEach(b=>b.remove());
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + (card.offsetWidth || 420) + 'px;background:#FFF9E8;padding:16px;';
+    wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + (card.offsetWidth || 420) + 'px;background:#FFF9E8;padding:16px;box-sizing:border-box;';
     wrap.appendChild(clone);
     document.body.appendChild(wrap);
-    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2, useCORS:true, logging:false });
+    const canvas = await window.html2canvas(clone, { backgroundColor:'#FFF9E8', scale:2.5, useCORS:true, logging:false });
     wrap.remove();
     const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
     if(!blob){ showToast('Image nahi bani — dobara try karo'); return; }
-    const file = new File([blob], 'baatbanao-card.png', { type:'image/png' });
+    const file = new File([blob], 'baatbanao-reminder.png', { type:'image/png' });
+
+    if(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem){
+      try{
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }catch(_clipE){}
+    }
+
     if(navigator.canShare && navigator.canShare({ files:[file] })){
       try{
-        await navigator.share({ files:[file], title:'BaatBanao Card', text:'BaatBanao Reminder \uD83D\uDCB8' });
+        await navigator.share({ files:[file], title:'BaatBanao Reminder', text:'BaatBanao Reminder 💸\nhttps://baatbanao.vercel.app' });
+        showToast('Photo WhatsApp/Share drawer me open ho gayi! ✅');
       }catch(shareErr){
         if(shareErr && shareErr.name==='AbortError'){ showToast('Share cancel kiya'); }
-        else{ dlPng(blob); showToast('Share nahi khula — photo download kar di \u2B07\uFE0F WhatsApp me attach karo'); }
+        else{ dlPng(blob); showToast('📸 Card download ho gaya & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karo ✅'); }
       }
     } else {
       dlPng(blob);
-      showToast('Card download ho gayi \u2B07\uFE0F — WhatsApp pe bhejo!');
+      showToast('📸 Card download & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karein ✅');
     }
   }catch(err){ console.warn('shareCardImage', err); showToast('Image nahi bani — dobara try karo'); }
 }
@@ -1256,17 +1266,18 @@ function saveOutputToKhata(m, formSnapshot, taId){
 function genericOutputCard(m, idx, prefix){
   const taId = `${prefix}-${idx}`;
   const t = bbTheme();
+  const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸</div>';
   return `
     <div class="output-card rcard t-${t.id}">
       ${rcardHead({}, m.label)}
       <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
-      <div class="rc-foot">\u2014 via baatbanao</div>
+      ${watermark}
+      <button class="primary-card-btn whatsapp-photo-btn" onclick="shareCardImage('${taId}')">📸 WhatsApp Photo Card Bhejo</button>
       <div class="btn-row">
-        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
-        <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp</button>
-        <button class="ghost-btn" onclick="shareCardImage('${taId}')">\uD83D\uDCE4 Photo</button>
+        <button class="ghost-btn copy" onclick="copyOutput('${taId}')">${ICONS.copy} Copy Text</button>
+        <button class="ghost-btn whatsapp" onclick="whatsappGeneric('${taId}')">${ICONS.whatsapp} WhatsApp Text</button>
       </div>
-      <div class="rc-hint">\uD83D\uDCA1 Photo WhatsApp pe bhejne ke liye <b>\uD83D\uDCE4 Photo</b> dabao \u2192 WhatsApp chuno</div>
+      <div class="rc-hint">💡 Mobile par <b>📸 WhatsApp Photo Card</b> dabayein WhatsApp chune ke liye. PC par image copy aur download ho jayegi!</div>
     </div>
   `;
 }
