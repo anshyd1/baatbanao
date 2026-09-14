@@ -1111,12 +1111,12 @@ function rcardHead(formSnapshot, label){
   const amt = (formSnapshot && hasValidAmount(formSnapshot.amount)) ? fmtMoney(Number(String(formSnapshot.amount).replace(/,/g,''))) : '';
   const who = [nm, rel].filter(Boolean).join(' · ');
   const targetHtml = who
-    ? `<div class="rc-to">REMINDER FOR</div><div class="rc-name">${escapeHtml(who)}</div>`
-    : `<div class="rc-to">PAYMENT REMINDER</div><div class="rc-name">Vasooli Alert 💸</div>`;
+    ? `<div class="rc-to">REMINDER FOR PAYMENT</div><div class="rc-name">${escapeHtml(who)}</div>`
+    : `<div class="rc-to">REMINDER FOR PAYMENT</div><div class="rc-name">Payment Due 💸</div>`;
 
   return `
       <div class="rc-stamp"${t.stamp?'':' style="display:none"'}>${escapeHtml(t.stamp)}</div>
-      <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span><span class="rc-tone">${escapeHtml(optionLabel(label)||label||'')}</span></div>
+      <div class="rc-head"><span class="rc-mode">${escapeHtml(t.head)}</span></div>
       ${targetHtml}
       ${amt?`<div class="rc-amt">${amt}</div>`:''}
       <div class="rc-art-wrap"${t.art?'':' style="display:none"'}>${t.art?`<img class="rc-art" src="${t.art}" alt="" loading="lazy"/>`:''}</div>
@@ -1126,13 +1126,11 @@ function rcardHead(formSnapshot, label){
 function outputCard(m, idx, formSnapshot){
   const taId = 'out-text-' + idx;
   const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
-  const score = relationshipSafeScore(m.text);
   const t = bbTheme();
   const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ baatbanao.vercel.app · Rishta Safe Vasooli 💸</div>';
   return `
     <div class="output-card rcard t-${t.id}">
       ${rcardHead(formSnapshot, m.label)}
-      <div class="safe-score">Relationship Safe Score: <b>${score}/100</b> · ${relationshipSafeLabel(score)}</div>
       <textarea class="rc-msg" id="${taId}" rows="4">${escapeHtml(m.text)}</textarea>
       ${watermark}
 
