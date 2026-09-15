@@ -1766,7 +1766,10 @@ function viewKhata(){
   const partialCount = state.khata.filter(k=>k.status==='partial').length;
   const overdueCount = state.khata.filter(k=>isOverdue(k)).length;
   const filter = state.khataFilter || 'all';
+  const catF = state.categoryFilter || 'all_cat';
   const list = state.khata.filter(k => {
+    const matchCat = (catF === 'all_cat') || (k.relation === catF);
+    if(!matchCat) return false;
     if(filter==='all') return true;
     if(filter==='overdue') return isOverdue(k);
     return k.status===filter;
@@ -1805,6 +1808,18 @@ function viewKhata(){
       <button class="ghost-btn" onclick="exportKhataCSV()">⬇️ Export CSV</button>
     </div>
 
+    <!-- Category Pills -->
+    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">📂 Category Filter:</div>
+    <div class="chip-row" style="margin-bottom:12px;">
+      ${['all_cat','Dost','Tenant','Client','Shop Khata'].map(c => {
+        const catFilter = state.categoryFilter || 'all_cat';
+        const labels = {'all_cat':'Sabhi Categories','Dost':'🤝 Dost','Tenant':'🏠 Rent','Client':'💼 Client','Shop Khata':'🛒 Dukaan'};
+        return `<div class="chip ${catFilter===c?'active':''}" onclick="setCategoryFilter('${c}')">${labels[c]}</div>`;
+      }).join('')}
+    </div>
+
+    <!-- Status Pills -->
+    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">⚡ Status Filter:</div>
     <div class="chip-row">
       ${['all','pending','partial','overdue','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':f==='partial'?'Partial':f==='overdue'?'Overdue':'Paid'}</div>`).join('')}
     </div>
@@ -1897,6 +1912,7 @@ function khataCard(k){
           <button class="ghost-btn" onclick="remindKhata('${k.id}')" style="background:#25D366; color:#fff; border:none; font-weight:700; font-size:0.8rem; padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
             <span>🔔 Remind</span>
           </button>
+          <button class="ghost-btn" onclick="openHisaabSlip('${k.id}')" style="background:#FFF0E6; color:#FF725F; font-weight:700; font-size:0.8rem; padding:6px 10px; border-radius:8px; border:1px solid #FFD4C4;">🧾 Parchi</button>
           <button class="ghost-btn" onclick="showUpiQrForKhata('${k.id}')" style="font-size:0.8rem; padding:6px 10px; border-radius:8px;">
             📲 QR
           </button>
@@ -2409,4 +2425,141 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);
 } else {
   initApp();
+}
+
+
+/* --- Digital Hisaab Slip Feature --- */
+function openHisaabSlip(id){
+  const k = state.khata.find(x => x.id === id);
+  if(!k) return;
+  const outstanding = outstandingAmount(k);
+  const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
+  const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
+  const isPaid = k.status === 'paid';
+  const dueStr = k.dueDate ? escapeHtml(k.dueDate) : 'Immediate';
+  const upiLink = buildUpiLink({ name: k.name, amount: outstanding || k.amount, phone: k.phone, note: k.note || 'Payment' });
+
+  const modalHtml = `
+    <div id="slip-modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target.id==='slip-modal-overlay') closeHisaabSlip()">
+      <div style="background:#FFFDF8; border-radius:20px; width:100%; max-width:380px; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:2px solid #FFD4C4; animation:bbModalPop 0.25s ease-out;">
+        
+        <!-- Slip Header -->
+        <div style="background:linear-gradient(135deg, #FF725F 0%, #FF9278 100%); color:#fff; padding:18px 20px; text-align:center; position:relative;">
+          <button onclick="closeHisaabSlip()" style="position:absolute; right:14px; top:14px; background:rgba(0,0,0,0.15); border:none; color:#fff; width:28px; height:28px; border-radius:50%; font-size:16px; cursor:pointer;">&times;</button>
+          <div style="font-size:1.6rem; margin-bottom:4px;">🪙</div>
+          <h3 style="margin:0; font-size:1.25rem; font-weight:800; letter-spacing:0.3px;">HISAAB PARCHI</h3>
+          <div style="font-size:0.75rem; opacity:0.9; margin-top:2px;">BaatBanao · Paisa bhi wapas, rishta bhi safe</div>
+        </div>
+
+        <!-- Slip Body / Invoice Look -->
+        <div id="hisaab-slip-card" style="padding:20px; background:#FFFDF8;">
+          <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:#75615C; border-bottom:1px dashed #E5D5C5; padding-bottom:10px; margin-bottom:12px;">
+            <span>Taarikh: <b>${todayISO()}</b></span>
+            <span>Category: <b>${escapeHtml(k.relation || 'General')}</b></span>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <div style="font-size:0.78rem; color:#75615C; text-transform:uppercase; font-weight:700;">Hisaab Banam:</div>
+            <div style="font-size:1.2rem; font-weight:800; color:#261818;">${escapeHtml(k.name)}</div>
+            ${k.phone ? `<div style="font-size:0.82rem; color:#75615C;">📞 ${escapeHtml(k.phone)}</div>` : ''}
+          </div>
+
+          <!-- Ledger breakdown -->
+          <div style="background:#FFF5EC; border-radius:12px; padding:12px; margin-bottom:14px; border:1px solid #FFE2D1;">
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:6px; color:#5A302B;">
+              <span>Kul Rashi (Total):</span>
+              <b>${fmtMoney(totalAmt || outstanding)}</b>
+            </div>
+            ${paidAmt > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:6px; color:#247C32;">
+              <span>Jama Hua (Paid):</span>
+              <b>- ${fmtMoney(paidAmt)}</b>
+            </div>` : ''}
+            <div style="border-top:1.5px dashed #FFD4C4; padding-top:8px; margin-top:6px; display:flex; justify-content:space-between; font-size:1.05rem; font-weight:900; color:#261818;">
+              <span>Baaki Rashi (Due):</span>
+              <span style="color:#FF725F;">${fmtMoney(outstanding || totalAmt)}</span>
+            </div>
+          </div>
+
+          ${k.note ? `<div style="font-size:0.82rem; color:#75615C; margin-bottom:14px; background:#fff; padding:8px 12px; border-radius:8px; border:1px solid #F0DFCF;"><b>Vivaran (Note):</b> ${escapeHtml(k.note)}</div>` : ''}
+
+          <!-- Due Date & Status -->
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; margin-bottom:16px;">
+            <span style="color:#75615C;">Bhugtan Ki Taarikh: <b>${dueStr}</b></span>
+            <span style="background:${isPaid?'#DFF8DF':'#FFEAE8'}; color:${isPaid?'#247C32':'#D93829'}; font-weight:800; padding:3px 8px; border-radius:6px;">${isPaid ? 'PAID' : (isOverdue(k)?'OVERDUE':'PENDING')}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button onclick="shareSlipViaWhatsApp('${k.id}')" style="background:#25D366; color:#fff; border:none; padding:12px; border-radius:12px; font-weight:800; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(37,211,102,0.35);">
+              <span>📲 WhatsApp Par Slip Bhejo</span>
+            </button>
+            <button onclick="copySlipText('${k.id}')" style="background:#FFF9E8; color:#5A302B; border:1.5px solid #FFD4C4; padding:10px; border-radius:12px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+              📋 Copy Hisaab Text
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  let existing = document.getElementById('slip-modal-container');
+  if(!existing){
+    existing = document.createElement('div');
+    existing.id = 'slip-modal-container';
+    document.body.appendChild(existing);
+  }
+  existing.innerHTML = modalHtml;
+}
+
+function closeHisaabSlip(){
+  const existing = document.getElementById('slip-modal-container');
+  if(existing) existing.innerHTML = '';
+}
+
+function formatHisaabSlipText(k){
+  const outstanding = outstandingAmount(k);
+  const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
+  const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
+  const due = outstanding || totalAmt;
+  const upiLink = buildUpiLink({ name: k.name, amount: due, phone: k.phone, note: k.note || 'Payment' });
+
+  return `*🧾 BAATBANAO HISAAB PARCHI*\n` +
+         `----------------------------\n` +
+         `👤 *Naam:* ${k.name}\n` +
+         `📅 *Taarikh:* ${todayISO()}\n` +
+         `📂 *Category:* ${k.relation || 'Dost'}\n` +
+         (k.note ? `📝 *Vivaran:* ${k.note}\n` : '') +
+         `----------------------------\n` +
+         `💰 *Kul Rashi:* ₹${totalAmt || due}\n` +
+         (paidAmt > 0 ? `✅ *Jama Rashi:* ₹${paidAmt}\n` : '') +
+         `🔴 *Baaki Rashi (Due):* ₹${due}\n` +
+         (k.dueDate ? `⏰ *Due Date:* ${k.dueDate}\n` : '') +
+         `----------------------------\n` +
+         `📲 *Pay via UPI:* ${upiLink}\n\n` +
+         `_Paisa bhi wapas, rishta bhi safe!_ 😊`;
+}
+
+function shareSlipViaWhatsApp(id){
+  const k = state.khata.find(x => x.id === id);
+  if(!k) return;
+  const text = formatHisaabSlipText(k);
+  closeHisaabSlip();
+  openWhatsAppWithText(text, k.phone, k);
+}
+
+function copySlipText(id){
+  const k = state.khata.find(x => x.id === id);
+  if(!k) return;
+  const text = formatHisaabSlipText(k);
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Hisaab Parchi copied! WhatsApp pe paste karein ✅');
+  });
+}
+
+
+function setCategoryFilter(c){
+  state.categoryFilter = c;
+  renderApp();
 }
