@@ -730,7 +730,7 @@ function viewVasooli(){
       <div class="field-block">
         <label class="field-label">Language</label>
         <div class="chip-row">
-          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="selectFormOption('ormOption('language','${l}',this)">${l}</div>`).join('')}
+          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="selectFormOption('language','${l}',this)">${l}</div>`).join('')}
         </div>
       </div>
 
