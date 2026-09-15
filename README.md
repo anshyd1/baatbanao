@@ -43,3 +43,19 @@ Then open `http://localhost:8080`.
 
 ## License
 Private / not specified.
+
+
+## Analytics setup
+1. Open `analytics-config.js`
+2. Paste your GA4 Measurement ID in `ga4MeasurementId`
+3. Deploy/push
+4. Site will show a simple consent prompt before loading analytics
+
+Example:
+
+```js
+window.BAATBANAO_ANALYTICS = {
+  ga4MeasurementId: 'G-XXXXXXXXXX',
+  requireConsent: true
+};
+```
