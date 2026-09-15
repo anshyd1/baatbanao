@@ -77,3 +77,4 @@ A custom `404.html` is included for broken links and unknown routes.
 - `analytics.js` contains the GA4 loader and sitewide click tracking
 - `ANALYTICS_EVENTS.md` lists the tracked custom events
 - `SEO_CONTENT_PLAN.md` lists article expansion ideas
+- `INTEGRATIONS_AND_PERMISSIONS.md` lists external APIs, integrations, permissions, and rotation-sensitive access currently involved in the project
