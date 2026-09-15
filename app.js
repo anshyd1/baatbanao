@@ -2472,7 +2472,7 @@ function openHisaabSlip(id, isEditMode = false){
           <button onclick="closeHisaabSlip()" style="position:absolute; right:14px; top:14px; background:rgba(0,0,0,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
           <div style="font-size:1.8rem; margin-bottom:2px;">🪙</div>
           <h3 style="margin:0; font-size:1.25rem; font-weight:900; letter-spacing:0.5px;">HISAAB PARCHI</h3>
-          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">${isEditMode ? 'Fields edit karke Save karein' : 'Paisa bhi wapas, rishta bhi safe'}</div>
+          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">${isEditMode ? 'Fields edit karke Save karein' : (state.settings.upiName ? escapeHtml(state.settings.upiName) : 'Digital Ledger Slip')}</div>
         </div>
 
         <div style="padding:18px 20px; background:#FFFDF8;">
@@ -2614,22 +2614,81 @@ function formatHisaabSlipText(k){
   const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
   const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
   const due = outstanding || totalAmt;
-  const upiLink = buildUpiLink({ name: k.name, amount: due, phone: k.phone, note: k.note || 'Payment' });
+  
+  // Sender shop or personal name
+  const senderName = (state.settings && state.settings.upiName && state.settings.upiName.trim()) 
+    ? state.settings.upiName.trim() 
+    : '';
+  const upiId = getSavedUpiId();
+  const upiWebLink = buildUpiWebLink({ name: k.name, amount: due });
+  const rawUpiLink = buildUpiLink({ name: k.name, amount: due, phone: k.phone, note: k.note || 'Hisaab Chukta' });
 
-  return `*🧾 BAATBANAO HISAAB PARCHI*\n` +
-         `----------------------------\n` +
-         `👤 *Naam:* ${k.name || 'Bhai'}\n` +
-         `📅 *Taarikh:* ${todayISO()}\n` +
-         `📂 *Category:* ${k.relation || 'Dost'}\n` +
-         (k.note ? `📝 *Vivaran:* ${k.note}\n` : '') +
-         `----------------------------\n` +
-         `💰 *Kul Rashi:* ₹${totalAmt || due}\n` +
-         (paidAmt > 0 ? `✅ *Jama Rashi:* ₹${paidAmt}\n` : '') +
-         `🔴 *Baaki Rashi (Due):* ₹${due}\n` +
-         (k.dueDate ? `⏰ *Due Date:* ${k.dueDate}\n` : '') +
-         `----------------------------\n` +
-         `📲 *Pay via UPI:* ${upiLink}\n\n` +
-         `_Paisa bhi wapas, rishta bhi safe!_ 😊`;
+  let text = `*🧾 HISAAB PARCHI*
+` +
+             `----------------------------
+`;
+  
+  if(senderName){
+    text += `🏪 *Bhejne Wale:* ${senderName}
+`;
+  }
+  
+  text += `👤 *Hisaab Banam:* ${k.name || 'Bhai'}
+` +
+          `📅 *Taarikh:* ${todayISO()}
+`;
+  
+  if(k.relation && k.relation !== 'General' && k.relation !== 'all_cat'){
+    text += `📂 *Category:* ${k.relation}
+`;
+  }
+  
+  if(k.note && k.note.trim()){
+    text += `📝 *Vivaran:* ${k.note.trim()}
+`;
+  }
+  
+  text += `----------------------------
+` +
+          `💰 *Kul Rashi:* ₹${totalAmt || due}
+`;
+  
+  if(paidAmt > 0){
+    text += `✅ *Jama Rashi:* ₹${paidAmt}
+`;
+  }
+  
+  text += `🔴 *Baaki Rashi (Due):* ₹${due}
+`;
+  
+  if(k.dueDate){
+    text += `⏰ *Taarikh Tak:* ${k.dueDate}
+`;
+  }
+  
+  text += `----------------------------
+`;
+  
+  // Clean readable payment section
+  if(upiId){
+    text += `📲 *GPay / PhonePe / Paytm Se Pay Karein:*
+` +
+            `👉 UPI ID: \`${upiId}\`
+`;
+    if(upiWebLink){
+      text += `🔗 Direct Pay Link: ${upiWebLink}
+`;
+    }
+  } else if(rawUpiLink){
+    text += `📲 *Pay via UPI Link:*
+${rawUpiLink}
+`;
+  }
+  
+  text += `
+_Kripya samay par hisaab chukta karein. Dhanyavaad!_ 🙏`;
+
+  return text;
 }
 
 function recalcSlipModalDue(){
