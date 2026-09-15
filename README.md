@@ -59,3 +59,16 @@ window.BAATBANAO_ANALYTICS = {
   requireConsent: false
 };
 ```
+
+
+## Search Console helper
+Use `seo/gsc_report.py` to generate a quick Search Console status report from a service-account JSON key.
+
+Example:
+
+```bash
+python3 seo/gsc_report.py --credentials /path/to/service-account.json --site sc-domain:baatbanao.shop
+```
+
+## 404 page
+A custom `404.html` is included for broken links and unknown routes.
