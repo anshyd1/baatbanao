@@ -2441,6 +2441,7 @@ if (document.readyState === 'loading') {
 
 
 /* --- Digital Hisaab Slip Feature --- */
+
 function openHisaabSlip(id){
   const k = state.khata.find(x => x.id === id);
   if(!k) return;
@@ -2449,77 +2450,84 @@ function openHisaabSlip(id){
   const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
   const isPaid = k.status === 'paid';
   const due = outstanding || totalAmt;
-  const dueStr = k.dueDate ? escapeHtml(k.dueDate) : todayISO();
+  const dueStr = k.dueDate ? escapeHtml(k.dueDate) : 'Immediate';
+
+  // State for modal view vs edit mode
+  window._currentSlipId = id;
 
   const modalHtml = `
-    <div id="slip-modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:99999; display:flex; align-items:center; justify-content:center; padding:12px;" onclick="if(event.target.id==='slip-modal-overlay') closeHisaabSlip()">
-      <div style="background:#FFFDF8; border-radius:22px; width:100%; max-width:400px; max-height:92vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.3); border:2px solid #FFD4C4; animation:bbModalPop 0.2s ease-out; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <div id="slip-modal-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.72); z-index:99999; display:flex; align-items:center; justify-content:center; padding:14px;" onclick="if(event.target.id==='slip-modal-overlay') closeHisaabSlip()">
+      <div style="background:#FFFDF8; border-radius:24px; width:100%; max-width:390px; overflow:hidden; box-shadow:0 24px 50px rgba(0,0,0,0.35); border:2px solid #FFD4C4; animation:bbModalPop 0.2s ease-out; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
         
-        <!-- Slip Header -->
-        <div style="background:linear-gradient(135deg, #FF6B57 0%, #FF856D 100%); color:#fff; padding:16px 20px; text-align:center; position:relative;">
-          <button onclick="closeHisaabSlip()" style="position:absolute; right:12px; top:12px; background:rgba(0,0,0,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
-          <div style="font-size:1.6rem; margin-bottom:2px;">🪙</div>
-          <h3 style="margin:0; font-size:1.2rem; font-weight:900; letter-spacing:0.5px;">HISAAB PARCHI</h3>
-          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">Edit karke seedha WhatsApp par bhejo</div>
+        <!-- Premium Slip Header -->
+        <div style="background:linear-gradient(135deg, #FF6B57 0%, #FF856D 100%); color:#fff; padding:18px 20px; text-align:center; position:relative;">
+          <button onclick="closeHisaabSlip()" style="position:absolute; right:14px; top:14px; background:rgba(0,0,0,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+          <div style="font-size:1.8rem; margin-bottom:2px;">🪙</div>
+          <h3 style="margin:0; font-size:1.25rem; font-weight:900; letter-spacing:0.5px;">HISAAB PARCHI</h3>
+          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">BaatBanao · Paisa bhi wapas, rishta bhi safe</div>
         </div>
 
-        <!-- Slip Body with Interactive Editable Inputs -->
-        <div style="padding:16px 18px; background:#FFFDF8;">
+        <!-- Clean Bill Card (Not accidental inputs) -->
+        <div id="slip-content-container" style="padding:18px 20px; background:#FFFDF8;">
           
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:#75615C; margin-bottom:12px; border-bottom:1px dashed #E5D5C5; padding-bottom:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; color:#75615C; border-bottom:1px dashed #E5D5C5; padding-bottom:8px; margin-bottom:14px;">
             <span>Taarikh: <b>${todayISO()}</b></span>
-            <button onclick="closeHisaabSlip(); openKhataForm('${k.id}')" style="background:#FFF0E6; border:1px solid #FFD4C4; color:#FF6B57; font-weight:700; font-size:0.72rem; padding:3px 8px; border-radius:6px; cursor:pointer;">✏️ Full Edit</button>
+            <span>Category: <b style="color:#FF6B57;">${escapeHtml(k.relation || 'General')}</b></span>
           </div>
 
-          <!-- Editable Name & Phone -->
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+          <!-- Person info -->
+          <div style="margin-bottom:14px; display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
-              <label style="font-size:0.72rem; font-weight:800; color:#75615C; text-transform:uppercase; display:block; margin-bottom:4px;">Hisaab Banam (Naam):</label>
-              <input type="text" id="slip-name" value="${escapeHtml(k.name)}" placeholder="Naam" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #F0DFCF; font-size:0.9rem; font-weight:700; color:#261818; background:#fff; box-sizing:border-box;" />
+              <div style="font-size:0.72rem; color:#75615C; text-transform:uppercase; font-weight:800; letter-spacing:0.3px;">Hisaab Banam:</div>
+              <div style="font-size:1.25rem; font-weight:900; color:#261818;">${escapeHtml(k.name)}</div>
+              ${k.phone ? `<div style="font-size:0.82rem; color:#75615C; margin-top:2px;">📞 ${escapeHtml(k.phone)}</div>` : ''}
             </div>
-            <div>
-              <label style="font-size:0.72rem; font-weight:800; color:#75615C; text-transform:uppercase; display:block; margin-bottom:4px;">WhatsApp Number:</label>
-              <input type="tel" id="slip-phone" value="${escapeHtml(k.phone||'')}" placeholder="Number (optional)" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #F0DFCF; font-size:0.9rem; font-weight:700; color:#261818; background:#fff; box-sizing:border-box;" />
-            </div>
-          </div>
-
-          <!-- Editable Amounts (Total, Paid, Due) -->
-          <div style="background:#FFF5EC; border-radius:12px; padding:12px; margin-bottom:12px; border:1.5px solid #FFE2D1;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:0.82rem; color:#5A302B; font-weight:700;">Kul Rashi (Total):</span>
-              <div style="display:flex; align-items:center; gap:4px;">
-                <span style="font-weight:800; color:#5A302B;">₹</span>
-                <input type="number" id="slip-total" value="${totalAmt || due}" oninput="recalcSlipDue()" style="width:90px; padding:5px 8px; border-radius:6px; border:1px solid #FFD4C4; font-weight:800; font-size:0.95rem; text-align:right;" />
-              </div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span style="font-size:0.82rem; color:#247C32; font-weight:700;">Jama Hua (Paid):</span>
-              <div style="display:flex; align-items:center; gap:4px;">
-                <span style="font-weight:800; color:#247C32;">- ₹</span>
-                <input type="number" id="slip-paid" value="${paidAmt}" oninput="recalcSlipDue()" style="width:90px; padding:5px 8px; border-radius:6px; border:1px solid #C8E6C9; font-weight:800; font-size:0.95rem; text-align:right; color:#247C32;" />
-              </div>
-            </div>
-
-            <div style="border-top:1.5px dashed #FFD4C4; padding-top:8px; margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:0.95rem; font-weight:900; color:#261818;">Baaki Rashi (Due):</span>
-              <div style="font-size:1.25rem; font-weight:900; color:#FF5E48;" id="slip-due-display">₹${due}</div>
-            </div>
-          </div>
-
-          <!-- Editable Note / Description -->
-          <div style="margin-bottom:12px;">
-            <label style="font-size:0.72rem; font-weight:800; color:#75615C; text-transform:uppercase; display:block; margin-bottom:4px;">Vivaran / Note (Details):</label>
-            <input type="text" id="slip-note" value="${escapeHtml(k.note||'')}" placeholder="Udhaar ki wajah / Item details" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #F0DFCF; font-size:0.85rem; color:#261818; background:#fff; box-sizing:border-box;" />
-          </div>
-
-          <!-- Action Buttons -->
-          <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
-            <button type="button" onclick="executeParchiWhatsApp('${k.id}')" style="background:#25D366; color:#fff; border:none; padding:13px; border-radius:12px; font-weight:900; font-size:1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(37,211,102,0.38);">
-              <span style="font-size:1.2rem;">📲</span>
-              <span>WhatsApp Par Bhejo</span>
+            
+            <!-- Direct Edit Button -->
+            <button onclick="closeHisaabSlip(); openKhataForm('${k.id}')" style="background:#FFF0E6; border:1.5px solid #FFD4C4; color:#FF6B57; font-weight:800; font-size:0.78rem; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+              <span>✏️ Edit Details</span>
             </button>
-            <button type="button" onclick="executeParchiCopy('${k.id}')" style="background:#FFF9E8; color:#5A302B; border:1.5px solid #FFD4C4; padding:10px; border-radius:12px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+          </div>
+
+          <!-- Clean Financial Breakdown -->
+          <div style="background:#FFF5EC; border-radius:14px; padding:14px; margin-bottom:14px; border:1.5px solid #FFE2D1;">
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:6px; color:#5A302B;">
+              <span>Kul Rashi (Total):</span>
+              <b>${fmtMoney(totalAmt || due)}</b>
+            </div>
+            ${paidAmt > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem; margin-bottom:6px; color:#247C32;">
+              <span>Jama Hua (Paid):</span>
+              <b>- ${fmtMoney(paidAmt)}</b>
+            </div>` : ''}
+            <div style="border-top:1.5px dashed #FFD4C4; padding-top:8px; margin-top:6px; display:flex; justify-content:space-between; align-items:baseline;">
+              <span style="font-size:1rem; font-weight:900; color:#261818;">Baaki Rashi (Due):</span>
+              <span style="font-size:1.35rem; font-weight:900; color:#FF5E48;">${fmtMoney(due)}</span>
+            </div>
+          </div>
+
+          <!-- Note / Description -->
+          <div style="background:#fff; border:1px solid #F0DFCF; border-radius:10px; padding:10px 12px; margin-bottom:14px;">
+            <div style="font-size:0.72rem; color:#75615C; font-weight:800; text-transform:uppercase;">Vivaran (Details):</div>
+            <div style="font-size:0.88rem; color:#261818; margin-top:2px;">${escapeHtml(k.note || 'Koi extra note nahi')}</div>
+          </div>
+
+          <!-- Due Date & Status -->
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; margin-bottom:16px;">
+            <span style="color:#75615C;">Bhugtan Taarikh: <b>${dueStr}</b></span>
+            <span style="background:${isPaid?'#DFF8DF':(isOverdue(k)?'#FFEAE8':'#FFF0C7')}; color:${isPaid?'#247C32':(isOverdue(k)?'#D93829':'#9A6810')}; font-weight:800; padding:4px 9px; border-radius:6px;">
+              ${isPaid ? '✓ PAID' : (isOverdue(k)?'⚠️ OVERDUE':'⏳ PENDING')}
+            </span>
+          </div>
+
+          <!-- Bulletproof WhatsApp Action Button -->
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <a id="parchi-wa-link" href="#" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:#fff; text-decoration:none; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(37,211,102,0.4); text-align:center;">
+              <span style="font-size:1.25rem;">📲</span>
+              <span>WhatsApp Par Slip Bhejo</span>
+            </a>
+            
+            <button type="button" onclick="executeParchiCopy('${k.id}')" style="background:#FFF9E8; color:#5A302B; border:1.5px solid #FFD4C4; padding:11px; border-radius:12px; font-weight:800; font-size:0.88rem; cursor:pointer;">
               📋 Copy Hisaab Text
             </button>
           </div>
@@ -2537,94 +2545,44 @@ function openHisaabSlip(id){
     document.body.appendChild(existing);
   }
   existing.innerHTML = modalHtml;
-}
 
-function recalcSlipDue(){
-  const tot = Number(document.getElementById('slip-total').value || 0);
-  const paid = Number(document.getElementById('slip-paid').value || 0);
-  const due = Math.max(0, tot - paid);
-  const dEl = document.getElementById('slip-due-display');
-  if(dEl) dEl.innerText = '₹' + due;
-}
-
-function buildEditedParchiText(id){
-  const k = state.khata.find(x => x.id === id) || {};
-  const nameEl = document.getElementById('slip-name');
-  const totalEl = document.getElementById('slip-total');
-  const paidEl = document.getElementById('slip-paid');
-  const noteEl = document.getElementById('slip-note');
-
-  const name = nameEl ? nameEl.value.trim() : (k.name || 'Bhai');
-  const tot = totalEl ? Number(totalEl.value || 0) : Number(k.amount || 0);
-  const paid = paidEl ? Number(paidEl.value || 0) : Number(k.paidAmount || 0);
-  const note = noteEl ? noteEl.value.trim() : (k.note || '');
-  const due = Math.max(0, tot - paid);
-
-  // Sync edits back to entry
-  if(k.id){
-    k.name = name;
-    k.amount = tot;
-    k.paidAmount = paid;
-    k.note = note;
-    if(paid >= tot && tot > 0) k.status = 'paid';
-    else if(paid > 0) k.status = 'partial';
-    persist();
-  }
-
-  const upiLink = buildUpiLink({ name, amount: due, phone: k.phone, note: note || 'Payment' });
-
-  return `*🧾 BAATBANAO HISAAB PARCHI*
-` +
-         `----------------------------
-` +
-         `👤 *Naam:* ${name}
-` +
-         `📅 *Taarikh:* ${todayISO()}
-` +
-         (k.relation ? `📂 *Category:* ${k.relation}
-` : '') +
-         (note ? `📝 *Vivaran:* ${note}
-` : '') +
-         `----------------------------
-` +
-         `💰 *Kul Rashi:* ₹${tot}
-` +
-         (paid > 0 ? `✅ *Jama Rashi:* ₹${paid}
-` : '') +
-         `🔴 *Baaki Rashi (Due):* ₹${due}
-` +
-         (k.dueDate ? `⏰ *Due Date:* ${k.dueDate}
-` : '') +
-         `----------------------------
-` +
-         `📲 *Pay via UPI:* ${upiLink}
-
-` +
-         `_Paisa bhi wapas, rishta bhi safe!_ 😊`;
-}
-
-function executeParchiWhatsApp(id){
-  const phoneEl = document.getElementById('slip-phone');
-  const k = state.khata.find(x => x.id === id) || {};
-  const phone = phoneEl ? phoneEl.value.trim() : (k.phone || '');
-  const text = buildEditedParchiText(id);
-  closeHisaabSlip();
-  
-  // Instant direct location href for reliable WhatsApp app launching on mobile
+  // Dynamically attach genuine WhatsApp URL to <a> tag
+  const text = formatHisaabSlipText(k);
   const encoded = encodeURIComponent(text);
-  const cleanPhone = normalizeWhatsAppPhone(phone);
-  const waUrl = cleanPhone ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` : `https://api.whatsapp.com/send?text=${encoded}`;
-  window.location.href = waUrl;
+  const cleanPhone = normalizeWhatsAppPhone(k.phone);
+  
+  // Both whatsapp:// deep link and web fallback
+  const aLink = document.getElementById('parchi-wa-link');
+  if(aLink){
+    const waHref = cleanPhone 
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` 
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+    
+    aLink.href = waHref;
+    
+    // Explicit click listener for mobile devices
+    aLink.onclick = function(e){
+      // allow native navigation
+      setTimeout(() => closeHisaabSlip(), 500);
+    };
+  }
+}
+
+function closeHisaabSlip(){
+  const existing = document.getElementById('slip-modal-container');
+  if(existing) existing.innerHTML = '';
 }
 
 function executeParchiCopy(id){
-  const text = buildEditedParchiText(id);
+  const k = state.khata.find(x => x.id === id);
+  if(!k) return;
+  const text = formatHisaabSlipText(k);
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(() => {
       showToast('Hisaab Parchi copied! WhatsApp pe paste karein ✅');
     });
   } else {
-    showToast('Hisaab copied!');
+    showToast('Hisaab copied! ✅');
   }
 }
 
