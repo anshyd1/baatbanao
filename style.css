@@ -201,10 +201,15 @@ textarea{ resize:vertical; min-height:70px; line-height:1.4; }
 select{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1L7 7L13 1' stroke='%2375615C' stroke-width='2' fill='none' stroke-linecap='round'/></svg>"); background-repeat:no-repeat; background-position:right 16px center; padding-right:36px; }
 
 .primary-btn{
-  width:100%; padding:15px; border-radius:18px; border:none; cursor:pointer;
-  background:linear-gradient(135deg,var(--coral) 0%, var(--coral-2) 100%); color:#fff;
-  font-family:inherit; font-weight:800; font-size:15.5px; box-shadow:0 12px 20px rgba(232,89,75,0.28);
-  transition:transform .15s ease;
+  width:100%; padding:15px; border-radius:16px; border:none; cursor:pointer;
+  background:linear-gradient(135deg, #FF6B57 0%, #FF856D 100%); color:#FFFFFF !important;
+  font-family:inherit; font-weight:800; font-size:16px; box-shadow:0 10px 22px rgba(232,89,75,0.32);
+  transition:transform .15s ease, box-shadow .15s ease;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.primary-btn:active {
+  transform: scale(0.98);
 }
 .primary-btn:active{ transform:scale(0.98); }
 .primary-btn:disabled{ opacity:0.6; cursor:default; transform:none; }
@@ -330,7 +335,15 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 #vasooli-output{ scroll-margin-top:14px; }
 
 /* Khata */
-.summary-card{ background:linear-gradient(135deg,var(--coral) 0%, var(--coral-2) 100%); border-radius:20px; padding:18px 20px; color:#fff; box-shadow:0 15px 25px rgba(232,89,75,0.25); }
+.summary-card{ 
+  background:linear-gradient(135deg, #FF5E48 0%, #FF7F68 100%); 
+  border-radius:20px; padding:20px; color:#FFFFFF !important; 
+  box-shadow:0 14px 28px rgba(232,89,75,0.28); 
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.summary-card .amt{ font-family:'Manrope',sans-serif; font-weight:900; font-size:28px; color:#FFFFFF !important; text-shadow:0 2px 4px rgba(0,0,0,0.12); }
+.summary-card .sub{ font-size:13.5px; font-weight:700; color:rgba(255,255,255,0.95) !important; margin-top:4px; }
+
 .summary-card .amt{ font-family:'Manrope',sans-serif; font-weight:900; font-size:26px; }
 .summary-card .sub{ font-size:13px; font-weight:600; opacity:0.95; margin-top:2px; }
 
