@@ -1845,35 +1845,80 @@ function setKhataFilter(f){ state.khataFilter = f; renderApp(); }
 
 function khataCard(k){
   const outstanding = outstandingAmount(k);
-  const amountText = k.status==='paid' ? displayAmount(k.amount) : (outstanding ? fmtMoney(outstanding) : displayAmount(k.amount));
-  const metaBits = [escapeHtml(k.relation||'General')];
-  if(k.note) metaBits.push(escapeHtml(k.note));
-  if(k.dueDate) metaBits.push(escapeHtml(dueLabel(k)));
-  metaBits.push(`Reminders: ${Number(k.reminderCount||0)}`);
-  if(k.lastReminderAt) metaBits.push(`Last: ${timeAgo(k.lastReminderAt)}`);
+  const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
+  const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
+  const isPaid = k.status === 'paid';
+  const amountText = isPaid ? displayAmount(k.amount) : (outstanding ? fmtMoney(outstanding) : displayAmount(k.amount));
+  const count = Number(k.reminderCount || 0);
+
+  // Partial calculation
+  const percentPaid = totalAmt > 0 && paidAmt > 0 ? Math.min(100, Math.round((paidAmt / totalAmt) * 100)) : 0;
+
+  // Due urgency badge
+  let dueBadge = '';
+  if(!isPaid && isOverdue(k)){
+    dueBadge = '<span style="background:#FFEAE8; color:#D93829; font-size:0.7rem; font-weight:800; padding:3px 8px; border-radius:6px;">⚠️ OVERDUE</span>';
+  } else if(!isPaid && k.dueDate){
+    dueBadge = `<span style="background:#FFF0C7; color:#9A6810; font-size:0.7rem; font-weight:700; padding:3px 8px; border-radius:6px;">📅 Due: ${escapeHtml(k.dueDate)}</span>`;
+  }
+
   return `
-    <div class="list-card ${isOverdue(k)?'overdue-card':''}">
-      <div class="row-top">
-        <span class="name">${escapeHtml(k.name)}</span>
-        <span class="amount">${amountText}</span>
+    <div class="list-card ${isOverdue(k)?'overdue-card':''}" style="background:#FFFDF8; border:1.5px solid ${isOverdue(k)?'#FFA494':'#F0DFCF'}; border-radius:16px; padding:1rem; margin-bottom:1rem; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
+      <div class="row-top" style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="name" style="font-size:1.1rem; font-weight:800; color:#261818;">${escapeHtml(k.name)}</span>
+          ${dueBadge}
+        </div>
+        <span class="amount" style="font-size:1.2rem; font-weight:900; color:${isPaid?'#247C32':'#FF725F'};">${amountText}</span>
       </div>
-      <div class="meta">${metaBits.join(' · ')}</div>
-      ${k.paidAmount ? `<div class="meta">Paid: ${displayAmount(k.paidAmount)} · Outstanding: ${outstanding ? fmtMoney(outstanding) : '₹0'}</div>` : ''}
-      <div class="row-top">
-        <span class="status-badge ${statusClass(k)}">${statusText(k)}</span>
-        <div class="btn-row" style="margin-top:0;">
-          ${k.status!=='paid' ? `<button class="ghost-btn" onclick="remindKhata('${k.id}')">🔔 Remind</button>
-          <button class="ghost-btn" onclick="showUpiQrForKhata('${k.id}')">📲 UPI QR</button>
-          <button class="ghost-btn" onclick="quickPartialPaid('${k.id}')">₹ Partial</button>
-          <button class="ghost-btn save" onclick="markPaid('${k.id}')">${ICONS.check} Paid</button>` : ''}
-          <button class="ghost-btn" onclick="openKhataForm('${k.id}')">Edit</button>
-          <button class="ghost-btn danger" onclick="deleteKhata('${k.id}')">${ICONS.trash}</button>
+
+      <!-- Partial progress bar if partially paid -->
+      ${paidAmt > 0 && !isPaid ? `
+      <div style="margin:8px 0; background:rgba(0,0,0,0.04); height:6px; border-radius:99px; overflow:hidden;">
+        <div style="width:${percentPaid}%; background:#25D366; height:100%; border-radius:99px;"></div>
+      </div>
+      <div style="font-size:0.75rem; color:#75615C; margin-bottom:8px;">
+        ₹${paidAmt} paid (${percentPaid}%) · <b>₹${outstanding} baaki</b>
+      </div>
+      ` : ''}
+
+      <div class="meta" style="font-size:0.8rem; color:#75615C; margin-bottom:10px;">
+        <span>👤 ${escapeHtml(k.relation||'Dost')}</span>
+        ${k.phone ? ` · <span>📞 ${escapeHtml(k.phone)}</span>` : ''}
+        ${k.note ? ` · <span>📝 ${escapeHtml(k.note)}</span>` : ''}
+        ${count > 0 ? ` · <span style="color:#FF725F; font-weight:700;">🔔 ${count} Reminders Sent</span>` : ''}
+        ${k.lastReminderAt ? ` · <span>Last: ${timeAgo(k.lastReminderAt)}</span>` : ''}
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid #F5ECE3;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          ${!isPaid ? `
+          <button class="ghost-btn" onclick="remindKhata('${k.id}')" style="background:#25D366; color:#fff; border:none; font-weight:700; font-size:0.8rem; padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
+            <span>🔔 Remind</span>
+          </button>
+          <button class="ghost-btn" onclick="showUpiQrForKhata('${k.id}')" style="font-size:0.8rem; padding:6px 10px; border-radius:8px;">
+            📲 QR
+          </button>
+          <button class="ghost-btn" onclick="quickPartialPaid('${k.id}')" style="font-size:0.8rem; padding:6px 10px; border-radius:8px;">
+            ₹ Partial
+          </button>
+          <button class="ghost-btn save" onclick="markPaid('${k.id}')" style="background:#DFF8DF; color:#247C32; border:1px solid #B8E8B8; font-weight:700; font-size:0.8rem; padding:6px 12px; border-radius:8px;">
+            ✓ Paid
+          </button>
+          ` : `
+          <span style="color:#247C32; font-weight:800; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;">✓ Payment Received</span>
+          `}
+        </div>
+
+        <div style="display:flex; gap:6px;">
+          <button class="ghost-btn" onclick="openKhataForm('${k.id}')" style="font-size:0.8rem; padding:6px 10px; border-radius:8px;">Edit</button>
+          <button class="ghost-btn danger" onclick="deleteKhata('${k.id}')" style="font-size:0.8rem; padding:6px 10px; border-radius:8px; color:#E53E3E;">${ICONS.trash}</button>
         </div>
       </div>
     </div>
   `;
 }
-
 function remindKhata(id){
   const k = state.khata.find(x=>x.id===id);
   if(!k) return;
