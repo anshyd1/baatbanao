@@ -72,3 +72,8 @@ python3 seo/gsc_report.py --credentials /path/to/service-account.json --site sc-
 
 ## 404 page
 A custom `404.html` is included for broken links and unknown routes.
+
+## Analytics docs
+- `analytics.js` contains the GA4 loader and sitewide click tracking
+- `ANALYTICS_EVENTS.md` lists the tracked custom events
+- `SEO_CONTENT_PLAN.md` lists article expansion ideas

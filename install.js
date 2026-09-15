@@ -257,6 +257,7 @@
   };
 
   function triggerInstall() {
+    bbTrack('install_prompt_open', { has_prompt: !!deferredPrompt, ios: isIOS, in_app: isInAppBrowser });
     if (isInAppBrowser) return showInstallUI('inapp');
     if (!deferredPrompt) {
       if (isIOS) return showInstallUI('ios');

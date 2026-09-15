@@ -158,6 +158,7 @@ function improveOutput(taId, mode, encodedForm){
 
 function copyTextValue(textValue, successMsg='Copied ✅'){
   const text = String(textValue || '');
+  bbTrack('copy_text', { route: state.route || 'unknown', label: successMsg });
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(()=>showToast(successMsg)).catch(()=>showToast('Copy failed'));
   } else {
@@ -329,7 +330,7 @@ function generateMessages({name, amount, relation, language, tone, note}){
   const FUNNY = {
     Hinglish:[
       (n,a)=>`${n} bhai, mera ${a} raat ko sapne mein aata hai — "Ghar bhej do yaar!" \u{1F602} Aaj bhej do!`,
-      (n,a)=>`${n}, teri wajah se mera ${a} homesick ho gaya \u{1F62D} Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
+      (n,a)=>`${n}, teri wan}, teri wajah se mera ${a} homesick ho gaya \u{1F62D} Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
       (n,a)=>`${n} bhai, ${a} ka Google Maps on kiya — still showing at your location \u{1F4CD}\u{1F602} Transfer karo!`,
       (n,a)=>`${n}, Google Pay ne ${a} ke liye "Pending Since Forever" badge de diya \u{1F602} Aaj clear karo!`,
       (n,a)=>`${n} bhai, IRCTC ka waiting confirm ho jaata hai lekin tera ${a} nahi aaya \u{1F602} Tu IRCTC se bhi slow hai!`,
@@ -461,7 +462,7 @@ function generateGenericReminderMessages({name, language, tone, note}){
       Hinglish: [
         `${n} bhai, payment ghar ka rasta bhool gaya lagta hai ${e('😂')} Aaj usko ghar bhej do!${nt}`,
         `${n}, pending payment ka WhatsApp status: “missing my owner” ${e('😂')} Aaj reunite kar do.${nt}`,
-        `${n} bhai, payment ko itna wait kara diya ki woh emotional ho gaya ${e('😄')} Aaj bhej do.${nt}`
+        `${n} bhai, payment ko itna wait kara diya ki woh emotional h'😄')} Aaj bhej do.${nt}`
       ],
       Hindi: [
         `${n} bhai, payment ghar ka raasta bhool gaya lagta hai ${e('😂')} Aaj bhej dijiye.${nt}`,
@@ -729,7 +730,7 @@ function viewVasooli(){
       <div class="field-block">
         <label class="field-label">Language</label>
         <div class="chip-row">
-          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="selectFormOption('language','${l}',this)">${l}</div>`).join('')}
+          ${languages.map(l => `<div class="chip ${s.language===l?'active':''}" onclick="selectFormOption('ormOption('language','${l}',this)">${l}</div>`).join('')}
         </div>
       </div>
 
@@ -920,6 +921,7 @@ async function shareUpiQr(encodedUpi, encodedName='', encodedAmount=''){
   const amount = decodeURIComponent(encodedAmount || '');
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&margin=18&data=${encodeURIComponent(upi)}`;
   const shareText = `${name}\n${amount ? amount + '\n' : ''}UPI QR / Pay link:\n${upi}`;
+  bbTrack('upi_qr_share', { route: state.route || 'unknown', has_amount: !!amount });
   try{
     if(navigator.share && navigator.canShare){
       const res = await fetch(qrSrc);
@@ -1263,6 +1265,12 @@ function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
   const finalText = appendUpiPaymentLine(textValue || '', paymentData || {});
   const text = encodeURIComponent(finalText);
   const phone = normalizeWhatsAppPhone(phoneRaw);
+  bbTrack('whatsapp_open', {
+    route: state.route || 'unknown',
+    has_phone: !!phone,
+    has_upi: finalText.includes('upi://pay'),
+    has_amount: hasValidAmount(paymentData && paymentData.amount)
+  });
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
   const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
   window.open(url, '_blank');
@@ -1383,6 +1391,13 @@ function handleTemplateGenerate(){
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
   const data = {name:f.name || '', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:''};
+  bbTrack('template_generate', {
+    category: cat.id,
+    relation: cat.relation,
+    language: f.language || 'Hinglish',
+    has_amount: hasValidAmount(amount),
+    has_phone: !!phone
+  });
   state.vasooliForm = data;
   const messages = generateMessages(data);
   const out = document.getElementById('template-output');
@@ -1814,6 +1829,7 @@ function shareKhataSummary(){
   else showToast('Summary ready');
 }
 function exportKhataCSV(){
+  bbTrack('export_khata_csv', { entries: state.khata.length });
   const header = ['Name','Phone','Amount','PaidAmount','Outstanding','Status','DueDate','ReminderCount','LastReminder','Note'];
   const rows = state.khata.map(k => [k.name,k.phone||'',k.amount||'',k.paidAmount||'',outstandingAmount(k)||'',statusText(k),k.dueDate||'',k.reminderCount||0,k.lastReminderAt?new Date(k.lastReminderAt).toLocaleString():'',k.note||'']);
   const csv = [header,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -2112,6 +2128,7 @@ function viewPro(){
 let bbSelectedPlan = 'pro';
 function bbStartPurchase(plan){
   bbSelectedPlan = plan;
+  bbTrack('pro_checkout_start', { plan: plan });
   const step = document.getElementById('bb-pay-step');
   step.style.display = 'block';
   step.scrollIntoView({behavior:'smooth'});
@@ -2126,6 +2143,7 @@ function bbRedeemCode(){
   if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
   const expected = bbGenerateRedeemCode(phone, bbSelectedPlan);
   if (expected === code){
+    bbTrack('pro_unlock_success', { plan: bbSelectedPlan });
     localStorage.setItem(BB_PRO_KEY, '1');
     localStorage.setItem(BB_PRO_PLAN_KEY, bbSelectedPlan);
     msgEl.textContent = '🎉 BaatBanao Pro Unlock ho gaya! Dhanyavaad.';

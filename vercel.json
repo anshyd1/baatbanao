@@ -14,12 +14,20 @@
       "destination": "/contact.html"
     },
     {
+      "source": "/client-invoice-follow-up-message",
+      "destination": "/client-invoice-follow-up-message.html"
+    },
+    {
       "source": "/disclaimer",
       "destination": "/disclaimer.html"
     },
     {
       "source": "/dost-se-paise-wapas-message",
       "destination": "/dost-se-paise-wapas-message.html"
+    },
+    {
+      "source": "/freelancer-payment-reminder-message",
+      "destination": "/freelancer-payment-reminder-message.html"
     },
     {
       "source": "/google4fd656e5d7ba5eb3",
