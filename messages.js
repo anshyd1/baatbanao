@@ -404,7 +404,16 @@ function generateMessages({ name, amount, relation, language, tone, note }) {
     }));
   }
 
-  if (tone === 'Polite') {
+  if (tone === 'Mummy Style') {
+    pool        = MUMMY_STYLE[lang] || MUMMY_STYLE['Hinglish'];
+    labelPrefix = '👵 Mummy Style';
+  } else if (tone === 'Sharma Ji') {
+    pool        = SHARMA_JI[lang] || SHARMA_JI['Hinglish'];
+    labelPrefix = '🏆 Sharma Ji';
+  } else if (tone === 'Savage Safe') {
+    pool        = SAVAGE_SAFE[lang] || SAVAGE_SAFE['Hinglish'];
+    labelPrefix = '⚡ Savage Safe';
+  } else if (tone === 'Polite') {
     pool        = POLITE[lang] || POLITE['Hinglish'];
     labelPrefix = '🙏 Polite';
   } else if (tone === 'Strong') {
@@ -423,3 +432,75 @@ function generateMessages({ name, amount, relation, language, tone, note }) {
     text:  fn(n, amt, note_),
   }));
 }
+
+
+/* ===========================================================
+   CULTURE TONES: MUMMY STYLE, SHARMA JI, SAVAGE SAFE
+   Authentic Indian dialogues, relatable emotions & humor
+   =========================================================== */
+
+const MUMMY_STYLE = {
+  Hinglish: [
+    (n,amt,note) => `Beta ${n}, humne toh bachpan se sikhaya hai hisaab saaf rakhna chahiye! Ye jo ${amt} pending hai, aaj hi transfer kar do beta. Shubh kaam me deri nahi karte 🙏${note?' ('+note+')':''}`,
+    (n,amt,note) => `${n}! Kitni baar bola hai udhaar rakhna acchi baat nahi hoti? Subah se 10 baar yaad kar chuki hoon, wo ${amt} chupchaap bhej do warna ghar aake hisaab lungi 😄`,
+    (n,amt,note) => `Beta ${n}, bahar ka khana-peena sab chal raha hai par humara ${amt} lautana bhool gaye? Aaj shaam tak bhej dena, varna aashirwad freeze ho jayega beta 😅🙏`,
+    (n,amt,note) => `Dekho ${n}, dosti-yaari apni jagah hai par ${amt} ka hisaab saaf hona chahiye. Phone pe din bhar lage rehte ho, 1 minute nikaal ke Google Pay kar do!`,
+    (n,amt,note) => `${n} beta, nazar na lage tere kharche ko! Bas ye ${amt} jo baaki hai na, isko bhi clear kar do taaki humara BP normal rahe 😊`,
+  ],
+  Hindi: [
+    (n,amt,note) => `बेटा ${n}, बड़ों ने सिखाया है कि हिसाब हमेशा साफ रखना चाहिए। यह ${amt} जो बाकी है, आज ही भेज दो बेटा। शुभ काम में देरी नहीं करते 🙏`,
+    (n,amt,note) => `${n}! कितनी बार समझाना पड़ेगा? उधार रखना अच्छी आदत नहीं है। यह ${amt} आज ही ट्रांसफर कर दो बेटा, घर की शांति बनी रहेगी 😄`,
+    (n,amt,note) => `बेटा ${n}, सारे शौक पूरे हो रहे हैं पर हमारा ${amt} लौटाना भूल गए? आज शाम तक भेज देना, नहीं तो घर आकर हिसाब लेंगे 😅`,
+  ],
+  Bhojpuri: [
+    (n,amt,note) => `ए बबुआ ${n}, हिसाब-किताब हमेशा साफ राखे के चाहीं! ई ${amt} जवन बाकी बा, आजे भेज द बबुआ। देरी मत करऽ 🙏`,
+    (n,amt,note) => `${n} बाबू! दिन भर फोन चलावत बाड़ऽ, 1 मिनट निकाल के ${amt} भेज द ना। हमार माथा मत पकावऽ अब 😄`,
+    (n,amt,note) => `बबुआ ${n}, जब पैसा लिहल रहलऽ त कहले रहलऽ दू दिन में देब। आज भेज द, कुल काम बन जाई 😊`,
+  ],
+  English: [
+    (n,amt,note) => `Dear ${n}, keeping accounts clean is good manners! Please clear the pending ${amt} today itself. No delay in good deeds 🙏`,
+    (n,amt,note) => `${n}, you remember everything except returning ${amt}! Clear it today before I give you a motherly scolding 😄`,
+  ]
+};
+
+const SHARMA_JI = {
+  Hinglish: [
+    (n,amt,note) => `Arre ${n} bhai, Sharma Ji ke ladke ko dekho — udhaar lete hi agle din lautata hai! Aur ek aap hain, ${amt} pending rakhe hain. Aaj clear karke Sharma ji ke bete se aage niklo 😄🏆`,
+    (n,amt,note) => `Namaste ${n} ji! Sharma Ji keh rahe the hisaab saaf rakhne walo ki society me izzat badhti hai. Aapka ${amt} pending hai, bhej kar izzat aur badhaiye 🙏`,
+    (n,amt,note) => `${n} bhai, rishtedaar aur Sharma ji dono hisaab pooch rahe hain! Ye ${amt} aaj bhej do taaki hum unhe bol sakein ki hamare dost no. 1 hain 🥇`,
+    (n,amt,note) => `Suno ${n}, Sharma Ji ne naya investment kar diya aur hamara ${amt} aapke paas fasa hai! Aaj transfer kar do, dono bhai aage badhte hain 😄`,
+  ],
+  Hindi: [
+    (n,amt,note) => `अरे ${n} भाई, शर्मा जी के लड़के को देखिए — समय पर हिसाब चुकता करता है! आपका यह ${amt} बाकी है, आज भेज दीजिए और मिसाल बनिए 😄`,
+    (n,amt,note) => `नमस्ते ${n} जी! हिसाब साफ रखने से समाज में प्रतिष्ठा बढ़ती है। यह ${amt} आज क्लियर कर दीजिए, बहुत मेहरबानी होगी 🙏`,
+  ],
+  Bhojpuri: [
+    (n,amt,note) => `अरे ${n} भाई, शर्मा जी के लइका के देखऽ — कइसन टाइम पे हिसाब करेला! रउआ भी ई ${amt} आजे भेज दीं, नाम हो जाई 😄`,
+    (n,amt,note) => `${n} भैया, शर्मा जी भी पूछत रहन हिसाब। ई ${amt} आज ट्रांसफर कर दीं, मन खुश हो जाई 🙏`,
+  ],
+  English: [
+    (n,amt,note) => `Hey ${n}, even Sharma Ji's son clears his dues on time! Don't let him win — transfer the pending ${amt} today 😄🏆`,
+    (n,amt,note) => `Hi ${n}, keeping financial records spotless builds true reputation. Please clear the ${amt} due today 🙏`,
+  ]
+};
+
+const SAVAGE_SAFE = {
+  Hinglish: [
+    (n,amt,note) => `${n} bhai, tera memory card corrupt ho gaya hai kya? Har baar ${amt} ka hisaab bhool jaata hai! Aaj hi backup le aur transfer dabao 😂💳`,
+    (n,amt,note) => `${n}, Netflix ka subscription expire hote hi renew kar leta hai, par mera ${amt} 2 mahine se buffering pe hai! Aaj stream kar do bhai 📺😂`,
+    (n,amt,note) => `${n} yaar, Chandrayaan chand pe pahunch gaya par tera ${amt} abhi tak mere account tak nahi pahuncha! Aaj launch kar de bhai 🚀😄`,
+    (n,amt,note) => `${n} bhai, dosti me koi sharm nahi hoti, isliye khullam-khulla bol raha hoon: Wo ${amt} bhej do warna kal tere hi paise se tujhe party dunga 😂🍕`,
+  ],
+  Hindi: [
+    (n,amt,note) => `${n} भाई, याददाश्त कमजोर हो गई है क्या? यह ${amt} आज ही भेज दो, दिमाग की बत्ती अपने आप जल जाएगी 😂`,
+    (n,amt,note) => `${n}, चांद पर पानी मिल गया पर आपका ${amt} अभी तक हमारे खाते में नहीं आया! आज ट्रांसफर कर दीजिए भाई 🚀`,
+  ],
+  Bhojpuri: [
+    (n,amt,note) => `${n} भाई, तोहार याददाश्त धोखा दे देलस का? ई ${amt} आजे भेज द, ना त तोहरे पैसा से पार्टी करे के पड़ी 😂`,
+    (n,amt,note) => `ए ${n} भैया, ट्रेन समय पर आ गइल बाकिर रउआ ${amt} आजुओ लेट बा! अब त भेज दीं 🙏`,
+  ],
+  English: [
+    (n,amt,note) => `${n}, did your memory card get corrupted? You keep forgetting the ${amt} due! Send it today and clear the cache 😂`,
+    (n,amt,note) => `Hey ${n}, rockets are landing on the moon, but your ${amt} hasn't reached my bank yet! Launch the transfer today 🚀`,
+  ]
+};
