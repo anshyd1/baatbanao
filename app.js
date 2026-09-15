@@ -2618,38 +2618,23 @@ function saveParchiEdits(id){
 
 
 function triggerWhatsAppDirect(encodedText, cleanPhone){
-  // Check if running on Android/iOS mobile
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const waUrl = cleanPhone 
+    ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` 
+    : `https://api.whatsapp.com/send?text=${encodedText}`;
   
-  if (isMobile) {
-    // 1. Try native whatsapp scheme first (bypasses browser URL capture in PWA)
-    const schemeUrl = cleanPhone 
-      ? `whatsapp://send?phone=${cleanPhone}&text=${encodedText}` 
-      : `whatsapp://send?text=${encodedText}`;
-    
-    // Create an invisible anchor and trigger click (works 100% inside Installed PWA)
-    const a = document.createElement('a');
-    a.href = schemeUrl;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Fallback if scheme doesn't respond
-    setTimeout(() => {
-      const fallbackUrl = cleanPhone 
-        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` 
-        : `https://api.whatsapp.com/send?text=${encodedText}`;
-      window.location.href = fallbackUrl;
-    }, 400);
-  } else {
-    // Desktop: Web WhatsApp
-    const webUrl = cleanPhone 
-      ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` 
-      : `https://api.whatsapp.com/send?text=${encodedText}`;
-    window.open(webUrl, '_blank');
+  // Try opening WhatsApp in new window first, if blocked navigate current window
+  const w = window.open(waUrl, '_blank');
+  if(!w || w.closed || typeof w.closed === 'undefined'){
+    window.location.assign(waUrl);
   }
+}
+
+
+function closeHisaabSlip(){
+  const existing = document.getElementById('slip-modal-container');
+  if(existing) existing.innerHTML = '';
+  window._currentSlipObject = null;
+  window._currentSlipId = null;
 }
 
 function sendSlipToWhatsApp(){
