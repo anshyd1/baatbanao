@@ -1275,11 +1275,7 @@ function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
   });
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
   
-  // Direct WhatsApp URL (works on all mobile & desktop browsers without popup blockers)
-  const url = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`;
-  
-  // Use direct location redirect to prevent popup blockers on Chrome / Safari mobile
-  window.location.href = url;
+  triggerWhatsAppDirect(text, phone);
 }
 
 function whatsappOutput(taId){
@@ -2558,10 +2554,10 @@ function openHisaabSlip(id, isEditMode = false){
 
           <!-- Action Buttons -->
           <div style="display:flex; flex-direction:column; gap:10px;">
-            <a id="parchi-wa-link" href="#" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:#fff; text-decoration:none; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(37,211,102,0.4); text-align:center;">
+            <button type="button" onclick="sendSlipToWhatsApp()" style="background:#25D366; color:#fff; border:none; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(37,211,102,0.4); width:100%; cursor:pointer;">
               <span style="font-size:1.25rem;">📲</span>
               <span>WhatsApp Par Slip Bhejo</span>
-            </a>
+            </button>
             
             <button type="button" onclick="executeParchiCopy('${k.id}')" style="background:#FFF9E8; color:#5A302B; border:1.5px solid #FFD4C4; padding:11px; border-radius:12px; font-weight:800; font-size:0.88rem; cursor:pointer;">
               📋 Copy Hisaab Text
@@ -2620,16 +2616,50 @@ function saveParchiEdits(id){
   openHisaabSlip(id, false);
 }
 
-function updateParchiWaLink(k){
+
+function triggerWhatsAppDirect(encodedText, cleanPhone){
+  // Check if running on Android/iOS mobile
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // 1. Try native whatsapp scheme first (bypasses browser URL capture in PWA)
+    const schemeUrl = cleanPhone 
+      ? `whatsapp://send?phone=${cleanPhone}&text=${encodedText}` 
+      : `whatsapp://send?text=${encodedText}`;
+    
+    // Create an invisible anchor and trigger click (works 100% inside Installed PWA)
+    const a = document.createElement('a');
+    a.href = schemeUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Fallback if scheme doesn't respond
+    setTimeout(() => {
+      const fallbackUrl = cleanPhone 
+        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` 
+        : `https://api.whatsapp.com/send?text=${encodedText}`;
+      window.location.href = fallbackUrl;
+    }, 400);
+  } else {
+    // Desktop: Web WhatsApp
+    const webUrl = cleanPhone 
+      ? `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}` 
+      : `https://api.whatsapp.com/send?text=${encodedText}`;
+    window.open(webUrl, '_blank');
+  }
+}
+
+function sendSlipToWhatsApp(){
+  const k = window._currentSlipObject;
+  if(!k) return;
   const text = formatHisaabSlipText(k);
   const encoded = encodeURIComponent(text);
   const cleanPhone = normalizeWhatsAppPhone(k.phone);
-  const aLink = document.getElementById('parchi-wa-link');
-  if(aLink){
-    aLink.href = cleanPhone 
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` 
-      : `https://api.whatsapp.com/send?text=${encoded}`;
-  }
+  closeHisaabSlip();
+  triggerWhatsAppDirect(encoded, cleanPhone);
 }
 
 
