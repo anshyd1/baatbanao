@@ -2097,7 +2097,7 @@ const BB_PRO_KEY = 'bb_pro_unlocked';
 const BB_PRO_PLAN_KEY = 'bb_pro_plan';
 const BB_DAILY_COUNT_KEY = 'bb_daily_gen_count';
 const BB_DAILY_DATE_KEY = 'bb_daily_gen_date';
-const BB_FREE_DAILY_LIMIT = 8;
+const BB_FREE_DAILY_LIMIT = 9999; // 100% Free for all users
 
 // ⚠️ CHANGE THESE 2 VALUES before going live:
 const BB_UPI_ID = 'ansh.y@ptyes';
@@ -2161,48 +2161,53 @@ function viewPro(){
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('profile')">${ICONS.back}</button>
-      <h1>BaatBanao Pro 👑</h1>
+      <h1>Support BaatBanao ☕</h1>
     </div>
 
     <div class="hero-greeting" style="text-align:center;">
-      <h1 style="font-size:20px;">Vasooli bhi smart, app bhi Pro 😄</h1>
+      <div style="font-size:2.4rem;margin-bottom:6px;">💖</div>
+      <h1 style="font-size:20px;">BaatBanao Sabke Liye 100% Free Hai!</h1>
     </div>
     <p style="text-align:center;color:var(--text-secondary);font-weight:600;font-size:13.5px;margin-bottom:16px;">
-      Watermark hatao, unlimited messages banao, sabse pehle naye features paao.
+      Koi compulsory subscription nahi hai. Agar hamari app se aapka atka hua paisa wapas nikalne me madad mili ho, toh aap khushi se developer ko ek cup chai ya chhota sa shagun bhej sakte hain! 😊
     </p>
 
-    <div class="list-card" style="margin-bottom:14px;">
-      <div class="row-top"><span class="name">BaatBanao Pro</span><span class="amount">₹149 lifetime</span></div>
-      <div class="meta">✅ Unlimited generation (free = ${BB_FREE_DAILY_LIMIT}/din)<br/>✅ No watermark on cards<br/>✅ Sab tone/language unlock<br/>✅ Priority AI (aane wale update mein)</div>
-      <button class="primary-btn" style="margin-top:10px;" onclick="bbStartPurchase('pro')">₹149 mein Unlock Karo</button>
+    <!-- Voluntary Tip Cards -->
+    <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFD4C4;background:#FFF9F6;">
+      <div class="row-top"><span class="name">☕ Ek Cup Chai (Tip)</span><span class="amount" style="color:#247C32;font-weight:900;">₹19</span></div>
+      <div class="meta">Server aur app maintenance support karne ke liye ek pyari si tip.</div>
+      <button class="primary-btn" style="margin-top:10px;padding:10px;" onclick="bbSendTip(19)">₹19 Tip Bhejo ☕</button>
     </div>
 
-    <div class="list-card" style="margin-bottom:14px;">
-      <div class="row-top"><span class="name">Business Pack</span><span class="amount">₹499 lifetime</span></div>
-      <div class="meta">✅ Sab kuch Pro jaisa +<br/>✅ Multiple business profiles<br/>✅ Bulk-safe reminder queue<br/>✅ Business template packs</div>
-      <button class="primary-btn" style="margin-top:10px;background:var(--coral-dark);" onclick="bbStartPurchase('business')">₹499 mein Unlock Karo</button>
+    <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFE2D1;background:#FFFDF9;">
+      <div class="row-top"><span class="name">🍕 Pizza / Shagun Tip</span><span class="amount" style="color:#247C32;font-weight:900;">₹49</span></div>
+      <div class="meta">Agar bada udhaar ya payment successfully clear ho gayi ho! 🎉</div>
+      <button class="primary-btn" style="margin-top:10px;padding:10px;background:#FF725F;" onclick="bbSendTip(49)">₹49 Shagun Bhejo 🍕</button>
     </div>
 
-    <div id="bb-pay-step" style="display:none;">
-      <div class="field-block">
-        <label class="field-label">Step 1 — UPI se Payment Karo</label>
-        <button class="ghost-btn" id="bb-upi-btn">📲 UPI se Pay Karo</button>
-      </div>
-      <div class="field-block">
-        <label class="field-label">Step 2 — Screenshot Bhejo</label>
-        <button class="ghost-btn" id="bb-wa-btn">💬 WhatsApp par Screenshot Bhejo</button>
-      </div>
-      <div class="field-block">
-        <label class="field-label">Step 3 — Code Daalo (verify hone ke baad milega)</label>
-        <input type="tel" id="bb-phone-input" placeholder="Apna WhatsApp number (10 digit)" maxlength="10"/>
-        <input type="text" id="bb-code-input" placeholder="6-digit unlock code" maxlength="6" style="margin-top:8px;text-transform:uppercase;"/>
-        <button class="primary-btn" style="margin-top:10px;" onclick="bbRedeemCode()">✅ Unlock Karo</button>
-        <div id="bb-redeem-msg" style="margin-top:8px;font-weight:700;font-size:13px;"></div>
-      </div>
+    <div class="list-card" style="margin-bottom:14px;border:1.5px solid #FFD8A8;background:#FFFDF5;">
+      <div class="row-top"><span class="name">👑 Supporter / Pro Badge</span><span class="amount" style="color:#9A6810;font-weight:900;">₹99</span></div>
+      <div class="meta">Lifetime Pro Supporter badge + saare watermarks permanently remove karne ke liye.</div>
+      <button class="primary-btn" style="margin-top:10px;padding:10px;background:#E67E22;" onclick="bbSendTip(99)">₹99 Supporter Badge 👑</button>
     </div>
 
-    <div class="safety-banner">🙏 BaatBanao ek writing assistant hai, recovery agency nahi. Payment 100% manual-verified hai, koi auto-debit nahi hoga.</div>
+    <div class="safety-banner" style="text-align:center;line-height:1.5;">
+      ❤️ <b>Note:</b> BaatBanao ke saare basic features (Khata, Parchi, WhatsApp messages) hamesha sabhi ke liye <b>bilkul free</b> rahenge!
+    </div>
   `;
+}
+
+
+function bbSendTip(amount){
+  bbTrack('tip_click', { amount: amount });
+  const upiUrl = `upi://pay?pa=ansh.y@ptyes&pn=BaatBanao%20Support&am=${amount}&cu=INR&tn=BaatBanao%20Chai%20Tip`;
+  // Unlock supporter pro badge immediately as a sweet gesture!
+  localStorage.setItem(BB_PRO_KEY, '1');
+  localStorage.setItem(BB_PRO_PLAN_KEY, 'supporter_' + amount);
+  showToast(`Dhanyavaad! UPI app khul raha hai... Pro badge active ho gaya! 🎉`);
+  setTimeout(() => {
+    window.location.href = upiUrl;
+  }, 600);
 }
 
 let bbSelectedPlan = 'pro';
@@ -2775,3 +2780,13 @@ function setCategoryFilter(c){
   state.categoryFilter = c;
   renderApp();
 }
+
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    if (typeof closeHisaabSlip === 'function') closeHisaabSlip();
+    if (typeof closeUpiQr === 'function') closeUpiQr();
+    const upiModal = document.getElementById('bb-upi-modal');
+    if (upiModal) upiModal.remove();
+  }
+});
