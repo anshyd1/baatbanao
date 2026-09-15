@@ -4,6 +4,17 @@
 
 const STORE_KEYS = { khata:'bb_khata', history:'bb_history', settings:'bb_settings' };
 
+
+function bbTrack(eventName, params){
+  try{
+    if(typeof window !== 'undefined' && window.BBAnalytics && typeof window.BBAnalytics.track === 'function'){
+      window.BBAnalytics.track(eventName, params);
+    }
+  }catch(e){
+    // silent fail
+  }
+}
+
 function loadStore(key, fallback){
   try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
   catch(e){ return fallback; }
@@ -2442,6 +2453,8 @@ if (document.readyState === 'loading') {
 function openHisaabSlip(id, isEditMode = false){
   const k = state.khata.find(x => x.id === id);
   if(!k) return;
+  window._currentSlipObject = k;
+  window._currentSlipId = id;
   const outstanding = outstandingAmount(k);
   const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
   const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
@@ -2580,6 +2593,43 @@ function openHisaabSlip(id, isEditMode = false){
 
   // Build authentic WhatsApp deep-link
   updateParchiWaLink(k);
+}
+
+
+function updateParchiWaLink(k){
+  const aLink = document.getElementById('parchi-wa-link');
+  if(aLink && k){
+    const text = formatHisaabSlipText(k);
+    const encoded = encodeURIComponent(text);
+    const cleanPhone = normalizeWhatsAppPhone(k.phone);
+    aLink.href = cleanPhone 
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}` 
+      : `https://api.whatsapp.com/send?text=${encoded}`;
+  }
+}
+
+function formatHisaabSlipText(k){
+  if(!k) return '';
+  const outstanding = outstandingAmount(k);
+  const totalAmt = hasValidAmount(k.amount) ? Number(k.amount) : 0;
+  const paidAmt = hasValidAmount(k.paidAmount) ? Number(k.paidAmount) : 0;
+  const due = outstanding || totalAmt;
+  const upiLink = buildUpiLink({ name: k.name, amount: due, phone: k.phone, note: k.note || 'Payment' });
+
+  return `*🧾 BAATBANAO HISAAB PARCHI*\n` +
+         `----------------------------\n` +
+         `👤 *Naam:* ${k.name || 'Bhai'}\n` +
+         `📅 *Taarikh:* ${todayISO()}\n` +
+         `📂 *Category:* ${k.relation || 'Dost'}\n` +
+         (k.note ? `📝 *Vivaran:* ${k.note}\n` : '') +
+         `----------------------------\n` +
+         `💰 *Kul Rashi:* ₹${totalAmt || due}\n` +
+         (paidAmt > 0 ? `✅ *Jama Rashi:* ₹${paidAmt}\n` : '') +
+         `🔴 *Baaki Rashi (Due):* ₹${due}\n` +
+         (k.dueDate ? `⏰ *Due Date:* ${k.dueDate}\n` : '') +
+         `----------------------------\n` +
+         `📲 *Pay via UPI:* ${upiLink}\n\n` +
+         `_Paisa bhi wapas, rishta bhi safe!_ 😊`;
 }
 
 function recalcSlipModalDue(){
