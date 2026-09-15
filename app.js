@@ -1262,7 +1262,9 @@ function copyOutput(taId){
 }
 
 function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
-  const finalText = appendUpiPaymentLine(textValue || '', paymentData || {});
+  const finalText = (textValue || '').includes('BAATBANAO HISAAB PARCHI') 
+    ? (textValue || '') 
+    : appendUpiPaymentLine(textValue || '', paymentData || {});
   const text = encodeURIComponent(finalText);
   const phone = normalizeWhatsAppPhone(phoneRaw);
   bbTrack('whatsapp_open', {
@@ -1272,8 +1274,12 @@ function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
     has_amount: hasValidAmount(paymentData && paymentData.amount)
   });
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
-  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
-  window.open(url, '_blank');
+  
+  // Direct WhatsApp URL (works on all mobile & desktop browsers without popup blockers)
+  const url = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${text}` : `https://api.whatsapp.com/send?text=${text}`;
+  
+  // Use direct location redirect to prevent popup blockers on Chrome / Safari mobile
+  window.location.href = url;
 }
 
 function whatsappOutput(taId){
@@ -1837,11 +1843,17 @@ function shareKhataSummary(){
   const pending = state.khata.filter(k=>k.status!=='paid');
   const total = pending.reduce((a,b)=>a+outstandingAmount(b),0);
   const overdue = pending.filter(k=>isOverdue(k)).length;
-  const lines = pending.slice(0,12).map((k,i)=>`${i+1}. ${k.name} — ${displayAmount(outstandingAmount(k) || k.amount)} — ${statusText(k)}${k.dueDate ? ' — Due: '+k.dueDate : ''}`);
-  const text = `BaatBanao Khata Summary\nPending Total: ${total ? fmtMoney(total) : 'Amount optional'}\nOverdue: ${overdue}\n\n${lines.join('\n') || 'No pending entries ✅'}`;
-  if(navigator.share) navigator.share({title:'BaatBanao Khata Summary', text});
-  else if(navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('Summary copied ✅'));
-  else showToast('Summary ready');
+  const lines = pending.slice(0,15).map((k,i)=>`${i+1}. ${k.name} — ${displayAmount(outstandingAmount(k) || k.amount)} (${statusText(k)}${k.dueDate ? ' · Due: '+k.dueDate : ''})`);
+  const text = `*📊 BAATBANAO KHATA SUMMARY*\n` +
+               `----------------------------\n` +
+               `💰 *Pending Total:* ${total ? fmtMoney(total) : '₹0'}\n` +
+               `⚠️ *Overdue Entries:* ${overdue}\n` +
+               `----------------------------\n` +
+               (lines.join('\n') || 'Sabhi hisaab clear hai! ✅') + `\n\n` +
+               `_Tracked on BaatBanao.shop_`;
+  
+  // Directly open WhatsApp! No useless Android system share sheet
+  openWhatsAppWithText(text, '', {});
 }
 function exportKhataCSV(){
   bbTrack('export_khata_csv', { entries: state.khata.length });
@@ -2546,7 +2558,7 @@ function shareSlipViaWhatsApp(id){
   if(!k) return;
   const text = formatHisaabSlipText(k);
   closeHisaabSlip();
-  openWhatsAppWithText(text, k.phone, k);
+  openWhatsAppWithText(text, k.phone, {});
 }
 
 function copySlipText(id){
