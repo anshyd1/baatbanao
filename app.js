@@ -856,15 +856,17 @@ function appendUpiPaymentLine(textValue, data={}){
   const base = textValue || '';
   const viralFooter = '\n\n— ⚡ Apna reminder banao: https://www.baatbanao.shop';
   if(!state.settings.upiAttachEnabled || !canUseUpi()) return base + viralFooter;
-  const upiLink = buildUpiLink(data);
-  if(!upiLink) return base + viralFooter;
-  const amountLine = hasValidAmount(data.amount) ? `Amount: ${displayAmount(data.amount)}
-` : '';
-  return `${base}
-
-Payment option:
-${amountLine}UPI Pay link 👇
-${upiLink}${viralFooter}`;
+  
+  const upiId = getSavedUpiId();
+  const upiWebLink = buildUpiWebLink(data);
+  const amountLine = hasValidAmount(data.amount) ? `💰 Amount: ${displayAmount(data.amount)}\n` : '';
+  
+  let paymentSection = `\n\n📲 *Pay via UPI:*\n${amountLine}👉 UPI ID: \`${upiId}\``;
+  if(upiWebLink){
+    paymentSection += `\n🔗 Pay Link: ${upiWebLink}`;
+  }
+  
+  return `${base}${paymentSection}${viralFooter}`;
 }
 function buildUpiLinkFromPayParams(pay={}){
   const pa = normalizeUpiId(pay.pa || '');
