@@ -341,7 +341,7 @@ function generateMessages({name, amount, relation, language, tone, note}){
   const FUNNY = {
     Hinglish:[
       (n,a)=>`${n} bhai, mera ${a} raat ko sapne mein aata hai — "Ghar bhej do yaar!" \u{1F602} Aaj bhej do!`,
-      (n,a)=>`${n}, teri wan}, teri wajah se mera ${a} homesick ho gaya \u{1F62D} Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
+      (n,a)=>`${n}, teri wajah se mera ${a} homesick ho gaya \u{1F62D} Roz kehta hai "Wapas aa jaa." Aaj bhej do!`,
       (n,a)=>`${n} bhai, ${a} ka Google Maps on kiya — still showing at your location \u{1F4CD}\u{1F602} Transfer karo!`,
       (n,a)=>`${n}, Google Pay ne ${a} ke liye "Pending Since Forever" badge de diya \u{1F602} Aaj clear karo!`,
       (n,a)=>`${n} bhai, IRCTC ka waiting confirm ho jaata hai lekin tera ${a} nahi aaya \u{1F602} Tu IRCTC se bhi slow hai!`,
@@ -1021,7 +1021,7 @@ function handleGenerate(){
     amount,
     phone: cleanPhone || ''
   };
-  state.vasooliForm = formData;
+  state.vasooliForm = formData; window._lastFormSnapshot = formData;
 
   const limitCheck = bbCanGenerate();
   if (!limitCheck.allowed){
@@ -1167,7 +1167,7 @@ function outputCard(m, idx, formSnapshot){
         <div class="sub-btn-row">
           <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
           ${upiOutputButton(formSnapshot)}
-          <button class="ghost-btn save" onclick='saveOutputToKhata(${JSON.stringify(m).replace(/'/g,"&#39;")}, ${JSON.stringify(formSnapshot).replace(/'/g,"&#39;")}, "${taId}")'>${ICONS.save} Khata</button>
+          <button class="ghost-btn save" onclick="saveOutputToKhataSafe('${taId}')">${ICONS.save} Khata</button>
         </div>
       </div>
     </div>
@@ -1303,6 +1303,15 @@ function whatsappHistory(id, taId){
   const ta = document.getElementById(taId);
   const h = state.history.find(x => x.id === id);
   openWhatsAppWithText(ta ? ta.value : (h && h.message), h && h.phone, h || {});
+}
+
+
+window._lastFormSnapshot = null;
+function saveOutputToKhataSafe(taId){
+  const ta = document.getElementById(taId);
+  const text = ta ? ta.value : '';
+  const snap = window._lastFormSnapshot || state.vasooliForm || {};
+  saveOutputToKhata({ text: text }, snap, taId);
 }
 
 function saveOutputToKhata(m, formSnapshot, taId){
