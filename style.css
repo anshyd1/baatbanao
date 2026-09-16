@@ -97,8 +97,20 @@ body{
     object-position: center 30% !important;
   }
   .hero-card-content {
-    padding: 24px 28px !important;
-    background: linear-gradient(180deg, transparent 0%, rgba(20,10,5,0.45) 50%, rgba(20,10,5,0.78) 100%) !important;
+    padding: 28px 32px !important;
+    width: 58% !important; /* Keep text on left 58% so mascot on right is completely unobstructed */
+    background: linear-gradient(90deg, rgba(20,10,5,0.72) 0%, rgba(20,10,5,0.45) 75%, transparent 100%) !important;
+    border-radius: 24px 0 0 24px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .hero-card-banner {
+    min-height: 240px !important;
+    align-items: stretch !important;
   }
   .hero-card-banner h2 {
     font-size: 32px !important;
