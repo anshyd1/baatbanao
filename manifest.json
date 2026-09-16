@@ -6,13 +6,21 @@
   "id": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
-  "background_color": "#FFF9E8",
-  "theme_color": "#FF725F",
+  "background_color": "#FFFDF9",
+  "theme_color": "#FF6B57",
   "lang": "hi-IN",
   "dir": "ltr",
-  "categories": ["productivity", "business", "finance", "social"],
+  "categories": [
+    "productivity",
+    "business",
+    "finance",
+    "social"
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
@@ -46,21 +54,36 @@
       "short_name": "Vasooli",
       "description": "Payment reminder message banao",
       "url": "/#vasooli",
-      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Udhaar Khata",
       "short_name": "Khata",
       "description": "Pending payments dekho",
       "url": "/#khata",
-      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "History",
       "short_name": "History",
       "description": "Purane messages dekho",
       "url": "/#history",
-      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "assets/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
