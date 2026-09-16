@@ -37,78 +37,176 @@ body{
   position:relative;
   box-shadow: 0 0 60px rgba(90,48,30,0.12);
 }
-/* Tablet & Desktop Full Responsive Overhaul */
+/* ===========================================================
+   PREMIUM DESKTOP & LAPTOP ARCHITECTURE (Clean Dashboard Pro)
+   =========================================================== */
 @media(min-width: 600px) {
   body {
     padding: 0;
-    background: #FAF5EF;
+    margin: 0;
+    background: #F4EDE4;
+    overflow-x: hidden;
   }
   #app {
-    max-width: 1000px;
+    max-width: 960px;
     width: 100%;
     margin: 0 auto;
     min-height: 100vh;
-    border-left: 1px solid rgba(229,213,197,0.5);
-    border-right: 1px solid rgba(229,213,197,0.5);
-    box-shadow: 0 0 50px rgba(90,48,30,0.06);
-    border-radius: 0;
+    background: #FFFDF9;
+    box-shadow: 0 0 50px rgba(72,42,33,0.08);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-left: 1px solid #EBE0D3;
+    border-right: 1px solid #EBE0D3;
   }
   .topbar {
     padding: 16px 36px;
-    border-bottom: 1px solid rgba(229,213,197,0.6);
+    background: #FFFDF9;
+    border-bottom: 1px solid #EFE5D9;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   .content {
-    padding: 24px 36px 90px 36px;
-    max-width: 1000px;
+    padding: 24px 36px 40px 36px !important;
+    gap: 22px !important;
+    max-width: 960px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
-    gap: 22px;
   }
-  /* 4-column feature cards on desktop instead of squished mobile 2-col */
-  .secondary-row {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
+  /* Desktop Hero Banner: Premium Wide Ratio (Never Cutoff) */
   .hero-card-banner {
-    min-height: 220px;
-    border-radius: 20px;
+    min-height: 240px !important;
+    max-height: 280px;
+    border-radius: 24px !important;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    box-shadow: 0 16px 36px rgba(255,107,87,0.22);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  }
+  .hero-card-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(255,107,87,0.28);
+  }
+  .hero-banner-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover !important;
+    object-position: center 30% !important;
+  }
+  .hero-card-content {
+    padding: 24px 28px !important;
+    background: linear-gradient(180deg, transparent 0%, rgba(20,10,5,0.45) 50%, rgba(20,10,5,0.78) 100%) !important;
   }
   .hero-card-banner h2 {
-    font-size: 28px !important;
+    font-size: 32px !important;
+    letter-spacing: -0.5px;
   }
   .hero-card-banner p {
-    font-size: 15px !important;
+    font-size: 15.5px !important;
+    opacity: 0.96;
   }
+  /* Input Pill: Full width, sleek elevation */
+  .input-pill {
+    padding: 16px 24px !important;
+    border-radius: 20px !important;
+    font-size: 15px !important;
+    border: 1.5px solid #FFD9CA !important;
+    background: #FFFDF9 !important;
+    box-shadow: 0 8px 24px rgba(72,42,33,0.06) !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-pill:hover {
+    border-color: #FF725F !important;
+    box-shadow: 0 10px 28px rgba(255,114,95,0.12) !important;
+  }
+  /* Mini stats grid: Pro horizontal cards */
+  .mini-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+  .mini-stats > div {
+    padding: 16px 22px !important;
+    border-radius: 18px !important;
+    border: 1px solid #EFE4D6 !important;
+    background: #FFF9F3 !important;
+  }
+  .mini-stats b {
+    font-size: 24px !important;
+  }
+  /* Secondary feature cards: Clean 2x2 grid with smooth hover elevation */
+  .secondary-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+  .sec-card {
+    padding: 20px 22px !important;
+    border-radius: 20px !important;
+    background: #FFFDF9 !important;
+    border: 1.5px solid #EFE5D9 !important;
+    box-shadow: 0 6px 16px rgba(72,42,33,0.04) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+  }
+  .sec-card:hover {
+    transform: translateY(-3px) !important;
+    border-color: #FFC4B6 !important;
+    box-shadow: 0 12px 28px rgba(255,107,87,0.12) !important;
+  }
+  .sec-card h3 {
+    font-size: 17px !important;
+    color: #2D1A15 !important;
+  }
+  .sec-card p {
+    font-size: 13.5px !important;
+    line-height: 1.45 !important;
+  }
+  /* Desktop Navigation: Elegant Sticky Dock Bar without overlapping content */
+  .bottom-nav {
+    position: static !important; /* In-flow footer dock on desktop so it never overlaps content */
+    margin-top: auto;
+    width: 100% !important;
+    border-radius: 0 !important;
+    background: #FFF9F2 !important;
+    border-top: 1px solid #EFE2D3 !important;
+    padding: 12px 36px 14px 36px !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 32px !important;
+  }
+  .nav-item {
+    padding: 8px 24px !important;
+    border-radius: 16px !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-item span {
+    font-size: 13px !important;
+  }
+  .nav-item:hover {
+    background: rgba(255,114,95,0.08) !important;
+  }
+  .nav-item.active {
+    background: #FFE8E2 !important;
+    color: #FF5E48 !important;
+  }
+  /* Form views & Khata views */
   .vasooli-form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px 20px;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px 20px !important;
   }
   .output-card {
-    padding: 22px;
-    border-radius: 20px;
-  }
-  .bottom-nav {
-    max-width: 1000px;
-    margin: 0 auto;
-    width: 100%;
-    left: 0; right: 0;
-    border-radius: 0;
-    padding: 12px 36px;
+    padding: 24px !important;
+    border-radius: 22px !important;
   }
 }
-
-@media(min-width: 900px) {
-  /* Spread secondary features across 4 columns on large monitors */
-  .secondary-row {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
 /* Top bar */
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
