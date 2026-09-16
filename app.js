@@ -617,25 +617,26 @@ function viewHome(){
       <div><b>${pendingTotal ? fmtMoney(pendingTotal) : 'No amount'}</b><span>Total</span></div>
     </div>
 
-    <div class="secondary-row">
+    <div class="features-grid">
       <button class="sec-card" onclick="navigate('vasooli')">
-        <h3>Polite<br/>Reminder 🙏</h3>
-        <p>Customer/client ke liye professional payment follow-up.</p>
+        <div class="sec-icon-circle" style="background:#FFF0ED;color:#FF5E48;">🙏</div>
+        <h3>Polite Reminder</h3>
+        <p>Customer/client ke liye respectful payment follow-up.</p>
       </button>
       <button class="sec-card" onclick="navigate('khata')">
-        <h3>Udhaar<br/>Khata 📒</h3>
-        <p>Pending entries save karo aur repeat reminder bhejo.</p>
+        <div class="sec-icon-circle" style="background:#FFF9E6;color:#D97706;">📒</div>
+        <h3>Udhaar Khata</h3>
+        <p>Pending hisaab aur customer ledger save karein.</p>
       </button>
-    </div>
-
-    <div class="secondary-row">
       <button class="sec-card" onclick="navigate('templates')">
-        <h3>Smart<br/>Templates 🧩</h3>
-        <p>Client, rent, tuition, freelance aur shop udhaar ready formats.</p>
+        <div class="sec-icon-circle" style="background:#EEF8FF;color:#0284C7;">🧩</div>
+        <h3>Smart Templates</h3>
+        <p>Rent, tuition, freelance aur dukaan ke ready message.</p>
       </button>
       <button class="sec-card" onclick="navigate('bulk')">
-        <h3>Bulk<br/>Reminder 🚀</h3>
-        <p>Overdue-first queue, summary copy aur one-by-one WhatsApp flow.</p>
+        <div class="sec-icon-circle" style="background:#F0FDF4;color:#16A34A;">🚀</div>
+        <h3>Bulk Remind</h3>
+        <p>Ek saath sabhi pending hisaab WhatsApp karein.</p>
       </button>
     </div>
 
