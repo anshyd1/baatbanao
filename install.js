@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.48';
+  const APP_VERSION = '1.0.49';
 
   /* ---------- NUKE ALL EXISTING TOASTS ON LOAD ---------- */
   function nukeAllToasts(){

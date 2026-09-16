@@ -320,7 +320,7 @@
   // the brand moment isn't skipped on fast connections, and a maximum
   // cap so a broken/very slow load doesn't trap the user behind the
   // splash forever.
-  var MIN_HOLD_MS = 400; // Ultra-fast smooth transition   // still feels like an intentional brand beat
+  var MIN_HOLD_MS = 2000; // Hold full 2 seconds for rich animation   // still feels like an intentional brand beat
   var MAX_HOLD_MS = 6000;   // safety cap even if app.js never finishes
   var start = Date.now();
 
