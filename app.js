@@ -22,17 +22,20 @@ function loadStore(key, fallback){
 function saveStore(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
 let state = {
-  khata: loadStore(STORE_KEYS.khata, [
-    { id: uid(), name:'Ramesh bhai', phone:'', amount:2500, relation:'Dost', status:'pending',
-      language:'Hinglish', tone:'Friendly', note:'2 mahine se pending',
-      createdAt: Date.now(), updatedAt: Date.now() }
-  ]),
+  khata: loadStore(STORE_KEYS.khata, []),
   history: loadStore(STORE_KEYS.history, []),
   settings: loadStore(STORE_KEYS.settings, {
     defaultLanguage:'Hinglish', defaultTone:'Friendly', emojiEnabled:true, watermarkEnabled:true
   }),
   route: 'home'
 };
+
+
+// If legacy dummy sample 'Ramesh bhai' is still in localStorage, clear it for a clean fresh slate
+if (Array.isArray(state.khata) && state.khata.length === 1 && state.khata[0].name === 'Ramesh bhai' && state.khata[0].amount === 2500) {
+  state.khata = [];
+  persist();
+}
 
 function persist(){
   saveStore(STORE_KEYS.khata, state.khata);
