@@ -1789,7 +1789,14 @@ function viewKhata(){
   const overdueCount = state.khata.filter(k=>isOverdue(k)).length;
   const filter = state.khataFilter || 'all';
   const catF = state.categoryFilter || 'all_cat';
+  const searchQ = (state.khataSearch || '').trim().toLowerCase();
   const list = state.khata.filter(k => {
+    if(searchQ){
+      const matchName = (k.name || '').toLowerCase().includes(searchQ);
+      const matchPhone = (k.phone || '').includes(searchQ);
+      const matchNote = (k.note || '').toLowerCase().includes(searchQ);
+      if(!matchName && !matchPhone && !matchNote) return false;
+    }
     const matchCat = (catF === 'all_cat') || (k.relation === catF);
     if(!matchCat) return false;
     if(filter==='all') return true;
@@ -1806,6 +1813,12 @@ function viewKhata(){
     <div class="summary-card">
       <div class="amt">${total ? fmtMoney(total) : 'Amount optional'}</div>
       <div class="sub">${pendingCount} pending · ${partialCount} partial · ${overdueCount} overdue · ${paidTotal ? fmtMoney(paidTotal) + ' paid' : 'No paid yet'}</div>
+    </div>
+
+    <!-- Live Search Bar -->
+    <div style="position:relative;margin-bottom:4px;">
+      <input type="text" id="khata-search-input" placeholder="🔍 Search naam, phone ya note se..." value="${escapeHtml(state.khataSearch || '')}" oninput="setKhataSearch(this.value)" style="width:100%;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid #FFD4C4;background:#fff;font-size:0.9rem;font-weight:600;box-sizing:border-box;" />
+      ${state.khataSearch ? `<button onclick="setKhataSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#999;font-size:16px;cursor:pointer;">&times;</button>` : ''}
     </div>
 
     <div class="quick-add-box">
@@ -2559,17 +2572,19 @@ function openHisaabSlip(id, isEditMode = false){
             `}
           </div>
 
-          <!-- Note / Details -->
+          <!-- Note / Details (Hidden in view mode if blank) -->
+          ${(!isEditMode && !k.note) ? '' : `
           <div style="margin-bottom:14px;">
             <div style="font-size:0.72rem; color:#75615C; font-weight:800; text-transform:uppercase; margin-bottom:4px;">Vivaran / Note:</div>
             ${!isEditMode ? `
               <div style="background:#fff; border:1px solid #F0DFCF; border-radius:10px; padding:9px 12px; font-size:0.88rem; color:#261818;">
-                ${escapeHtml(k.note || 'Koi extra note nahi')}
+                ${escapeHtml(k.note)}
               </div>
             ` : `
-              <input type="text" id="slip-edit-note" value="${escapeHtml(k.note||'')}" placeholder="Udhaar ki wajah ya item details" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #FFD4C4; font-size:0.85rem; color:#261818; background:#fff; box-sizing:border-box;" />
+              <input type="text" id="slip-edit-note" value="${escapeHtml(k.note||'')}" placeholder="Udhaar ki wajah ya item details (optional)" style="width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #FFD4C4; font-size:0.85rem; color:#261818; background:#fff; box-sizing:border-box;" />
             `}
           </div>
+          `}
 
           <!-- Status & Due Date -->
           <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; margin-bottom:16px;">
@@ -2784,6 +2799,20 @@ function executeParchiCopy(id){
   }
 }
 
+
+
+function setKhataSearch(val){
+  state.khataSearch = val;
+  renderApp();
+  // Keep focus on search input after render
+  setTimeout(() => {
+    const el = document.getElementById('khata-search-input');
+    if(el){
+      el.focus();
+      el.selectionStart = el.selectionEnd = el.value.length;
+    }
+  }, 10);
+}
 
 function setCategoryFilter(c){
   state.categoryFilter = c;
