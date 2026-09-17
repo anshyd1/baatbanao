@@ -1,5 +1,5 @@
 /* Local backup and restore. No file is uploaded. */
-const BB_BACKUP_KEYS=['bb_khata','bb_history','bb_settings','bb_invoices_v1'];
+const BB_BACKUP_KEYS=['bb_khata','bb_history','bb_settings','bb_invoices_v1','bb_hisaab_v1'];
 function bbExportBackup(){
   const data={app:'BaatBanao',version:1,exportedAt:new Date().toISOString(),data:{}};
   BB_BACKUP_KEYS.forEach(k=>{const raw=localStorage.getItem(k);if(raw!==null){try{data.data[k]=JSON.parse(raw)}catch(e){}}});

@@ -628,10 +628,15 @@ function viewHome(){
         <h3>Polite Reminder</h3>
         <p>Customer/client ke liye respectful payment follow-up.</p>
       </button>
+      <button class="sec-card hisaab-core-card" onclick="navigate('hisaab')">
+        <div class="sec-icon-circle" style="background:#EAF8F0;color:#087A43;">₹</div>
+        <h3>Ek Hisaab</h3>
+        <p>Roz ka kharcha, lena-dena aur shaam tak clear.</p>
+      </button>
       <button class="sec-card" onclick="navigate('khata')">
         <div class="sec-icon-circle" style="background:#FFF9E6;color:#D97706;">📒</div>
-        <h3>Udhaar Khata</h3>
-        <p>Pending hisaab aur customer ledger save karein.</p>
+        <h3>Customer Khata</h3>
+        <p>Pending customer balance aur reminder sambhalein.</p>
       </button>
       <button class="sec-card" onclick="navigate('templates')">
         <div class="sec-icon-circle" style="background:#EEF8FF;color:#0284C7;">🧩</div>
@@ -2510,6 +2515,7 @@ function deleteLedgerTransaction(kid,tid){if(!confirm('Ye transaction delete kar
    =========================================================== */
 const ROUTES = {
   home: viewHome,
+  hisaab: viewUnifiedHisaab,
   vasooli: viewVasooli,
   templates: viewTemplates,
   billing: viewBilling,
