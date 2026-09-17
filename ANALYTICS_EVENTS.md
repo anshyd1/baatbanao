@@ -30,6 +30,7 @@
 - `invoice_preview`
 - `invoice_share`
 - `invoice_image_share`
+- `invoice_pdf_share`
 - `backup_export`
 - `backup_restore`
 

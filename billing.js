@@ -40,7 +40,7 @@ function viewBilling(){
 }
 function viewInvoiceForm(){
   const d=state.invoiceDraft||bbNewInvoiceDraft(); state.invoiceDraft=d; const t=bbInvoiceTotals(d);
-  return `<div class="page-header invoice-page-head"><button class="back-btn" onclick="navigate('billing')">${ICONS.back}</button><h1>Bill Banayein</h1><button class="head-share-btn" onclick="bbShareInvoice(state.invoiceDraft)">↗ Share</button></div>
+  return `<div class="page-header invoice-page-head"><button class="back-btn" onclick="navigate('billing')">${ICONS.back}</button><h1>Bill Banayein</h1><button class="head-share-btn" onclick="bbShareInvoice(state.invoiceDraft)">📄 PDF</button></div>
   <div class="invoice-form-card"><div class="invoice-grid"><div class="field-block"><label class="field-label">Bill number</label><input type="text" value="${escapeHtml(d.number)}" oninput="bbSetDraft('number',this.value)"></div><div class="field-block"><label class="field-label">Bill date</label><input type="date" value="${escapeHtml(d.date)}" oninput="bbSetDraft('date',this.value)"></div><div class="field-block"><label class="field-label">Due date (optional)</label><input type="date" value="${escapeHtml(d.dueDate)}" oninput="bbSetDraft('dueDate',this.value)"></div></div>
   <details class="invoice-details" open><summary>Aapka business</summary><div class="invoice-grid"><div class="field-block"><label class="field-label">Business/name</label><input type="text" placeholder="Shree Balaji Traders" value="${escapeHtml(d.seller)}" oninput="bbSetDraft('seller',this.value)"></div><div class="field-block"><label class="field-label">Phone</label><input type="tel" inputmode="tel" value="${escapeHtml(d.sellerPhone)}" oninput="bbSetDraft('sellerPhone',this.value)"></div><div class="field-block"><label class="field-label">GSTIN (optional)</label><input type="text" maxlength="15" value="${escapeHtml(d.gstin)}" oninput="bbSetDraft('gstin',this.value.toUpperCase())"></div></div><div class="field-block"><label class="field-label">Address</label><textarea oninput="bbSetDraft('sellerAddress',this.value)">${escapeHtml(d.sellerAddress)}</textarea></div></details>
   <details class="invoice-details" open><summary>Customer</summary><div class="invoice-grid"><div class="field-block"><label class="field-label">Customer name</label><input type="text" placeholder="Customer" value="${escapeHtml(d.buyer)}" oninput="bbSetDraft('buyer',this.value)"></div><div class="field-block"><label class="field-label">Phone (optional)</label><input type="tel" inputmode="tel" value="${escapeHtml(d.buyerPhone)}" oninput="bbSetDraft('buyerPhone',this.value)"></div></div><div class="field-block"><label class="field-label">Address (optional)</label><textarea oninput="bbSetDraft('buyerAddress',this.value)">${escapeHtml(d.buyerAddress)}</textarea></div></details>
@@ -48,7 +48,7 @@ function viewInvoiceForm(){
   <div class="invoice-grid"><div class="field-block"><label class="field-label">Discount ₹</label><input type="number" inputmode="decimal" min="0" value="${escapeHtml(d.discount)}" oninput="bbSetDraft('discount',this.value)"></div><div class="field-block"><label class="field-label">Tax/GST %</label><select onchange="bbSetDraft('taxRate',this.value)">${[0,5,12,18,28].map(v=>`<option value="${v}" ${Number(d.taxRate)===v?'selected':''}>${v}%</option>`).join('')}</select></div></div>
   <div id="invoice-live-total" class="invoice-total"><span>Subtotal ₹${bbMoney(t.sub)}</span>${t.discount?`<span>Discount −₹${bbMoney(t.discount)}</span>`:''}${t.tax?`<span>Tax ₹${bbMoney(t.tax)}</span>`:''}<b>Total ₹${bbMoney(t.total)}</b></div>
   <div class="field-block"><label class="field-label">Note</label><textarea oninput="bbSetDraft('note',this.value)">${escapeHtml(d.note)}</textarea></div>
-  <div class="invoice-actions"><button class="ghost-btn" onclick="bbPreviewInvoice(state.invoiceDraft)">👁 Preview</button><button class="ghost-btn share" onclick="bbShareInvoice(state.invoiceDraft)">↗ Share Bill</button><button class="primary-btn" onclick="bbSaveInvoice(false)">Save Bill</button><button class="ghost-btn" onclick="bbSaveInvoice(true)">PDF/Print</button></div></div>`;
+  <div class="invoice-actions"><button class="ghost-btn" onclick="bbPreviewInvoice(state.invoiceDraft)">👁 Preview</button><button class="ghost-btn share" onclick="bbShareInvoice(state.invoiceDraft)">📄 Share PDF</button><button class="primary-btn" onclick="bbSaveInvoice(false)">Save Bill</button><button class="ghost-btn" onclick="bbSaveInvoice(true)">PDF/Print</button></div></div>`;
 }
 function bbSaveInvoice(printAfter){
   const d=state.invoiceDraft;
@@ -63,20 +63,20 @@ function bbInvoiceMenu(id){
   const x=bbLoadInvoices().find(v=>v.id===id);if(!x)return;
   document.getElementById('bb-invoice-sheet')?.remove();
   const el=document.createElement('div');el.id='bb-invoice-sheet';el.className='bb-sheet-wrap';
-  el.innerHTML=`<div class="bb-sheet-backdrop" onclick="this.parentElement.remove()"></div><div class="bb-sheet"><div class="bb-sheet-handle"></div><h3>${escapeHtml(x.number)} · ${escapeHtml(x.buyer)}</h3><button onclick="bbPreviewInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">👁 Preview</button><button onclick="bbShareInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">↗ Share Bill</button><button onclick="bbPrintInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">🖨 PDF / Print</button><button onclick="bbDuplicateInvoice('${id}')">⧉ Duplicate</button><button onclick="bbEditInvoice('${id}');this.closest('.bb-sheet-wrap').remove()">✏️ Edit</button><button class="danger" onclick="bbDeleteInvoice('${id}')">🗑 Delete</button></div>`;document.body.appendChild(el);
+  el.innerHTML=`<div class="bb-sheet-backdrop" onclick="this.parentElement.remove()"></div><div class="bb-sheet"><div class="bb-sheet-handle"></div><h3>${escapeHtml(x.number)} · ${escapeHtml(x.buyer)}</h3><button onclick="bbPreviewInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">👁 Preview</button><button onclick="bbShareInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">📄 Share PDF</button><button onclick="bbPrintInvoice(bbLoadInvoices().find(v=>v.id==='${id}'));this.closest('.bb-sheet-wrap').remove()">🖨 PDF / Print</button><button onclick="bbDuplicateInvoice('${id}')">⧉ Duplicate</button><button onclick="bbEditInvoice('${id}');this.closest('.bb-sheet-wrap').remove()">✏️ Edit</button><button class="danger" onclick="bbDeleteInvoice('${id}')">🗑 Delete</button></div>`;document.body.appendChild(el);
 }
 function bbDuplicateInvoice(id){const x=bbLoadInvoices().find(v=>v.id===id);if(!x)return;state.invoiceDraft={...JSON.parse(JSON.stringify(x)),id:'inv-'+Date.now().toString(36),number:bbInvoiceNumber(),date:todayISO(),createdAt:Date.now()};document.getElementById('bb-invoice-sheet')?.remove();navigate('invoice-new');}
 function bbDeleteInvoice(id){if(!confirm('Ye bill permanently delete karein?'))return;bbSaveInvoices(bbLoadInvoices().filter(v=>v.id!==id));document.getElementById('bb-invoice-sheet')?.remove();renderApp();showToast('Bill delete hua');}
 function bbPreviewInvoice(inv){
   if(!inv)return;window._bbPreviewInvoice=inv;const t=bbInvoiceTotals(inv), rows=(inv.items||[]).map(i=>`<tr><td>${escapeHtml(i.description||'Item')}</td><td>${bbMoney(i.qty)}</td><td>₹${bbMoney(Number(i.qty)*Number(i.rate))}</td></tr>`).join('');
-  document.getElementById('bb-invoice-preview')?.remove();const el=document.createElement('div');el.id='bb-invoice-preview';el.className='invoice-preview-wrap';el.innerHTML=`<div class="invoice-preview-backdrop" onclick="this.parentElement.remove()"></div><div class="invoice-preview-panel"><div class="preview-toolbar"><b>Bill Preview</b><button onclick="this.closest('.invoice-preview-wrap').remove()">✕</button></div><div class="invoice-paper"><div class="preview-head"><div><h2>${escapeHtml(inv.seller||'Your Business')}</h2><p>${escapeHtml(inv.sellerPhone||'')}<br>${escapeHtml(inv.gstin?`GSTIN: ${inv.gstin}`:'')}</p></div><div><strong>INVOICE</strong><p>${escapeHtml(inv.number)}<br>${escapeHtml(inv.date)}</p></div></div><div class="preview-parties"><div><small>FROM</small><b>${escapeHtml(inv.seller||'—')}</b><span>${escapeHtml(inv.sellerAddress||'')}</span></div><div><small>BILL TO</small><b>${escapeHtml(inv.buyer||'Customer')}</b><span>${escapeHtml(inv.buyerPhone||'')}</span></div></div><table><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||'<tr><td>Item</td><td>1</td><td>₹0.00</td></tr>'}</tbody></table><div class="preview-total"><span>Total</span><b>₹${bbMoney(t.total)}</b></div>${inv.note?`<p class="preview-note">${escapeHtml(inv.note)}</p>`:''}</div><div class="preview-actions"><button class="ghost-btn" onclick="this.closest('.invoice-preview-wrap').remove()">Edit</button><button class="ghost-btn share" onclick="bbShareInvoice(window._bbPreviewInvoice)">↗ Text</button><button class="ghost-btn" onclick="bbShareInvoiceImage(window._bbPreviewInvoice)">🖼 Image</button><button class="primary-btn" onclick="bbPrintInvoice(window._bbPreviewInvoice)">PDF / Print</button></div></div>`;document.body.appendChild(el);bbTrack('invoice_preview',{item_count:(inv.items||[]).length});
+  document.getElementById('bb-invoice-preview')?.remove();const el=document.createElement('div');el.id='bb-invoice-preview';el.className='invoice-preview-wrap';el.innerHTML=`<div class="invoice-preview-backdrop" onclick="this.parentElement.remove()"></div><div class="invoice-preview-panel"><div class="preview-toolbar"><b>Bill Preview</b><button onclick="this.closest('.invoice-preview-wrap').remove()">✕</button></div><div class="invoice-paper"><div class="preview-head"><div><h2>${escapeHtml(inv.seller||'Your Business')}</h2><p>${escapeHtml(inv.sellerPhone||'')}<br>${escapeHtml(inv.gstin?`GSTIN: ${inv.gstin}`:'')}</p></div><div><strong>INVOICE</strong><p>${escapeHtml(inv.number)}<br>${escapeHtml(inv.date)}</p></div></div><div class="preview-parties"><div><small>FROM</small><b>${escapeHtml(inv.seller||'—')}</b><span>${escapeHtml(inv.sellerAddress||'')}</span></div><div><small>BILL TO</small><b>${escapeHtml(inv.buyer||'Customer')}</b><span>${escapeHtml(inv.buyerPhone||'')}</span></div></div><table><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows||'<tr><td>Item</td><td>1</td><td>₹0.00</td></tr>'}</tbody></table><div class="preview-total"><span>Total</span><b>₹${bbMoney(t.total)}</b></div>${inv.note?`<p class="preview-note">${escapeHtml(inv.note)}</p>`:''}</div><div class="preview-actions"><button class="ghost-btn" onclick="this.closest('.invoice-preview-wrap').remove()">Edit</button><button class="ghost-btn share" onclick="bbShareInvoiceText(window._bbPreviewInvoice)">↗ Text</button><button class="ghost-btn" onclick="bbShareInvoiceImage(window._bbPreviewInvoice)">🖼 Image</button><button class="primary-btn" onclick="bbPrintInvoice(window._bbPreviewInvoice)">PDF / Print</button></div></div>`;document.body.appendChild(el);bbTrack('invoice_preview',{item_count:(inv.items||[]).length});
 }
 
 function bbInvoiceShareText(inv){
   const t=bbInvoiceTotals(inv), lines=(inv.items||[]).map((i,n)=>`${n+1}. ${i.description||'Item'} — ${bbMoney(i.qty)} × ₹${bbMoney(i.rate)} = ₹${bbMoney(Number(i.qty)*Number(i.rate))}`);
   return `🧾 *${inv.seller||'BaatBanao'} — INVOICE*\nBill: ${inv.number||''}\nDate: ${inv.date||''}${inv.dueDate?`\nDue: ${inv.dueDate}`:''}\nCustomer: ${inv.buyer||'Customer'}\n\n${lines.join('\n')}\n\nSubtotal: ₹${bbMoney(t.sub)}${t.discount?`\nDiscount: -₹${bbMoney(t.discount)}`:''}${t.tax?`\nTax (${bbMoney(inv.taxRate)}%): ₹${bbMoney(t.tax)}`:''}\n*Total: ₹${bbMoney(t.total)}*${inv.note?`\n\nNote: ${inv.note}`:''}\n\nBill created with BaatBanao`;
 }
-async function bbShareInvoice(inv){
+async function bbShareInvoiceText(inv){
   if(!inv)return;
   const text=bbInvoiceShareText(inv), title=`Invoice ${inv.number||''}`;
   bbTrack('invoice_share',{item_count:(inv.items||[]).length,has_phone:!!inv.buyerPhone});
@@ -86,6 +86,38 @@ async function bbShareInvoice(inv){
   const phone=normalizeWhatsAppPhone(inv.buyerPhone||'');
   const url=phone?`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}`:`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
   window.open(url,'_blank');
+}
+async function bbCreateInvoicePdf(inv){
+  if(!window.jspdf||!window.jspdf.jsPDF)throw new Error('PDF library unavailable');
+  bbPreviewInvoice(inv);await new Promise(r=>setTimeout(r,160));
+  const paper=document.querySelector('#bb-invoice-preview .invoice-paper');
+  if(!paper||!window.html2canvas)throw new Error('Invoice renderer unavailable');
+  const canvas=await window.html2canvas(paper,{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true});
+  const {jsPDF}=window.jspdf, pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+  const pageW=210,pageH=297,margin=10,drawW=pageW-margin*2,drawH=pageH-margin*2;
+  const pagePx=Math.floor(canvas.width*(drawH/drawW));
+  let offset=0,page=0;
+  while(offset<canvas.height){
+    const h=Math.min(pagePx,canvas.height-offset),slice=document.createElement('canvas');slice.width=canvas.width;slice.height=h;
+    slice.getContext('2d').fillStyle='#fff';slice.getContext('2d').fillRect(0,0,slice.width,slice.height);slice.getContext('2d').drawImage(canvas,0,offset,canvas.width,h,0,0,canvas.width,h);
+    if(page++)pdf.addPage();
+    const renderedH=drawW*(h/canvas.width);pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,drawW,renderedH,undefined,'FAST');
+    offset+=h;
+  }
+  return pdf.output('blob');
+}
+async function bbShareInvoice(inv){
+  if(!inv)return;
+  try{
+    showToast('Proper PDF ban rahi hai…');
+    const blob=await bbCreateInvoicePdf(inv),safe=String(inv.number||'invoice').replace(/[^a-z0-9_-]/gi,'-'),file=new File([blob],`${safe}.pdf`,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:`Invoice ${inv.number||''}`,text:`${inv.seller||'BaatBanao'} ka invoice ${inv.number||''}`});showToast('PDF share ho gayi ✅');
+    }else{
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);showToast('PDF download ho gayi — ab share karein');
+    }
+    bbTrack('invoice_pdf_share',{item_count:(inv.items||[]).length,has_tax:Number(inv.taxRate)>0});
+  }catch(e){if(e&&e.name==='AbortError')return;console.error(e);showToast('PDF nahi bani — dobara try karein');}
 }
 async function bbShareInvoiceImage(inv){
   if(!inv)return;
