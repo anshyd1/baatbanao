@@ -1039,3 +1039,4 @@ body[data-route="invoice-new"] .invoice-actions{bottom:0}body[data-route="invoic
 @media(max-width:520px){.invoice-actions{grid-template-columns:1fr 1fr}.invoice-actions button:first-child{grid-column:1/-1}.invoice-paper{padding:16px;min-height:570px}.preview-head h2{font-size:20px}.invoice-preview-panel{top:1vh;max-height:98vh}}
 .invoice-actions .share,.preview-actions .share{border-color:#1caf66;color:#087a43;background:#effcf5}.preview-actions{grid-template-columns:repeat(4,1fr)}
 @media(max-width:520px){.preview-actions{grid-template-columns:1fr 1fr}.preview-actions .primary-btn{grid-column:1/-1}}
+.invoice-row{grid-template-columns:1fr auto 38px 30px}.invoice-row .invoice-quick-share{width:36px;height:36px;border-radius:11px;background:#eafaf1;color:#087a43;border:1px solid #bfe8d0;font-size:20px;text-align:center;padding:0}

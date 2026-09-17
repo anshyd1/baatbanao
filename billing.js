@@ -36,7 +36,7 @@ function viewBilling(){
   <button class="primary-btn" onclick="state.invoiceDraft=bbNewInvoiceDraft();navigate('invoice-new')">+ Naya Bill Banayein</button>
   <div class="privacy-mini">🔒 Bills isi browser mein save hote hain. Cloud par upload nahi hote. Backup khud rakhna zaroori hai.</div>
   <div class="section-title">Recent Bills</div>
-  ${list.length?list.map(x=>{const t=bbInvoiceTotals(x);return `<div class="invoice-row"><div onclick="bbEditInvoice('${x.id}')"><b>${escapeHtml(x.buyer||'Cash Customer')}</b><span>${escapeHtml(x.number)} · ${escapeHtml(x.date)}</span></div><strong>₹${bbMoney(t.total)}</strong><button onclick="bbInvoiceMenu('${x.id}')" aria-label="Invoice options">⋮</button></div>`}).join(''):`<div class="empty-state"><p><b>Abhi koi bill nahi</b><br/>Pehla professional bill 1 minute mein banayein.</p></div>`}`;
+  ${list.length?list.map(x=>{const t=bbInvoiceTotals(x);return `<div class="invoice-row"><div onclick="bbEditInvoice('${x.id}')"><b>${escapeHtml(x.buyer||'Cash Customer')}</b><span>${escapeHtml(x.number)} · ${escapeHtml(x.date)}</span></div><strong>₹${bbMoney(t.total)}</strong><button class="invoice-quick-share" onclick="bbShareInvoice(bbLoadInvoices().find(v=>v.id==='${x.id}'))" aria-label="Share invoice">↗</button><button onclick="bbInvoiceMenu('${x.id}')" aria-label="Invoice options">⋮</button></div>`}).join(''):`<div class="empty-state"><p><b>Abhi koi bill nahi</b><br/>Pehla professional bill 1 minute mein banayein.</p></div>`}`;
 }
 function viewInvoiceForm(){
   const d=state.invoiceDraft||bbNewInvoiceDraft(); state.invoiceDraft=d; const t=bbInvoiceTotals(d);
