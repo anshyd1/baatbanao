@@ -33,6 +33,8 @@
 - `invoice_pdf_share`
 - `backup_export`
 - `backup_restore`
+- `ledger_transaction_add`
+- `ledger_transaction_delete`
 
 ## Suggested GA4 conversions to mark later
 - `message_generate`

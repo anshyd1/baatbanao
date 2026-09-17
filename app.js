@@ -1986,6 +1986,7 @@ function khataCard(k){
       <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid #F5ECE3;">
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
           ${!isPaid ? `
+          <button class="ghost-btn ledger-open-btn" onclick="openCustomerLedger('${k.id}')">📒 Ledger</button>
           <button class="ghost-btn" onclick="remindKhata('${k.id}')" style="background:#25D366; color:#fff; border:none; font-weight:700; font-size:0.8rem; padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:4px;">
             <span>🔔 Remind</span>
           </button>
@@ -2468,6 +2469,43 @@ function closeMenu(){
 }
 
 /* ===========================================================
+   CUSTOMER LEDGER — offline credit/debit transaction timeline
+   =========================================================== */
+function ensureKhataTransactions(k){
+  if(Array.isArray(k.transactions)) return k.transactions;
+  k.transactions=[];
+  const created=k.createdAt||Date.now();
+  if(hasValidAmount(k.amount)) k.transactions.push({id:uid(),type:'gave',amount:Number(k.amount),date:k.dueDate||new Date(created).toISOString().slice(0,10),note:k.note||'Opening balance',mode:'Other',createdAt:created});
+  if(hasValidAmount(k.paidAmount)) k.transactions.push({id:uid(),type:'received',amount:Number(k.paidAmount),date:todayISO(),note:'Payment received',mode:'Other',createdAt:k.updatedAt||Date.now()});
+  persist(); return k.transactions;
+}
+function ledgerBalance(k){return ensureKhataTransactions(k).reduce((sum,t)=>sum+(t.type==='gave'?1:-1)*(Number(t.amount)||0),0);}
+function syncKhataFromLedger(k){
+  const tx=ensureKhataTransactions(k),gave=tx.filter(t=>t.type==='gave').reduce((s,t)=>s+Number(t.amount||0),0),received=tx.filter(t=>t.type==='received').reduce((s,t)=>s+Number(t.amount||0),0);
+  k.amount=gave;k.paidAmount=Math.min(received,gave);k.status=gave>0&&received>=gave?'paid':received>0?'partial':'pending';k.updatedAt=Date.now();persist();
+}
+function openCustomerLedger(id){state.routeParams={id};navigate('customer-ledger',{id});}
+function viewCustomerLedger(){
+  const id=state.routeParams&&state.routeParams.id,k=state.khata.find(x=>x.id===id);if(!k)return `<div class="empty-state"><p>Customer ledger nahi mila.</p><button class="primary-btn" onclick="navigate('khata')">Khata par jayein</button></div>`;
+  const tx=ensureKhataTransactions(k).slice().sort((a,b)=>(String(b.date).localeCompare(String(a.date)))||((b.createdAt||0)-(a.createdAt||0))),bal=ledgerBalance(k);
+  return `<div class="page-header"><button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button><h1>${escapeHtml(k.name)}</h1></div>
+  <div class="ledger-balance ${bal>0?'due':bal<0?'advance':'clear'}"><small>${bal>0?'Aapko lena hai':bal<0?'Customer advance':'Hisaab clear'}</small><strong>₹${Math.abs(bal).toLocaleString('en-IN')}</strong><span>${tx.length} transactions · data offline</span></div>
+  <div class="ledger-main-actions"><button class="gave" onclick="openLedgerTransaction('${k.id}','gave')">− Aapne diye</button><button class="received" onclick="openLedgerTransaction('${k.id}','received')">+ Aapko mile</button></div>
+  ${bal>0?`<button class="primary-btn" onclick="remindKhata('${k.id}')">🔔 WhatsApp Reminder</button>`:''}
+  <div class="section-title">Transaction History</div>
+  ${tx.length?tx.map(t=>`<div class="ledger-tx"><div class="tx-icon ${t.type}">${t.type==='gave'?'−':'+'}</div><div><b>${escapeHtml(t.note||(t.type==='gave'?'Credit':'Payment'))}</b><span>${escapeHtml(t.date||'')} · ${escapeHtml(t.mode||'Other')}</span></div><strong class="${t.type}">${t.type==='gave'?'+':'−'}₹${Number(t.amount||0).toLocaleString('en-IN')}</strong><button onclick="deleteLedgerTransaction('${k.id}','${t.id}')">⋮</button></div>`).join(''):`<div class="empty-state"><p>Abhi koi transaction nahi.</p></div>`}`;
+}
+function openLedgerTransaction(id,type){
+  document.getElementById('ledger-tx-sheet')?.remove();const el=document.createElement('div');el.id='ledger-tx-sheet';el.className='bb-sheet-wrap';
+  el.innerHTML=`<div class="bb-sheet-backdrop" onclick="this.parentElement.remove()"></div><div class="bb-sheet ledger-entry-sheet"><div class="bb-sheet-handle"></div><h3>${type==='gave'?'Aapne diye':'Aapko mile'}</h3><label>Amount ₹<input id="ledger-amount" type="number" inputmode="decimal" min="0.01" step="0.01" autofocus></label><label>Date<input id="ledger-date" type="date" value="${todayISO()}"></label><label>Payment mode<select id="ledger-mode"><option>Cash</option><option>UPI</option><option>Bank</option><option>Card</option><option>Other</option></select></label><label>Note<input id="ledger-note" type="text" placeholder="Maal, payment, advance..."></label><button class="ledger-save ${type}" onclick="saveLedgerTransaction('${id}','${type}')">Save Transaction</button></div>`;document.body.appendChild(el);setTimeout(()=>document.getElementById('ledger-amount')?.focus(),100);
+}
+function saveLedgerTransaction(id,type){
+  const k=state.khata.find(x=>x.id===id),amount=Number(document.getElementById('ledger-amount')?.value),date=document.getElementById('ledger-date')?.value,note=document.getElementById('ledger-note')?.value.trim(),mode=document.getElementById('ledger-mode')?.value;if(!k||!amount||amount<=0){showToast('Valid amount daalein');return;}
+  ensureKhataTransactions(k).push({id:uid(),type,amount,date:date||todayISO(),note:note||(type==='gave'?'Credit diya':'Payment mila'),mode:mode||'Other',createdAt:Date.now()});syncKhataFromLedger(k);document.getElementById('ledger-tx-sheet')?.remove();bbTrack('ledger_transaction_add',{type,mode:mode||'Other'});renderApp();showToast('Transaction save ho gaya ✅');
+}
+function deleteLedgerTransaction(kid,tid){if(!confirm('Ye transaction delete karein?'))return;const k=state.khata.find(x=>x.id===kid);if(!k)return;k.transactions=ensureKhataTransactions(k).filter(t=>t.id!==tid);syncKhataFromLedger(k);bbTrack('ledger_transaction_delete',{});renderApp();showToast('Transaction delete hua');}
+
+/* ===========================================================
    RENDER
    =========================================================== */
 const ROUTES = {
@@ -2480,6 +2518,7 @@ const ROUTES = {
   business: viewBusinessReply,
   masti: viewMastiMessage,
   khata: viewKhata,
+  'customer-ledger': viewCustomerLedger,
   'khata-form': viewKhataForm,
   history: viewHistory,
   profile: viewProfile,
