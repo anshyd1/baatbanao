@@ -1133,8 +1133,8 @@ function setCardTheme(id){
 }
 function cardThemePicker(){
   const cur = bbTheme().id;
-  return `<div class="theme-pick"><div class="theme-pick-title">\uD83C\uDFA8 Card Style — tap karke badlo</div><div class="theme-chips">` +
-    BB_CARD_THEMES.map(t=>`<button class="theme-chip ${cur===t.id?'active':''}" data-theme="${t.id}" onclick="setCardTheme('${t.id}')">${t.chip}</button>`).join('') + `</div></div>`;
+  return `<details class="theme-pick"><summary class="theme-pick-title">\uD83C\uDFA8 Photo card style: ${escapeHtml(bbTheme().chip)} · badlein</summary><div class="theme-chips">` +
+    BB_CARD_THEMES.map(t=>`<button class="theme-chip ${cur===t.id?'active':''}" data-theme="${t.id}" onclick="setCardTheme('${t.id}')">${t.chip}</button>`).join('') + `</div></details>`;
 }
 function rcardHead(formSnapshot, label){
   const t = bbTheme();
