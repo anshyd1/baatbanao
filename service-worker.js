@@ -3,7 +3,7 @@
    (v1.0.31: GA4 auto-load + cookie notice banner + cache refresh force)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.51';
+const CACHE_VERSION = 'baatbanao-v1.0.52';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   './style.css',
   './app.js',
   './billing.js',
+  './backup.js',
   './analytics.js',
   './analytics-config.js',
   './cookie-banner.js',

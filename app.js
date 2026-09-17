@@ -2418,6 +2418,11 @@ function viewSettings(){
       <span>${isBBPro() ? 'Active ✅' : 'Upgrade ›'}</span>
     </div>
 
+    <div class="divider"></div>
+    <div class="section-title">Offline Data Backup</div>
+    <div class="privacy-mini">Khata, bills, history aur settings ki backup file aapke device par download hogi. Koi upload nahi.</div>
+    <div class="btn-row"><button class="ghost-btn save" onclick="bbExportBackup()">⬇ Export Backup</button><button class="ghost-btn" onclick="bbPickRestore()">⬆ Restore Backup</button></div>
+    <input id="bb-restore-file" type="file" accept="application/json,.json" hidden onchange="bbRestoreBackup(this)">
     <button class="ghost-btn danger" onclick="clearAllData()">${ICONS.trash} Clear all app data</button>
 
     <div class="divider"></div>

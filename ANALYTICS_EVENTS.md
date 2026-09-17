@@ -27,6 +27,9 @@
 - `pwa_installed`
 - `invoice_save`
 - `invoice_print`
+- `invoice_preview`
+- `backup_export`
+- `backup_restore`
 
 ## Suggested GA4 conversions to mark later
 - `message_generate`
