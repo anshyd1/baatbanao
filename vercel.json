@@ -80,6 +80,18 @@
     {
       "source": "/upi-payment-link-generator",
       "destination": "/upi-payment-link-generator.html"
+    },
+    {
+      "source": "/polite-payment-reminder-message-english",
+      "destination": "/polite-payment-reminder-message-english.html"
+    },
+    {
+      "source": "/payment-reminder-no-reply-message",
+      "destination": "/payment-reminder-no-reply-message.html"
+    },
+    {
+      "source": "/final-payment-reminder-message",
+      "destination": "/final-payment-reminder-message.html"
     }
   ],
   "headers": [
@@ -107,6 +119,13 @@
           "value": "same-origin-allow-popups"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
     }
   ]
 }

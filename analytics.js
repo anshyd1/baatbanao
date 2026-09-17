@@ -60,7 +60,7 @@
     clickBound = true;
 
     document.addEventListener('click', function(e){
-      var copyBtn = e.target.closest('.cp');
+      var copyBtn = e.target.closest('.cp, .copy');
       if(copyBtn){
         track('article_copy_click', { page_path: location.pathname });
       }

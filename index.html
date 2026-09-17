@@ -320,8 +320,11 @@
   // the brand moment isn't skipped on fast connections, and a maximum
   // cap so a broken/very slow load doesn't trap the user behind the
   // splash forever.
-  var MIN_HOLD_MS = 2000; // Hold full 2 seconds for rich animation   // still feels like an intentional brand beat
-  var MAX_HOLD_MS = 6000;   // safety cap even if app.js never finishes
+  var returningVisit = sessionStorage.getItem('bb_seen_splash') === '1';
+  sessionStorage.setItem('bb_seen_splash', '1');
+  // First visit keeps a short brand beat; repeat navigation should feel instant.
+  var MIN_HOLD_MS = returningVisit ? 150 : 900;
+  var MAX_HOLD_MS = returningVisit ? 1200 : 3500;
   var start = Date.now();
 
   function contentReady(){
@@ -391,6 +394,9 @@
       <a href="/udhar-funny-shayari" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">Udhar shayari 😄</a>
       <a href="/freelancer-payment-reminder-message" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">Freelancer 💻</a>
       <a href="/client-invoice-follow-up-message" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">Client invoice 💼</a>
+      <a href="/polite-payment-reminder-message-english" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">Polite English ✉️</a>
+      <a href="/payment-reminder-no-reply-message" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">No reply follow-up 🔁</a>
+      <a href="/final-payment-reminder-message" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">Final reminder ⚠️</a>
       <a href="/bhojpuri-udhaar-message" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">भोजपुरी 🗣️</a>
       <a href="/upi-payment-link-generator" style="text-decoration:none; background:#fff; border:1.5px solid #ffd2cb; color:#8a3b32; font-weight:700; font-size:12.5px; padding:8px 12px; border-radius:999px;">UPI link 👛</a>
     </div>
@@ -460,7 +466,7 @@
   </div>
 
   <div class="drawer-footer" style="padding:12px 20px; font-size:0.75rem; color:#9D8781; text-align:center; border-top:1px solid #F0DFCF;">
-    Made with ❤️ in India 🇮🇳 · 100% Private
+    Made with ❤️ in India 🇮🇳 · Local-first khata
   </div>
 </div>
 

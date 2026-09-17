@@ -1033,6 +1033,16 @@ function handleGenerate(){
   };
   state.vasooliForm = formData; window._lastFormSnapshot = formData;
 
+  bbTrack('message_generate', {
+    relation: formData.relation || 'General',
+    language: formData.language || 'Hinglish',
+    tone: formData.tone || 'Friendly',
+    has_amount: hasValidAmount(formData.amount),
+    has_phone: !!formData.phone,
+    has_name: !!(s.name && s.name.trim()),
+    source_route: state.route || 'vasooli'
+  });
+
   const limitCheck = bbCanGenerate();
   if (!limitCheck.allowed){
     showToast(`Aaj ke ${BB_FREE_DAILY_LIMIT} free messages khatam! BaatBanao Pro lo unlimited ke liye 👑`);
@@ -1271,6 +1281,8 @@ async function shareCardImage(taId){
 
 function copyOutput(taId){
   const ta = document.getElementById(taId);
+  if(!ta) return;
+  bbTrack('copy_output', { route: state.route || 'unknown', text_length_bucket: ta.value.length < 120 ? 'short' : ta.value.length < 300 ? 'medium' : 'long' });
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(ta.value).then(()=>{
       showToast('Copied! ✅');
