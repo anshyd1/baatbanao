@@ -92,6 +92,14 @@
     {
       "source": "/final-payment-reminder-message",
       "destination": "/final-payment-reminder-message.html"
+    },
+    {
+      "source": "/author/ansh-yadav",
+      "destination": "/author-ansh-yadav.html"
+    },
+    {
+      "source": "/editorial-policy",
+      "destination": "/editorial-policy.html"
     }
   ],
   "headers": [
