@@ -31,6 +31,7 @@
 - `invoice_share`
 - `invoice_image_share`
 - `invoice_pdf_share`
+- `invoice_payment_add`
 - `backup_export`
 - `backup_restore`
 - `ledger_transaction_add`
