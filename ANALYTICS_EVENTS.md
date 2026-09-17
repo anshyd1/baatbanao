@@ -25,6 +25,8 @@
 - `install_prompt_open`
 - `install_prompt_result`
 - `pwa_installed`
+- `invoice_save`
+- `invoice_print`
 
 ## Suggested GA4 conversions to mark later
 - `message_generate`

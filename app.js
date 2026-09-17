@@ -637,6 +637,11 @@ function viewHome(){
         <h3>Smart Templates</h3>
         <p>Rent, tuition, freelance aur dukaan ke ready message.</p>
       </button>
+      <button class="sec-card" onclick="navigate('billing')">
+        <div class="sec-icon-circle" style="background:#F3EEFF;color:#6D45B8;">🧾</div>
+        <h3>Offline Billing</h3>
+        <p>Items, tax aur discount ke saath PDF-ready bill.</p>
+      </button>
       <button class="sec-card" onclick="navigate('bulk')">
         <div class="sec-icon-circle" style="background:#F0FDF4;color:#16A34A;">🚀</div>
         <h3>Bulk Remind</h3>
@@ -2440,6 +2445,7 @@ function clearAllData(){
   localStorage.removeItem(STORE_KEYS.khata);
   localStorage.removeItem(STORE_KEYS.history);
   localStorage.removeItem(STORE_KEYS.settings);
+  localStorage.removeItem('bb_invoices_v1');
   location.reload();
 }
 
@@ -2462,6 +2468,8 @@ const ROUTES = {
   home: viewHome,
   vasooli: viewVasooli,
   templates: viewTemplates,
+  billing: viewBilling,
+  'invoice-new': viewInvoiceForm,
   bulk: viewBulkReminders,
   business: viewBusinessReply,
   masti: viewMastiMessage,
