@@ -28,6 +28,8 @@
 - `invoice_save`
 - `invoice_print`
 - `invoice_preview`
+- `invoice_share`
+- `invoice_image_share`
 - `backup_export`
 - `backup_restore`
 
