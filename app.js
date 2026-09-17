@@ -553,6 +553,7 @@ function navigate(route, params={}){
   renderApp();
   const _c = document.getElementById('content');
   if (_c && _c.scrollTo) _c.scrollTo(0, 0);
+  window.scrollTo({top:0,left:0,behavior:'instant'});
 }
 
 window.addEventListener('hashchange', ()=>{
@@ -2488,6 +2489,11 @@ function renderApp(){
   const route = state.route || 'home';
   const viewFn = ROUTES[route] || viewHome;
   document.getElementById('content').innerHTML = viewFn();
+  const seoHome = document.getElementById('seo-home-section');
+  if(seoHome) seoHome.hidden = route !== 'home';
+  document.body.dataset.route = route;
+  const bottomNav = document.querySelector('.bottom-nav');
+  if(bottomNav) bottomNav.style.display = ['billing','invoice-new'].includes(route) ? 'none' : '';
 
   // bottom nav active state
   document.querySelectorAll('.nav-item').forEach(el=>{

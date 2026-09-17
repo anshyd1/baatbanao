@@ -20,13 +20,13 @@
     el.id = ID;
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-live', 'polite');
-    el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99998;background:#fffdf8;border:1px solid #f0dfcf;border-radius:18px;box-shadow:0 14px 36px rgba(38,24,24,.16);padding:14px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#261818;';
+    el.style.cssText = 'position:fixed;left:50%;right:auto;bottom:10px;transform:translateX(-50%);width:calc(100% - 20px);max-width:430px;z-index:99998;background:#fffdf8;border:1px solid #f0dfcf;border-radius:14px;box-shadow:0 10px 28px rgba(38,24,24,.16);padding:10px 12px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#261818;';
     el.innerHTML = '' +
-      '<div style="font-weight:900;font-size:14px;margin-bottom:6px;">🍪 Cookies notice</div>' +
-      '<div style="font-size:12.8px;line-height:1.5;color:#6b6058;">Ye site analytics aur ads ke liye cookies ya similar browser storage use kar sakti hai. Naam, phone, ya reminder content cookie banner ke through collect nahi hota.</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
-        '<button id="bb-cookie-ok" style="border:none;border-radius:12px;padding:10px 14px;background:#FF725F;color:#fff;font-weight:800;cursor:pointer;">OK</button>' +
-        '<a href="/privacy" style="text-decoration:none;border:1px solid #eadccf;border-radius:12px;padding:10px 14px;background:#fff6ef;color:#261818;font-weight:800;">Privacy</a>' +
+      '<div style="font-weight:900;font-size:12.5px;margin-bottom:3px;">🍪 Cookies notice</div>' +
+      '<div style="font-size:11.5px;line-height:1.35;color:#6b6058;">Ye site analytics aur ads ke liye cookies ya similar browser storage use kar sakti hai. Naam, phone, ya reminder content cookie banner ke through collect nahi hota.</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;">' +
+        '<button id="bb-cookie-ok" style="border:none;border-radius:12px;padding:7px 11px;background:#FF725F;color:#fff;font-weight:800;cursor:pointer;">OK</button>' +
+        '<a href="/privacy" style="text-decoration:none;border:1px solid #eadccf;border-radius:12px;padding:7px 11px;background:#fff6ef;color:#261818;font-weight:800;">Privacy</a>' +
       '</div>';
     document.body.appendChild(el);
     document.getElementById('bb-cookie-ok').onclick = function(){ markSeen(); closeBanner(); };
