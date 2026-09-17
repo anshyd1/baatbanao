@@ -90,7 +90,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_VERSION).then(c => c.put(req, clone));
         }
         return res;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => Response.error());
     })
   );
 });

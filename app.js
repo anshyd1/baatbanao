@@ -69,7 +69,11 @@ function timeAgo(ts){
   return day + ' din pehle';
 }
 
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+function todayISO(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
 function parseDateOnly(v){
   if(!v) return null;
   const d = new Date(String(v) + 'T23:59:59');
@@ -1894,7 +1898,8 @@ function exportKhataCSV(){
   bbTrack('export_khata_csv', { entries: state.khata.length });
   const header = ['Name','Phone','Amount','PaidAmount','Outstanding','Status','DueDate','ReminderCount','LastReminder','Note'];
   const rows = state.khata.map(k => [k.name,k.phone||'',k.amount||'',k.paidAmount||'',outstandingAmount(k)||'',statusText(k),k.dueDate||'',k.reminderCount||0,k.lastReminderAt?new Date(k.lastReminderAt).toLocaleString():'',k.note||'']);
-  const csv = [header,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const safeCsvCell = v => { let x=String(v); if(/^[=+\-@]/.test(x)) x="'"+x; return '"'+x.replace(/"/g,'""')+'"'; };
+  const csv = [header,...rows].map(r=>r.map(safeCsvCell).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2130,7 +2135,6 @@ const BB_FREE_DAILY_LIMIT = 9999; // 100% Free for all users
 // ⚠️ CHANGE THESE 2 VALUES before going live:
 const BB_UPI_ID = 'ansh.y@ptyes';
 const BB_ADMIN_WHATSAPP = '919918996096';
-const BB_SECRET_SALT = 'baatbanao-2026-vasooli-secret'; // must match ADMIN_redeem_code_tool.html
 
 function isBBPro(){
   return localStorage.getItem(BB_PRO_KEY) === '1';
@@ -2145,12 +2149,7 @@ function bbSimpleHash(str){
   return Math.abs(hash);
 }
 
-function bbGenerateRedeemCode(phone, plan){
-  const raw = `${phone}-${plan}-${BB_SECRET_SALT}`;
-  return bbSimpleHash(raw).toString(36).toUpperCase().slice(0,6).padEnd(6,'X');
-}
-
-function bbTodayKey(){ return new Date().toISOString().slice(0,10); }
+function bbTodayKey(){ return todayISO(); }
 
 function bbCanGenerate(){
   if (isBBPro()) return { allowed:true, remaining: Infinity };
@@ -2229,10 +2228,8 @@ function viewPro(){
 function bbSendTip(amount){
   bbTrack('tip_click', { amount: amount });
   const upiUrl = `upi://pay?pa=ansh.y@ptyes&pn=BaatBanao%20Support&am=${amount}&cu=INR&tn=BaatBanao%20Chai%20Tip`;
-  // Unlock supporter pro badge immediately as a sweet gesture!
-  localStorage.setItem(BB_PRO_KEY, '1');
-  localStorage.setItem(BB_PRO_PLAN_KEY, 'supporter_' + amount);
-  showToast(`Dhanyavaad! UPI app khul raha hai... Pro badge active ho gaya! 🎉`);
+  // Payment cannot be verified from a UPI deep-link. Never unlock here.
+  showToast(`UPI app khul raha hai. Payment ke baad WhatsApp par activation code lein.`);
   setTimeout(() => {
     window.location.href = upiUrl;
   }, 600);
@@ -2249,22 +2246,25 @@ function bbStartPurchase(plan){
   document.getElementById('bb-wa-btn').onclick = () => { window.open(bbBuildWhatsAppScreenshotLink(plan), '_blank'); };
 }
 
-function bbRedeemCode(){
+async function bbRedeemCode(){
   const phone = document.getElementById('bb-phone-input').value.replace(/\D/g,'');
   const code = document.getElementById('bb-code-input').value.trim().toUpperCase();
   const msgEl = document.getElementById('bb-redeem-msg');
   if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
-  const expected = bbGenerateRedeemCode(phone, bbSelectedPlan);
-  if (expected === code){
+  if (!/^[A-Z0-9]{10}$/.test(code)){ msgEl.textContent = '⚠️ 10-character activation code daalo.'; msgEl.style.color = '#C0392B'; return; }
+  msgEl.textContent = 'Code verify ho raha hai…';
+  try {
+    const res = await fetch('/api/redeem', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone, plan:bbSelectedPlan, code})});
+    const data = await res.json();
+    if(!res.ok || !data.valid) throw new Error(data.error || 'Invalid code');
     bbTrack('pro_unlock_success', { plan: bbSelectedPlan });
     localStorage.setItem(BB_PRO_KEY, '1');
     localStorage.setItem(BB_PRO_PLAN_KEY, bbSelectedPlan);
-    msgEl.textContent = '🎉 BaatBanao Pro Unlock ho gaya! Dhanyavaad.';
-    msgEl.style.color = '#247C32';
+    localStorage.setItem('bb_pro_receipt', data.receipt || 'verified');
+    msgEl.textContent = '🎉 BaatBanao Pro unlock ho gaya!'; msgEl.style.color = '#247C32';
     setTimeout(()=> navigate('profile'), 1400);
-  } else {
-    msgEl.textContent = '❌ Code galat hai. Sahi phone number check karo jisse screenshot bheja tha.';
-    msgEl.style.color = '#C0392B';
+  } catch(e) {
+    msgEl.textContent = '❌ Code verify nahi hua. Number, plan aur code check karo.'; msgEl.style.color = '#C0392B';
   }
 }
 
