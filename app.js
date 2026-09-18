@@ -599,15 +599,19 @@ function viewHome(){
   const pendingTotal = state.khata.filter(k => k.status === 'pending').reduce((sum,k)=>sum + (hasValidAmount(k.amount) ? Number(k.amount) : 0), 0);
   return `
     <div class="hero-greeting">
-      <h1>Namaste! 🙏<br/>Payment reminder banao</h1>
+      <div>
+        <span class="hero-kicker">BaatBanao se easy</span>
+        <h1>Payment reminder banao<br/>rishta bhi safe rakho</h1>
+      </div>
       ${MASCOT}
     </div>
 
     <button class="hero-card hero-card-banner" onclick="navigate('vasooli')">
       <img class="hero-banner-img" src="assets/vasooli-hero-banner.webp" alt="" loading="eager" decoding="async" fetchpriority="high"/>
       <div class="hero-card-content">
-        <h2>Vasooli Mode 💸</h2>
-        <p>Naam/amount optional — WhatsApp-ready payment reminder lo.</p>
+        <span class="hero-mode-label">Vasooli Mode 💸</span>
+        <h2>Soft payment reminder</h2>
+        <p>Naam ya amount daalo — WhatsApp-ready message pao.</p>
         <span class="hero-cta-pill">Message banao →</span>
       </div>
     </button>

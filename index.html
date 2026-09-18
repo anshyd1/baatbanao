@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
-<title>BaatBanao — Dost Se Paise Wapas | Free WhatsApp Reminder + UPI Link</title>
+<title>BaatBanao — Polite WhatsApp Payment Reminder + UPI Link</title>
 <meta name="description" content="Dost, kirayedar ya customer se paise wapas maangne ka free tool. Hinglish/Hindi/Bhojpuri WhatsApp reminder message + UPI pay link, 5 second me. Paisa bhi wapas, rishta bhi safe.">
 <link rel="canonical" href="https://www.baatbanao.shop/">
 <meta name="keywords" content="dost se paise wapas kaise mange, udhaar reminder message, paise mangne ka message hindi, payment reminder whatsapp, upi payment link generator, udhar shayari">
@@ -27,7 +27,7 @@
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="BaatBanao — Vasooli Mode 💸">
+<meta property="og:title" content="BaatBanao — Polite WhatsApp Payment Reminder + UPI Link">
 <meta property="og:description" content="Paisa bhi wapas, rishta bhi safe 😄">
 <meta property="og:url" content="https://www.baatbanao.shop/">
 <meta property="og:image" content="https://www.baatbanao.shop/assets/og-share-card.jpg">
@@ -301,7 +301,7 @@
 
 <!-- ============================================================
      INSTANT SPLASH REMOVER (runs before app.js)
-     3 seconds hold — user has time to read
+     Capped hold (~2.6s first visit, ~0.9s returning) + content-ready check
      ============================================================ -->
 <script>
 (function(){
@@ -322,9 +322,10 @@
   // splash forever.
   var returningVisit = sessionStorage.getItem('bb_seen_splash') === '1';
   sessionStorage.setItem('bb_seen_splash', '1');
-  // First visit keeps a short brand beat; repeat navigation should feel instant.
+  // First visit keeps a short brand beat; repeat visits feel instant.
+  // Caps: ~2.6s first visit, ~0.9s returning — splash still waits for rendered content.
   var MIN_HOLD_MS = returningVisit ? 150 : 900;
-  var MAX_HOLD_MS = returningVisit ? 1200 : 3500;
+  var MAX_HOLD_MS = returningVisit ? 900 : 2600;
   var start = Date.now();
 
   function contentReady(){
