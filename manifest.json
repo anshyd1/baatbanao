@@ -1,7 +1,7 @@
 {
   "name": "BaatBanao",
   "short_name": "BaatBanao",
-  "description": "WhatsApp payment reminder assistant. Vasooli Mode se Hindi, Hinglish, Bhojpuri aur English mein message 5 second mein. Paisa bhi wapas, rishta bhi safe.",
+  "description": "Polite WhatsApp payment reminder + UPI link — Hinglish/Hindi/Bhojpuri/English me 5 sec me. Freelancer, shop, tuition, client ke liye. Paisa bhi wapas, rishta bhi safe.",
   "start_url": "/?utm_source=pwa",
   "id": "/",
   "scope": "/",

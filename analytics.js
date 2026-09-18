@@ -3,9 +3,31 @@
 
   var config = window.BAATBANAO_ANALYTICS || {};
   var GA_ID = String(config.ga4MeasurementId || '').trim();
+  var CONSENT_KEY = 'bb_cookie_consent_v2';
+  var OLD_KEY = 'bb_cookie_notice_seen_v1';
   var pageviewBound = false;
   var scriptLoaded = false;
   var clickBound = false;
+
+  function getConsentValue(){
+    try { return localStorage.getItem(CONSENT_KEY); } catch(e){ return null; }
+  }
+  function hasOldSeen(){
+    try { return localStorage.getItem(OLD_KEY) === '1'; } catch(e){ return false; }
+  }
+  function shouldLoadGA(){
+    // if requireConsent is explicitly false, always load (legacy override)
+    if(config.requireConsent === false) return true;
+    var c = getConsentValue();
+    if(c === 'accepted') return true;
+    if(c === 'rejected') return false;
+    // migrate old banner OK -> accepted for existing users
+    if(c === null && hasOldSeen()){
+      try { localStorage.setItem(CONSENT_KEY, 'accepted'); } catch(e){}
+      return true;
+    }
+    return false; // no decision yet -> wait
+  }
 
   function ensureDataLayer(){
     window.dataLayer = window.dataLayer || [];
@@ -104,6 +126,7 @@
 
   function loadGA(){
     if(scriptLoaded || !GA_ID) return;
+    if(!shouldLoadGA()) return; // wait for consent
     scriptLoaded = true;
     ensureDataLayer();
     window.gtag('js', new Date());
@@ -120,10 +143,20 @@
     sendPageView();
   }
 
+  function tryLoadGA(){ if(!scriptLoaded) loadGA(); }
+
   window.BBAnalytics = {
-    status: function(){ return { measurementId: GA_ID || null, gtagLoaded: !!window.gtag }; },
+    status: function(){
+      return {
+        measurementId: GA_ID || null,
+        gtagLoaded: !!window.gtag,
+        consent: getConsentValue(),
+        shouldLoad: shouldLoadGA()
+      };
+    },
     pageview: sendPageView,
-    track: track
+    track: track,
+    _load: tryLoadGA
   };
 
   if(!GA_ID) {
@@ -131,9 +164,15 @@
     return;
   }
 
+  // consent listeners — load GA only after Accept
+  window.addEventListener('bb-consent-accepted', function(){ tryLoadGA(); });
+  window.addEventListener('storage', function(e){
+    if(e && e.key === CONSENT_KEY && e.newValue === 'accepted') tryLoadGA();
+  });
+
   if(document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadGA);
+    document.addEventListener('DOMContentLoaded', tryLoadGA);
   } else {
-    loadGA();
+    tryLoadGA();
   }
 })();
