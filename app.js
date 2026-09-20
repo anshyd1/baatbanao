@@ -626,17 +626,6 @@ function viewHome(){
       <div><b>${pendingTotal ? fmtMoney(pendingTotal) : 'No amount'}</b><span>Total</span></div>
     </div>
 
-    <div class="download-banner">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <img src="assets/mascot-coin.webp" alt="BaatBanao" style="width:40px;height:40px;object-fit:contain;flex:none;" />
-        <div>
-          <h4>BaatBanao App Install Karein</h4>
-          <p>Offline khata & 1-tap reminders bina kisi jhanjhat ke.</p>
-        </div>
-      </div>
-      <button class="download-btn" onclick="typeof bbTriggerInstall === 'function' ? bbTriggerInstall() : navigate('vasooli')">Install 📲</button>
-    </div>
-
     <div class="features-grid">
       <button class="sec-card" onclick="navigate('vasooli')">
         <div class="sec-icon-circle" style="background:#FFF0ED;color:#FF5E48;">🙏</div>

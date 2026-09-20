@@ -1173,44 +1173,6 @@ body[data-route="invoice-new"] .invoice-actions{bottom:0}body[data-route="invoic
   color: var(--text-secondary);
   line-height: 1.45;
 }
-.download-banner {
-  margin: 16px 0;
-  background: linear-gradient(135deg, #FFF9F2 0%, #FFF2E8 100%);
-  border: 1.5px solid #FFD9CA;
-  border-radius: 20px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 6px 18px rgba(72,42,33,0.04);
-}
-.download-banner h4 {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin: 0;
-}
-.download-banner p {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 3px 0 0 0;
-}
-.download-btn {
-  background: var(--coral);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-weight: 800;
-  font-size: 12.5px;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(255,114,95,0.25);
-  transition: transform 0.15s ease;
-}
-.download-btn:active {
-  transform: scale(0.97);
-}
+
 
 
