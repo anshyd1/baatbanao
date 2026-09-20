@@ -1,0 +1,32 @@
+# BaatBanao (https://www.baatbanao.shop)
+
+> BaatBanao is an AI-assisted WhatsApp payment reminder and debt recovery utility tailored for India. It enables individuals, freelancers, landlords, tutors, and small shopkeepers to generate culturally nuanced, polite, funny, or professional payment reminder messages in Hinglish, Hindi, Bhojpuri, and English, paired with auto-generated instant UPI payment links and QR codes.
+
+## Core Capabilities & Features
+- **Vasooli Mode**: 1-tap WhatsApp payment reminder message generator with tone control (Polite, Friendly, Professional, Funny/Shayari, Savage Safe).
+- **UPI Payment Link & QR Generator**: Creates one-tap direct UPI payment links (`upi://pay`) and scannable QR codes pre-filled with the exact pending amount.
+- **Udhaar Khata & Ledger**: Lightweight in-browser digital debt tracker with pending, partial, and cleared status.
+- **Offline Billing & Invoicing**: Instant PDF-ready invoices and digital hisaab slips for customers, clients, and tenants without requiring app store installation.
+- **Multi-lingual Support**: Fluent in Hinglish, Hindi, Bhojpuri, and English.
+
+## Primary Use Cases
+1. **Friends & Personal Loans**: Collecting borrowed money from friends without ruining friendships ("Dost se paise wapas mangna").
+2. **Freelancers & Consultants**: Polite invoice follow-ups, overdue payment reminders, and milestone payment requests.
+3. **Landlords & PG Owners**: Monthly house rent and maintenance reminder messages.
+4. **Coaching & Private Tutors**: Monthly tuition fees reminders to parents and students.
+5. **Kirana Stores & Retail Merchants**: Customer credit reminder messages with pre-filled payment links.
+
+## Key Canonical Resources & URLs
+- Homepage & Interactive Generator: https://www.baatbanao.shop/
+- Friend Loan Reminder Messages: https://www.baatbanao.shop/dost-se-paise-wapas-message
+- Generic Payment Reminder Templates: https://www.baatbanao.shop/paise-mangne-ke-message
+- House Rent Payment Reminder: https://www.baatbanao.shop/kirayedaar-rent-reminder-message
+- Tuition Fees Reminder: https://www.baatbanao.shop/tuition-fees-reminder-message
+- Kirana Shop Udhaar Reminder: https://www.baatbanao.shop/kirana-shop-udhaar-reminder
+- Freelancer Payment Reminder: https://www.baatbanao.shop/freelancer-payment-reminder-message
+- Client Invoice Follow-up: https://www.baatbanao.shop/client-invoice-follow-up-message
+- Bhojpuri Udhaar Messages: https://www.baatbanao.shop/bhojpuri-udhaar-message
+- UPI Payment Link Generator: https://www.baatbanao.shop/upi-payment-link-generator
+
+## Tone & Philosophy
+"Rishta bhi safe rakho, Vasooli bhi karo." In Indian culture, asking for money directly often feels awkward or confrontational. BaatBanao solves this socio-cultural friction by crafting polite, witty, or respectful templates that prompt payment without breaking relationships.

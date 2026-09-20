@@ -626,6 +626,14 @@ function viewHome(){
       <div><b>${pendingTotal ? fmtMoney(pendingTotal) : 'No amount'}</b><span>Total</span></div>
     </div>
 
+    <div class="download-banner">
+      <div>
+        <h4>📱 BaatBanao App Download Karein</h4>
+        <p>Offline khata, instant reminders aur bina install kiye fast access.</p>
+      </div>
+      <button class="download-btn" onclick="typeof bbTriggerInstall === 'function' ? bbTriggerInstall() : navigate('vasooli')">📲 Install / Open</button>
+    </div>
+
     <div class="features-grid">
       <button class="sec-card" onclick="navigate('vasooli')">
         <div class="sec-icon-circle" style="background:#FFF0ED;color:#FF5E48;">🙏</div>
@@ -658,6 +666,40 @@ function viewHome(){
         <p>Ek saath sabhi pending hisaab WhatsApp karein.</p>
       </button>
     </div>
+
+    <!-- How to Use Visual Gallery -->
+    <div class="how-to-use-section">
+      <div class="how-to-use-head">
+        <h3><span>💡</span> Kaise Use Karein (3 Simple Steps)</h3>
+        <span style="font-size:12px;color:#FF725F;font-weight:800;cursor:pointer;" onclick="navigate('vasooli')">Try Now →</span>
+      </div>
+      <div class="gallery-scroll">
+        <div class="step-card">
+          <img src="assets/step1-enter-details.png" alt="Step 1: Naam & Amount Daalo" loading="lazy" />
+          <span class="step-badge">Step 1</span>
+          <h4>Naam & Amount Daalo</h4>
+          <p>Kisse lena hai aur kitna lena hai — bas 2 details fill karein.</p>
+        </div>
+        <div class="step-card">
+          <img src="assets/step2-select-tone.png" alt="Step 2: Tone & UPI Chuno" loading="lazy" />
+          <span class="step-badge">Step 2</span>
+          <h4>Tone & Auto-UPI Chuno</h4>
+          <p>Polite, Funny ya Savage — rishte ke hisaab se tone select karein.</p>
+        </div>
+        <div class="step-card">
+          <img src="assets/step3-whatsapp-sent.png" alt="Step 3: 1-Tap WhatsApp Bhejo" loading="lazy" />
+          <span class="step-badge">Step 3</span>
+          <h4>1-Tap WhatsApp Bhejo</h4>
+          <p>Direct WhatsApp par reminder bhejein aur paisa turant wapas paayein.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating WhatsApp Help Button -->
+    <a href="https://wa.me/919918996096?text=Namaste!%20Mujhe%20BaatBanao%20par%20help%20chahiye" target="_blank" rel="noopener" class="floating-help-btn" aria-label="Help on WhatsApp">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span>Help</span>
+    </a>
 
     ${pendingList.length ? `
     <div class="signal-card">
@@ -1305,14 +1347,22 @@ function copyOutput(taId){
   const ta = document.getElementById(taId);
   if(!ta) return;
   bbTrack('copy_output', { route: state.route || 'unknown', text_length_bucket: ta.value.length < 120 ? 'short' : ta.value.length < 300 ? 'medium' : 'long' });
+  
+  let valToCopy = ta.value || '';
+  if(!valToCopy.includes('baatbanao.shop')){
+    valToCopy += '\n\n— ⚡ Apna reminder banao: https://www.baatbanao.shop';
+  }
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(ta.value).then(()=>{
-      showToast('Copied! ✅');
+    navigator.clipboard.writeText(valToCopy).then(()=>{
+      showToast('Copied with link! ✅');
     }).catch(()=>{
-      ta.select(); document.execCommand('copy'); showToast('Copied! ✅');
+      ta.value = valToCopy;
+      ta.select(); document.execCommand('copy'); showToast('Copied with link! ✅');
     });
   } else {
-    ta.select(); document.execCommand('copy'); showToast('Copied! ✅');
+    ta.value = valToCopy;
+    ta.select(); document.execCommand('copy'); showToast('Copied with link! ✅');
   }
 }
 
@@ -2223,38 +2273,53 @@ function viewPro(){
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('profile')">${ICONS.back}</button>
-      <h1>Support BaatBanao ☕</h1>
+      <h1>BaatBanao Pro VIP 👑</h1>
     </div>
 
-    <div class="hero-greeting" style="text-align:center;">
-      <div style="font-size:2.4rem;margin-bottom:6px;">💖</div>
-      <h1 style="font-size:20px;">BaatBanao Sabke Liye 100% Free Hai!</h1>
-    </div>
-    <p style="text-align:center;color:var(--text-secondary);font-weight:600;font-size:13.5px;margin-bottom:16px;">
-      Koi compulsory subscription nahi hai. Agar hamari app se aapka atka hua paisa wapas nikalne me madad mili ho, toh aap khushi se developer ko ek cup chai ya chhota sa shagun bhej sakte hain! 😊
-    </p>
-
-    <!-- Voluntary Tip Cards -->
-    <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFD4C4;background:#FFF9F6;">
-      <div class="row-top"><span class="name">☕ Ek Cup Chai (Tip)</span><span class="amount" style="color:#247C32;font-weight:900;">₹19</span></div>
-      <div class="meta">Server aur app maintenance support karne ke liye ek pyari si tip.</div>
-      <button class="primary-btn" style="margin-top:10px;padding:10px;" onclick="bbSendTip(19)">₹19 Tip Bhejo ☕</button>
+    <!-- VIP Membership Card Visual -->
+    <div style="text-align:center;margin:10px 0 16px 0;">
+      <img src="assets/pro-membership-card.png" alt="BaatBanao Pro VIP Card" style="width:100%;max-width:380px;border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,0.3);display:inline-block;border:1.5px solid #FFD8A8;" />
     </div>
 
-    <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFE2D1;background:#FFFDF9;">
-      <div class="row-top"><span class="name">🍕 Pizza / Shagun Tip</span><span class="amount" style="color:#247C32;font-weight:900;">₹49</span></div>
-      <div class="meta">Agar bada udhaar ya payment successfully clear ho gayi ho! 🎉</div>
-      <button class="primary-btn" style="margin-top:10px;padding:10px;background:#FF725F;" onclick="bbSendTip(49)">₹49 Shagun Bhejo 🍕</button>
+    <div class="hero-greeting" style="text-align:center;padding:0 8px;">
+      <h1 style="font-size:21px;color:#261818;">Unlock VIP Privileges & Support</h1>
+      <p style="color:var(--text-secondary);font-weight:600;font-size:13px;margin-top:6px;">
+        Basic reminders hamesha 100% Free rahenge! Apne brand ko professional banane aur watermarks hatane ke liye VIP club join karein.
+      </p>
     </div>
 
-    <div class="list-card" style="margin-bottom:14px;border:1.5px solid #FFD8A8;background:#FFFDF5;">
-      <div class="row-top"><span class="name">👑 Supporter / Pro Badge</span><span class="amount" style="color:#9A6810;font-weight:900;">₹99</span></div>
-      <div class="meta">Lifetime Pro Supporter badge + saare watermarks permanently remove karne ke liye.</div>
-      <button class="primary-btn" style="margin-top:10px;padding:10px;background:#E67E22;" onclick="bbSendTip(99)">₹99 Supporter Badge 👑</button>
+    <!-- VIP Tier Cards -->
+    <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFD4C4;background:#FFF9F6;padding:16px;">
+      <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">☕ Shagun & Chai Supporter</span><span class="amount" style="color:#247C32;font-weight:900;font-size:18px;">₹29</span></div>
+      <div class="meta" style="margin-top:6px;line-height:1.4;">Developer ko chai shagun + Profile par Gold VIP Supporter Badge + 15 Secret Savage Templates unlock!</div>
+      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#FF725F;" onclick="bbSendTip(29)">₹29 Shagun Bhejo ☕</button>
     </div>
 
-    <div class="safety-banner" style="text-align:center;line-height:1.5;">
-      ❤️ <b>Note:</b> BaatBanao ke saare basic features (Khata, Parchi, WhatsApp messages) hamesha sabhi ke liye <b>bilkul free</b> rahenge!
+    <div class="list-card" style="margin-bottom:14px;border:2px solid #FFB84D;background:#FFFDF5;padding:16px;box-shadow:0 6px 20px rgba(245,158,11,0.12);">
+      <div style="background:#FF9900;color:#fff;font-size:10px;font-weight:900;display:inline-block;padding:2px 8px;border-radius:4px;margin-bottom:8px;text-transform:uppercase;">🔥 Most Popular</div>
+      <div class="row-top"><span class="name" style="font-weight:800;font-size:16px;">👑 Pro Dukan & Freelancer Pass</span><span class="amount" style="color:#B45309;font-weight:900;font-size:20px;">₹99 <small style="font-size:11px;font-weight:600;">/ Lifetime</small></span></div>
+      <div class="meta" style="margin-top:6px;line-height:1.4;">
+        ✓ Invoices & Slips se <b>Watermark permanently REMOVED</b><br/>
+        ✓ Bills par <b>Apna Shop/Brand Logo & Stamp</b><br/>
+        ✓ <b>Instant Dynamic Scannable UPI QR</b> on receipts<br/>
+        ✓ Unlimited Khata Customers
+      </div>
+      <button class="primary-btn" style="margin-top:12px;padding:13px;background:linear-gradient(90deg, #E67E22, #F39C12);font-weight:900;" onclick="bbSendTip(99)">₹99 Lifetime VIP Pass Le 👑</button>
+    </div>
+
+    <div class="list-card" style="margin-bottom:14px;border:1.5px solid #E2D9F3;background:#FAF8FF;padding:16px;">
+      <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">🚀 Business Boss Pack</span><span class="amount" style="color:#6D45B8;font-weight:900;font-size:18px;">₹249</span></div>
+      <div class="meta" style="margin-top:6px;line-height:1.4;">Bulk Reminders via WhatsApp Web queue + Customer Ledger Excel/CSV Export + GST Format.</div>
+      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#6D45B8;" onclick="bbSendTip(249)">₹249 Business Pack 🚀</button>
+    </div>
+
+    <!-- Help & Instant WhatsApp Verification -->
+    <div style="background:#EAF8F0;border:1.5px solid #A3E6BA;border-radius:14px;padding:14px;text-align:center;margin-bottom:18px;">
+      <div style="font-weight:800;color:#087A43;font-size:14px;">Direct WhatsApp Support & Activation:</div>
+      <p style="font-size:12px;color:#2D5A3C;margin:4px 0 10px 0;">Payment ke baad instant activation code ya kisi bhi help ke liye contact karein:</p>
+      <a href="https://wa.me/919918996096?text=Namaste!%20Maine%20BaatBanao%20Pro%20VIP%20ka%20payment%20kiya%20hai" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#fff;text-decoration:none;padding:9px 18px;border-radius:999px;font-weight:800;font-size:13px;box-shadow:0 4px 14px rgba(37,211,102,0.35);">
+        💬 WhatsApp: +91 9918996096
+      </a>
     </div>
   `;
 }

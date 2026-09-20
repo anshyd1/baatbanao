@@ -322,10 +322,9 @@
   // splash forever.
   var returningVisit = sessionStorage.getItem('bb_seen_splash') === '1';
   sessionStorage.setItem('bb_seen_splash', '1');
-  // First visit keeps a short brand beat; repeat visits feel instant.
-  // Caps: ~2.6s first visit, ~0.9s returning — splash still waits for rendered content.
-  var MIN_HOLD_MS = returningVisit ? 150 : 900;
-  var MAX_HOLD_MS = returningVisit ? 900 : 2600;
+  // Fast snappy load — maximum 300ms hold time
+  var MIN_HOLD_MS = 50;
+  var MAX_HOLD_MS = 300;
   var start = Date.now();
 
   function contentReady(){

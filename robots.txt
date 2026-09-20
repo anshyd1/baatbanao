@@ -1,4 +1,63 @@
+# ==============================================================================
+# BaatBanao.shop — Master robots.txt
+# Generative Engine Optimization (GEO) + Search Engine Indexing
+# ==============================================================================
+
 User-agent: *
 Allow: /
+Disallow: /pay
+Disallow: /api/
 
+# ------------------------------------------------------------------------------
+# Explicit AI Crawlers & LLM Agents (Permitted & Optimized for Search Ingestion)
+# ------------------------------------------------------------------------------
+
+# OpenAI (ChatGPT, ChatGPT Search, SearchGPT)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic (Claude, Claude Search)
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Google Gemini & AI Overviews
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+# Meta AI & Llama
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Apple Intelligence
+User-agent: Applebot-Extended
+Allow: /
+
+# ByteDance
+User-agent: Bytespider
+Allow: /
+
+# Cohere & Mistral
+User-agent: cohere-ai
+Allow: /
+
+# ------------------------------------------------------------------------------
+# Sitemaps & LLM Context Documents
+# ------------------------------------------------------------------------------
 Sitemap: https://www.baatbanao.shop/sitemap.xml
+Sitemap: https://www.baatbanao.shop/llms.txt
