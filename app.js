@@ -627,11 +627,14 @@ function viewHome(){
     </div>
 
     <div class="download-banner">
-      <div>
-        <h4>📱 BaatBanao App Download Karein</h4>
-        <p>Offline khata, instant reminders aur bina install kiye fast access.</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="assets/mascot-coin.webp" alt="BaatBanao" style="width:40px;height:40px;object-fit:contain;flex:none;" />
+        <div>
+          <h4>BaatBanao App Install Karein</h4>
+          <p>Offline khata & 1-tap reminders bina kisi jhanjhat ke.</p>
+        </div>
       </div>
-      <button class="download-btn" onclick="typeof bbTriggerInstall === 'function' ? bbTriggerInstall() : navigate('vasooli')">📲 Install / Open</button>
+      <button class="download-btn" onclick="typeof bbTriggerInstall === 'function' ? bbTriggerInstall() : navigate('vasooli')">Install 📲</button>
     </div>
 
     <div class="features-grid">
@@ -667,37 +670,45 @@ function viewHome(){
       </button>
     </div>
 
-    <!-- How to Use Visual Gallery -->
+    <!-- How to Use Visual Gallery (Warm Theme Faithful) -->
     <div class="how-to-use-section">
       <div class="how-to-use-head">
         <h3><span>💡</span> Kaise Use Karein (3 Simple Steps)</h3>
-        <span style="font-size:12px;color:#FF725F;font-weight:800;cursor:pointer;" onclick="navigate('vasooli')">Try Now →</span>
+        <span style="font-size:12px;color:var(--coral);font-weight:800;cursor:pointer;" onclick="navigate('vasooli')">Try Now →</span>
       </div>
       <div class="gallery-scroll">
         <div class="step-card">
-          <img src="assets/step1-enter-details.png" alt="Step 1: Naam & Amount Daalo" loading="lazy" />
+          <div class="step-icon-wrap">
+            <img src="assets/mascot-thinking.webp" alt="Step 1" />
+          </div>
           <span class="step-badge">Step 1</span>
           <h4>Naam & Amount Daalo</h4>
-          <p>Kisse lena hai aur kitna lena hai — bas 2 details fill karein.</p>
+          <p>Kisse lena hai aur kitna lena hai — bas 2 basic details daalein.</p>
         </div>
         <div class="step-card">
-          <img src="assets/step2-select-tone.png" alt="Step 2: Tone & UPI Chuno" loading="lazy" />
+          <div class="step-icon-wrap">
+            <img src="assets/mascot-coin.webp" alt="Step 2" />
+          </div>
           <span class="step-badge">Step 2</span>
           <h4>Tone & Auto-UPI Chuno</h4>
-          <p>Polite, Funny ya Savage — rishte ke hisaab se tone select karein.</p>
+          <p>Polite, Friendly, Funny ya Savage — rishte ke hisaab se tone select karein.</p>
         </div>
         <div class="step-card">
-          <img src="assets/step3-whatsapp-sent.png" alt="Step 3: 1-Tap WhatsApp Bhejo" loading="lazy" />
+          <div class="step-icon-wrap">
+            <img src="assets/mascot-celebrate.webp" alt="Step 3" />
+          </div>
           <span class="step-badge">Step 3</span>
           <h4>1-Tap WhatsApp Bhejo</h4>
-          <p>Direct WhatsApp par reminder bhejein aur paisa turant wapas paayein.</p>
+          <p>Direct WhatsApp par reminder bhejein aur hisaab smoothly clear karein.</p>
         </div>
       </div>
     </div>
 
     <!-- Floating WhatsApp Help Button -->
     <a href="https://wa.me/919918996096?text=Namaste!%20Mujhe%20BaatBanao%20par%20help%20chahiye" target="_blank" rel="noopener" class="floating-help-btn" aria-label="Help on WhatsApp">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span class="wa-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      </span>
       <span>Help</span>
     </a>
 
@@ -2276,15 +2287,13 @@ function viewPro(){
       <h1>BaatBanao Pro VIP 👑</h1>
     </div>
 
-    <!-- VIP Membership Card Visual -->
-    <div style="text-align:center;margin:10px 0 16px 0;">
-      <img src="assets/pro-membership-card.png" alt="BaatBanao Pro VIP Card" style="width:100%;max-width:380px;border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,0.3);display:inline-block;border:1.5px solid #FFD8A8;" />
-    </div>
-
-    <div class="hero-greeting" style="text-align:center;padding:0 8px;">
-      <h1 style="font-size:21px;color:#261818;">Unlock VIP Privileges & Support</h1>
-      <p style="color:var(--text-secondary);font-weight:600;font-size:13px;margin-top:6px;">
-        Basic reminders hamesha 100% Free rahenge! Apne brand ko professional banane aur watermarks hatane ke liye VIP club join karein.
+    <!-- Warm VIP Pass Header (100% Theme Matched) -->
+    <div style="background: linear-gradient(135deg, #FFF7EB 0%, #FFEED4 50%, #FFE2BD 100%); border: 1.5px solid #FFD29D; border-radius: 22px; padding: 20px 16px; text-align: center; box-shadow: 0 8px 24px rgba(72,42,33,0.05); margin: 10px 0 16px 0;">
+      <img src="assets/mascot-celebrate.webp" alt="BaatBanao VIP" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 4px;" />
+      <div style="font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #B45309; text-transform: uppercase;">BaatBanao Special Club</div>
+      <h2 style="font-size: 21px; font-weight: 900; color: #261818; margin: 4px 0 6px 0;">Pro VIP Member Pass 👑</h2>
+      <p style="font-size: 12.5px; color: #75615C; max-width: 310px; margin: 0 auto; line-height: 1.45;">
+        Watermark-free invoices, custom brand stamp, aur priority direct reminders.
       </p>
     </div>
 
