@@ -1,11 +1,12 @@
 /* ===========================================================
-   BaatBanao Voice & OCR Assistant Module (v1.0.0)
+   BaatBanao Voice & OCR Assistant Module (v1.1.0)
    100% Client-Side, Zero-Cost, Fast & Privacy-Safe
    Features:
    1. Voice-to-Khata & WhatsApp (Hindi & Hinglish Natural Speech)
    2. Number Input via Voice or Type with Khata Auto-Match
-   3. Camera OCR Scanner for printed bills & parchi (Lazy Tesseract)
-   4. Instant 3-Tone WhatsApp Generator + One-tap Save to Khata
+   3. Camera OCR + Gallery File Upload + Preprocessing (Tesseract.js)
+   4. One-tap Sample Bills for instant testing
+   5. Instant 3-Tone WhatsApp Generator + One-tap Save to Khata
    =========================================================== */
 
 (function(window){
@@ -98,15 +99,13 @@
     }
 
     // 4. Core Transaction: Name + Amount + Type (Lena/Dena) + Due Date
-    let type = 'lena'; // default: lena (paise lene hain / credit)
+    let type = 'lena';
     if (/(dena|dene|diye|chukane|de|देना|दिए|देने)/i.test(clean)) {
       type = 'dena';
     }
 
-    // Amount extraction
     const amount = extractAmountFromText(raw);
 
-    // Name extraction
     let name = '';
     const relMatch = raw.match(/^([A-Za-z\u0900-\u097F\s]+?)\s*(se|ko|par|ka|से|को|पर|का)\s+/i);
     if (relMatch) {
@@ -119,7 +118,6 @@
       }
     }
 
-    // Date extraction
     let dueDate = '';
     let dueText = '';
     const now = new Date();
@@ -141,7 +139,6 @@
       }
     }
 
-    // Embedded Phone if spoken
     let phone = phoneOnlyMatch ? phoneOnlyMatch[1] : '';
 
     return {
@@ -156,7 +153,7 @@
     };
   }
 
-  // --- Voice Assistant Controller ---
+  // --- Voice & OCR Assistant Controller ---
 
   const VoiceAssistant = {
     recognition: null,
@@ -169,7 +166,6 @@
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = false;
         this.recognition.interimResults = true;
-        // hi-IN works seamlessly for Hindi, Hinglish and English on Android Chrome
         this.recognition.lang = 'hi-IN';
 
         this.recognition.onstart = () => {
@@ -204,8 +200,6 @@
 
         this.recognition.onend = () => {
           this.isListening = false;
-          const indicator = document.getElementById('bb-voice-indicator');
-          if (indicator) indicator.classList.remove('pulse-active');
         };
       }
       this.injectUI();
@@ -241,31 +235,22 @@
         bbTrack('voice_command_parsed', { action: parsed.action, has_amount: !!parsed.amount });
       }
 
-      // Auto-Lookup from existing Khata
       if (window.state && Array.isArray(window.state.khata)) {
-        // If Phone was given without name, find name
         if (parsed.phone && !parsed.name) {
           const match = window.state.khata.find(k => k.phone && k.phone.includes(parsed.phone));
-          if (match) {
-            parsed.name = match.name;
-          }
+          if (match) parsed.name = match.name;
         }
-        // If Name was given without phone, lookup phone
         if (parsed.name && !parsed.phone) {
           const match = window.state.khata.find(k => (k.name || '').toLowerCase() === parsed.name.toLowerCase());
-          if (match && match.phone) {
-            parsed.phone = match.phone;
-          }
+          if (match && match.phone) parsed.phone = match.phone;
         }
       }
 
-      // Execute Action
       if (parsed.action === 'CLEAR_HISAAB') {
         this.handleClearHisaab(parsed.name);
       } else if (parsed.action === 'SEND_REMINDER') {
         this.handleQuickReminder(parsed.name);
       } else {
-        // Default: Show Smart Card with WhatsApp & Khata options
         this.activeEntry = parsed;
         this.showResultModal(parsed);
       }
@@ -310,7 +295,6 @@
       }
     },
 
-    // --- Dynamic Messages Generator ---
     generateMessageOptions(entry) {
       const n = entry.name || 'Dost';
       const amtStr = entry.amount ? `₹${Number(entry.amount).toLocaleString('en-IN')}` : 'hisaab';
@@ -342,9 +326,9 @@
       const container = document.createElement('div');
       container.id = 'bb-voice-modal-root';
       container.innerHTML = `
-        <!-- Floating FAB Assistant (Mic + Camera) -->
+        <!-- Floating FAB Assistant (Compact, Clean, No overlap) -->
         <div id="bb-fab-assistant" class="bb-fab-group">
-          <button class="bb-fab-btn bb-fab-camera" onclick="bbVoiceAssistant.startCameraOCR()" title="Scan Bill / Parchi">
+          <button class="bb-fab-btn bb-fab-camera" onclick="bbVoiceAssistant.openOcrPicker()" title="Scan Bill / Parchi / Photo">
             <span>📷</span>
           </button>
           <button class="bb-fab-btn bb-fab-mic" onclick="bbVoiceAssistant.startVoice()" title="Bolkar Hisaab Likhein">
@@ -353,8 +337,9 @@
           </button>
         </div>
 
-        <!-- Hidden Camera Input -->
+        <!-- Hidden Inputs for Camera and File Upload -->
         <input type="file" id="bb-ocr-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
+        <input type="file" id="bb-ocr-gallery-input" accept="image/*" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
 
         <!-- Assistant Modal Sheet -->
         <div id="bb-assistant-modal" class="bb-assist-backdrop" style="display:none;">
@@ -362,6 +347,49 @@
             <div class="bb-sheet-header">
               <div class="bb-sheet-title" id="bb-assist-head-title">🎙️ BaatBanao Assistant</div>
               <button class="bb-close-btn" onclick="bbVoiceAssistant.closeModal()">✕</button>
+            </div>
+
+            <!-- OCR Source Picker Stage -->
+            <div id="bb-stage-ocr-picker" style="display:none;">
+              <p style="font-size:13.5px;color:var(--text-secondary);font-weight:600;margin:0 0 16px;">
+                Dukaan ki kachi parchi, notebook ya printed invoice scan karein:
+              </p>
+
+              <div class="bb-ocr-options-grid">
+                <button class="bb-ocr-opt-btn" onclick="bbVoiceAssistant.triggerDirectCamera()">
+                  <span class="bb-opt-icon">📸</span>
+                  <div>
+                    <strong>Camera Se Photo Lo</strong>
+                    <small>Live bill ya parchi ki photo khechein</small>
+                  </div>
+                </button>
+                <button class="bb-ocr-opt-btn" onclick="bbVoiceAssistant.triggerGalleryUpload()">
+                  <span class="bb-opt-icon">📁</span>
+                  <div>
+                    <strong>Gallery / File Upload</strong>
+                    <small>Pehle se khinchi hui photo ya bill chunein</small>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Instant Sample Bills Section for Demo / Testing -->
+              <div class="bb-samples-box">
+                <div class="bb-samples-title">🧪 Sample Bills (1-Tap Instant Test):</div>
+                <div class="bb-samples-pills">
+                  <button class="bb-sample-chip" onclick="bbVoiceAssistant.testWithSample('assets/sample-bills/sample-bill-1-kirana.jpg')">
+                    🛒 Kirana Store (₹1,450)
+                  </button>
+                  <button class="bb-sample-chip" onclick="bbVoiceAssistant.testWithSample('assets/sample-bills/sample-bill-2-freelance.jpg')">
+                    💻 Freelance (₹4,500)
+                  </button>
+                  <button class="bb-sample-chip" onclick="bbVoiceAssistant.testWithSample('assets/sample-bills/sample-bill-3-parchi.jpg')">
+                    📒 Kachi Parchi (₹1,500)
+                  </button>
+                  <button class="bb-sample-chip" onclick="bbVoiceAssistant.testWithSample('assets/sample-bills/sample-bill-4-rent.jpg')">
+                    🏠 Rent Slip (₹8,500)
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Listening Stage -->
@@ -377,17 +405,27 @@
               <button class="bb-sheet-btn secondary" style="margin-top:14px;" onclick="bbVoiceAssistant.stopVoice()">Stop / Cancel</button>
             </div>
 
-            <!-- OCR Processing Stage -->
+            <!-- OCR Processing Stage with Live Progress Bar -->
             <div id="bb-stage-ocr" style="display:none;">
               <div class="bb-ocr-loader">
                 <div class="bb-spinner"></div>
-                <p>📷 Parchi scan ho rahi hai...</p>
-                <small>Amount, mobile aur customer name detect kiya ja raha hai</small>
+                <p id="bb-ocr-status-text">📷 Parchi scan ho rahi hai...</p>
+                <div class="bb-progress-bar-wrap">
+                  <div id="bb-ocr-progress-bar" class="bb-progress-bar"></div>
+                </div>
+                <small id="bb-ocr-progress-sub">Tesseract OCR load ho raha hai (Fast Mode)</small>
+                <button class="bb-sheet-btn secondary" style="margin-top:18px;" onclick="bbVoiceAssistant.skipOcrToManual()">
+                  Skip / Manual Entry Karein ✍️
+                </button>
               </div>
             </div>
 
             <!-- Result Confirmation Stage -->
             <div id="bb-stage-result" style="display:none;">
+              <div id="bb-thumb-preview-wrap" style="display:none;margin-bottom:12px;text-align:center;">
+                <img id="bb-scanned-thumb" src="" alt="Scanned Bill" style="max-height:90px;border-radius:12px;border:1.5px solid #F0DFCF;box-shadow:0 4px 10px rgba(0,0,0,0.06);" />
+              </div>
+
               <div class="bb-result-tag-row">
                 <span id="bb-type-pill" class="bb-pill lena" onclick="bbVoiceAssistant.toggleType()">🟢 Lena Hai (Tap to change)</span>
                 <span id="bb-date-pill" class="bb-pill date">📅 Aaj</span>
@@ -438,16 +476,13 @@
     },
 
     showListeningUI() {
+      this.resetModalStages();
       const modal = document.getElementById('bb-assistant-modal');
       const head = document.getElementById('bb-assist-head-title');
       const stageListen = document.getElementById('bb-stage-listening');
-      const stageOcr = document.getElementById('bb-stage-ocr');
-      const stageResult = document.getElementById('bb-stage-result');
 
       head.textContent = '🎙️ Voice Assistant';
       stageListen.style.display = 'block';
-      stageOcr.style.display = 'none';
-      stageResult.style.display = 'none';
       modal.style.display = 'flex';
       this.updateTranscriptUI('Sun raha hoon... Bolna shuru kijiye');
     },
@@ -455,7 +490,7 @@
     hideListeningUI() {
       const modal = document.getElementById('bb-assistant-modal');
       const stageListen = document.getElementById('bb-stage-listening');
-      if (stageListen.style.display === 'block') {
+      if (stageListen && stageListen.style.display === 'block') {
         modal.style.display = 'none';
       }
     },
@@ -465,6 +500,13 @@
       if (box) box.textContent = text;
     },
 
+    resetModalStages() {
+      ['bb-stage-ocr-picker', 'bb-stage-listening', 'bb-stage-ocr', 'bb-stage-result'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+    },
+
     closeModal() {
       this.stopVoice();
       const modal = document.getElementById('bb-assistant-modal');
@@ -472,17 +514,24 @@
     },
 
     showResultModal(entry) {
+      this.resetModalStages();
       const modal = document.getElementById('bb-assistant-modal');
       const head = document.getElementById('bb-assist-head-title');
-      const stageListen = document.getElementById('bb-stage-listening');
-      const stageOcr = document.getElementById('bb-stage-ocr');
       const stageResult = document.getElementById('bb-stage-result');
 
       head.textContent = entry._isOcr ? '📷 Parchi Scan Result' : '🎙️ Entry Samjhi Gayi!';
-      stageListen.style.display = 'none';
-      stageOcr.style.display = 'none';
       stageResult.style.display = 'block';
       modal.style.display = 'flex';
+
+      // Thumbnail
+      const thumbWrap = document.getElementById('bb-thumb-preview-wrap');
+      const thumbImg = document.getElementById('bb-scanned-thumb');
+      if (entry._thumbSrc) {
+        thumbImg.src = entry._thumbSrc;
+        thumbWrap.style.display = 'block';
+      } else {
+        thumbWrap.style.display = 'none';
+      }
 
       // Populate Inputs
       document.getElementById('bb-edit-name').value = entry.name || '';
@@ -594,7 +643,7 @@
         status: 'pending',
         language: 'Hinglish',
         tone: 'Friendly',
-        note: entry._isOcr ? 'Added via Camera OCR' : 'Added via Voice Command',
+        note: entry._isOcr ? 'Added via Camera/File OCR' : 'Added via Voice Command',
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
@@ -637,10 +686,24 @@
       }
     },
 
-    // --- Camera OCR Flow ---
+    // --- Camera OCR & File Upload Flow ---
+
+    openOcrPicker() {
+      this.resetModalStages();
+      const modal = document.getElementById('bb-assistant-modal');
+      const head = document.getElementById('bb-assist-head-title');
+      const stagePicker = document.getElementById('bb-stage-ocr-picker');
+
+      head.textContent = '📷 Bill / Parchi Scanner';
+      stagePicker.style.display = 'block';
+      modal.style.display = 'flex';
+    },
 
     startCameraOCR() {
-      if (typeof bbTrack === 'function') bbTrack('ocr_camera_click', {});
+      this.openOcrPicker();
+    },
+
+    triggerDirectCamera() {
       const input = document.getElementById('bb-ocr-camera-input');
       if (input) {
         input.value = '';
@@ -648,46 +711,155 @@
       }
     },
 
-    async handleImageSelected(input) {
+    triggerGalleryUpload() {
+      const input = document.getElementById('bb-ocr-gallery-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    },
+
+    skipOcrToManual() {
+      this.showResultModal({
+        name: '',
+        amount: '',
+        phone: '',
+        type: 'lena',
+        _isOcr: true
+      });
+    },
+
+    async testWithSample(sampleUrl) {
+      try {
+        const resp = await fetch(sampleUrl);
+        const blob = await resp.blob();
+        this.runOcrOnImage(blob, sampleUrl);
+      } catch (e) {
+        console.error('Failed to load sample image:', e);
+        this.runOcrOnImage(sampleUrl, sampleUrl);
+      }
+    },
+
+    handleImageSelected(input) {
       const file = input.files && input.files[0];
       if (!file) return;
 
+      const thumbUrl = URL.createObjectURL(file);
+      this.runOcrOnImage(file, thumbUrl);
+    },
+
+    // Fast image downscaler and preprocessor for mobile
+    preprocessImage(fileOrUrl) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          let maxDim = 1200;
+          let width = img.width;
+          let height = img.height;
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Enhance contrast
+          try {
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+              const enhanced = gray < 125 ? gray * 0.75 : Math.min(255, gray * 1.15);
+              d[i] = d[i+1] = d[i+2] = enhanced;
+            }
+            ctx.putImageData(imgData, 0, 0);
+          } catch(e) {}
+
+          canvas.toBlob((blob) => resolve(blob || fileOrUrl), 'image/jpeg', 0.88);
+        };
+        img.onerror = () => resolve(fileOrUrl);
+
+        if (typeof fileOrUrl === 'string') {
+          img.src = fileOrUrl;
+        } else {
+          const reader = new FileReader();
+          reader.onload = (e) => { img.src = e.target.result; };
+          reader.onerror = () => resolve(fileOrUrl);
+          reader.readAsDataURL(fileOrUrl);
+        }
+      });
+    },
+
+    async runOcrOnImage(fileOrBlob, thumbUrl) {
+      this.resetModalStages();
       const modal = document.getElementById('bb-assistant-modal');
       const head = document.getElementById('bb-assist-head-title');
-      const stageListen = document.getElementById('bb-stage-listening');
       const stageOcr = document.getElementById('bb-stage-ocr');
-      const stageResult = document.getElementById('bb-stage-result');
+      const statusText = document.getElementById('bb-ocr-status-text');
+      const progressBar = document.getElementById('bb-ocr-progress-bar');
+      const progressSub = document.getElementById('bb-ocr-progress-sub');
 
       head.textContent = '📷 Bill / Parchi Scanner';
-      stageListen.style.display = 'none';
       stageOcr.style.display = 'block';
-      stageResult.style.display = 'none';
       modal.style.display = 'flex';
+      statusText.textContent = 'Image optimize ho rahi hai...';
+      progressBar.style.width = '15%';
+      progressSub.textContent = 'Resizing & contrast enhancement';
 
       try {
-        // 1. Lazy-load Tesseract.js only when OCR is actually triggered
+        // 1. Optimize image resolution for fast processing on mobile
+        const optimizedBlob = await this.preprocessImage(fileOrBlob);
+
+        // 2. Load Tesseract.js (v5)
         if (!window.Tesseract) {
+          statusText.textContent = 'OCR Engine load ho raha hai...';
+          progressBar.style.width = '30%';
+          progressSub.textContent = 'Downloading lightweight model...';
           await this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
         }
 
-        // 2. Perform OCR recognition
-        const result = await window.Tesseract.recognize(file, 'eng+hin', {
-          logger: m => console.log('OCR status:', m.status, m.progress)
+        statusText.textContent = 'Parchi scan ho rahi hai...';
+        progressBar.style.width = '50%';
+        progressSub.textContent = 'Detecting numbers & customer name...';
+
+        // 3. Fast English & Digits recognition
+        const result = await window.Tesseract.recognize(optimizedBlob, 'eng', {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const p = Math.round((m.progress || 0) * 100);
+              progressBar.style.width = (50 + Math.round(p * 0.45)) + '%';
+              statusText.textContent = `Text Scan: ${p}%`;
+            }
+          }
         });
 
         const text = result && result.data ? result.data.text : '';
         console.log('OCR Output Text:\n', text);
 
-        // 3. Extract Fields from OCR
+        progressBar.style.width = '100%';
+        statusText.textContent = 'Scan Complete! ✅';
+
+        // 4. Extract data
         const parsed = this.parseOcrText(text);
         parsed._isOcr = true;
+        parsed._thumbSrc = thumbUrl || '';
         this.activeEntry = parsed;
-        this.showResultModal(parsed);
+
+        setTimeout(() => {
+          this.showResultModal(parsed);
+        }, 400);
 
       } catch (err) {
         console.error('OCR Error:', err);
-        alert('OCR scan nahi ho paya. Kripya parchi ki saaf photo khechein.');
-        this.closeModal();
+        alert('OCR scan me dikkat aayi. Kripya manual entry karein.');
+        this.skipOcrToManual();
       }
     },
 
@@ -706,48 +878,57 @@
       let phone = '';
       let amount = null;
       let name = '';
+      let date_str = '';
 
-      // Phone match (Indian 10-digit)
+      // 1. Mobile Number (10-digit)
       const phoneMatch = text.match(/\b([6-9]\d{9})\b/);
       if (phoneMatch) phone = phoneMatch[1];
 
-      // Amount extraction: Look for Total / Grand Total / Net
+      // 2. Date
+      const dateMatch = text.match(/\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/);
+      if (dateMatch) date_str = dateMatch[1];
+
+      // 3. Amount Extraction
       for (let i = lines.length - 1; i >= 0; i--) {
         const line = lines[i];
-        if (/(total|grand\s*total|net|amount|bal|balance|due|₹|rs)/i.test(line)) {
-          const m = line.match(/(?:₹|rs\.?)?\s*(\d+[\d,]*)/i);
+        if (/(total|grand|net|amount|bal|balance|due|₹|rs\.?|kul|baaki)/i.test(line)) {
+          const m = line.match(/(?:₹|rs\.?)?\s*(\d+[\d,]*)/ig);
           if (m) {
-            const val = parseInt(m[1].replace(/,/g, ''), 10);
-            if (val > 0) {
-              amount = val;
-              break;
+            for (let j = m.length - 1; j >= 0; j--) {
+              const rawNum = m[j].replace(/[^\d]/g, '');
+              const val = parseInt(rawNum, 10);
+              if (val > 10 && val !== 2026 && (!phone || rawNum !== phone)) {
+                amount = val;
+                break;
+              }
             }
           }
         }
+        if (amount) break;
       }
 
-      // If no total keyword, look for the largest number on the bill
+      // Fallback amount: find largest reasonable number
       if (!amount) {
         const allNums = text.match(/\b\d{2,6}\b/g);
         if (allNums) {
-          const valid = allNums.map(n => parseInt(n, 10)).filter(n => n > 20 && n !== parseInt(phone, 10));
+          const valid = allNums.map(n => parseInt(n, 10)).filter(n => n > 20 && n !== 2026 && n !== parseInt(phone, 10));
           if (valid.length > 0) amount = Math.max(...valid);
         }
       }
 
-      // Customer name match
+      // 4. Customer Name Match
       for (const line of lines) {
-        const nm = line.match(/(?:name|customer|shri|m\/s|bhai|mr\.?)\s*[:\-]?\s*([A-Za-z\u0900-\u097F\s]{3,25})/i);
+        const nm = line.match(/(?:customer\s*name|tenant\s*name|client\s*name|billed\s*to(?:\s*\([^\)]*\))?|customer|client|naam|name|shri|m\/s|tenant|owner)\s*[:\-]?\s*([A-Za-z\u0900-\u097F\s]{2,30})/i);
         if (nm) {
-          name = nm[1].trim();
+          name = nm[1].replace(/\b(date|mob|mobile|phone|ph|dt|inv|bill)\b.*$/i, '').trim();
           break;
         }
       }
-      if (!name && lines.length > 0) {
-        // take first clean alphabetic line
+
+      if (!name) {
         for (const line of lines) {
-          if (/^[A-Za-z\s]{3,20}$/.test(line) && !/invoice|cash|memo|bill|parchi/i.test(line)) {
-            name = line;
+          if (/^[A-Za-z\s]{3,20}$/.test(line) && !/invoice|cash|memo|bill|parchi|tax|receipt|store|market/i.test(line)) {
+            name = line.trim();
             break;
           }
         }
@@ -758,8 +939,8 @@
         amount: amount || '',
         phone: phone || '',
         type: 'lena',
-        dueDate: '',
-        dueText: 'Parchi Hisaab',
+        dueDate: date_str,
+        dueText: date_str ? `Date: ${date_str}` : 'Parchi Hisaab',
         raw: text.slice(0, 100)
       };
     },
@@ -770,15 +951,15 @@
       const s = document.createElement('style');
       s.id = 'bb-voice-styles';
       s.textContent = `
-        /* FAB Buttons Group */
+        /* FAB Buttons Group - Clean, Elevated, No Overlap */
         .bb-fab-group {
           position: fixed;
-          bottom: 84px;
-          right: 16px;
+          bottom: 78px;
+          right: 14px;
           z-index: 990;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 8px;
         }
         .bb-fab-btn {
           border: none;
@@ -788,26 +969,26 @@
           gap: 6px;
           font-family: inherit;
           font-weight: 800;
-          box-shadow: 0 8px 24px rgba(65,35,25,0.2);
+          box-shadow: 0 8px 20px rgba(65,35,25,0.18);
           transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .bb-fab-btn:active { transform: scale(0.94); }
+        .bb-fab-btn:active { transform: scale(0.93); }
         .bb-fab-mic {
           background: linear-gradient(135deg, #FF725F, #E8594B);
           color: #fff;
-          padding: 12px 18px;
-          border-radius: 30px;
-          font-size: 14px;
+          padding: 11px 16px;
+          border-radius: 28px;
+          font-size: 13.5px;
         }
         .bb-fab-camera {
           background: #FFFDF8;
           color: #261818;
           border: 1.5px solid #F0DFCF;
-          width: 44px;
-          height: 44px;
+          width: 42px;
+          height: 42px;
           border-radius: 50%;
           justify-content: center;
-          font-size: 18px;
+          font-size: 17px;
         }
 
         /* Modal Backdrop & Sheet */
@@ -830,7 +1011,7 @@
           max-width: 520px;
           max-height: 88vh;
           overflow-y: auto;
-          padding: 22px 20px 28px;
+          padding: 20px 18px 28px;
           box-shadow: 0 -15px 40px rgba(0,0,0,0.2);
           animation: bbSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -841,9 +1022,9 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 16px;
+          margin-bottom: 14px;
           border-bottom: 1px solid #F0DFCF;
-          padding-bottom: 12px;
+          padding-bottom: 10px;
         }
         .bb-sheet-title {
           font-family: 'Manrope', sans-serif;
@@ -855,12 +1036,114 @@
           background: #FFF5DF;
           border: none;
           color: #75615C;
-          width: 32px;
-          height: 32px;
+          width: 30px;
+          height: 30px;
           border-radius: 50%;
           font-size: 14px;
           font-weight: 800;
           cursor: pointer;
+        }
+
+        /* OCR Picker Grid */
+        .bb-ocr-options-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+        .bb-ocr-opt-btn {
+          background: #FFFDF8;
+          border: 1.5px solid #F0DFCF;
+          border-radius: 18px;
+          padding: 14px 16px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          cursor: pointer;
+          text-align: left;
+          box-shadow: 0 4px 12px rgba(65,35,25,0.04);
+          transition: all 0.15s ease;
+        }
+        .bb-ocr-opt-btn:active {
+          transform: scale(0.98);
+          border-color: #FF725F;
+        }
+        .bb-opt-icon {
+          font-size: 26px;
+          background: #FFF5DF;
+          width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 14px;
+          flex-shrink: 0;
+        }
+        .bb-ocr-opt-btn strong {
+          display: block;
+          font-size: 14.5px;
+          color: #261818;
+          margin-bottom: 2px;
+        }
+        .bb-ocr-opt-btn small {
+          display: block;
+          font-size: 12px;
+          color: #75615C;
+          font-weight: 600;
+        }
+
+        /* Sample Bills Section */
+        .bb-samples-box {
+          background: #FFF5DF;
+          border: 1.5px dashed #F0DFCF;
+          border-radius: 18px;
+          padding: 12px 14px;
+        }
+        .bb-samples-title {
+          font-size: 12px;
+          font-weight: 800;
+          color: #5A302B;
+          margin-bottom: 8px;
+        }
+        .bb-samples-pills {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+        .bb-sample-chip {
+          background: #FFFDF8;
+          border: 1px solid #F0DFCF;
+          border-radius: 12px;
+          padding: 8px 10px;
+          font-size: 11.5px;
+          font-weight: 800;
+          color: #261818;
+          cursor: pointer;
+          text-align: left;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .bb-sample-chip:hover {
+          border-color: #FF725F;
+        }
+
+        /* Progress Bar */
+        .bb-progress-bar-wrap {
+          width: 100%;
+          background: #FFF5DF;
+          height: 8px;
+          border-radius: 6px;
+          overflow: hidden;
+          margin: 10px 0;
+          border: 1px solid #F0DFCF;
+        }
+        .bb-progress-bar {
+          height: 100%;
+          width: 10%;
+          background: linear-gradient(90deg, #FF725F, #25D366);
+          border-radius: 6px;
+          transition: width 0.2s ease;
         }
 
         /* Pulse Rings */
@@ -868,21 +1151,21 @@
           position: relative;
           width: 90px;
           height: 90px;
-          margin: 20px auto 14px;
+          margin: 18px auto 12px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .bb-mic-pulse-circle {
-          width: 68px;
-          height: 68px;
+          width: 66px;
+          height: 66px;
           border-radius: 50%;
           background: linear-gradient(135deg, #FF725F, #E8594B);
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 32px;
+          font-size: 30px;
           z-index: 2;
           box-shadow: 0 8px 20px rgba(255,114,95,0.4);
         }
@@ -914,20 +1197,20 @@
         }
 
         /* OCR Loader */
-        .bb-ocr-loader { text-align: center; padding: 30px 10px; }
+        .bb-ocr-loader { text-align: center; padding: 25px 10px; }
         .bb-spinner {
-          width: 42px;
-          height: 42px;
+          width: 40px;
+          height: 40px;
           border: 3.5px solid #F0DFCF;
           border-top-color: #FF725F;
           border-radius: 50%;
-          margin: 0 auto 14px;
+          margin: 0 auto 12px;
           animation: bbSpin 0.8s linear infinite;
         }
         @keyframes bbSpin { to { transform: rotate(360deg); } }
 
         /* Result Stage */
-        .bb-result-tag-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+        .bb-result-tag-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
         .bb-pill {
           padding: 6px 14px;
           border-radius: 20px;
@@ -1024,17 +1307,15 @@
           .bb-grid-inputs { grid-template-columns: 1fr; }
           .bb-sheet-actions { grid-template-columns: 1fr; }
           .bb-fab-label { display: none; }
-          .bb-fab-mic { padding: 12px; border-radius: 50%; }
+          .bb-fab-mic { padding: 11px; border-radius: 50%; }
         }
       `;
       document.head.appendChild(s);
     }
   };
 
-  // Expose globally
   window.bbVoiceAssistant = VoiceAssistant;
 
-  // Auto initialize on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => VoiceAssistant.init());
   } else {
