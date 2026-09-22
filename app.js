@@ -616,10 +616,19 @@ function viewHome(){
       </div>
     </button>
 
-    <button class="input-pill" onclick="navigate('vasooli')">
-      <span>Naam, number ya sirf tone se reminder banao...</span>
-      <div class="mic-btn">→</div>
-    </button>
+    <div class="input-pill" onclick="window.bbVoiceAssistant ? window.bbVoiceAssistant.startVoice() : navigate('vasooli')" style="cursor:pointer;">
+      <span>🎙️ "Ravi se 500 lena hai" bolein ya number...</span>
+      <div class="mic-btn" style="background:var(--coral);color:#fff;font-size:16px;">🎙️</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:-6px; margin-bottom:12px;">
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
+        <span>🎙️ Bolkar Likho</span>
+      </button>
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
+        <span>📷 Bill / Parchi Scan</span>
+      </button>
+    </div>
 
     <div class="mini-stats">
       <div><b>${pendingCount}</b><span>Pending</span></div>
@@ -1913,6 +1922,15 @@ function viewKhata(){
     <div style="position:relative;margin-bottom:4px;">
       <input type="text" id="khata-search-input" placeholder="🔍 Search naam, phone ya note se..." value="${escapeHtml(state.khataSearch || '')}" oninput="setKhataSearch(this.value)" style="width:100%;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid #FFD4C4;background:#fff;font-size:0.9rem;font-weight:600;box-sizing:border-box;" />
       ${state.khataSearch ? `<button onclick="setKhataSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#999;font-size:16px;cursor:pointer;">&times;</button>` : ''}
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:10px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 3px 10px rgba(65,35,25,0.04);">
+        <span>🎙️ Bolkar Add Karein</span>
+      </button>
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:10px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 3px 10px rgba(65,35,25,0.04);">
+        <span>📷 Parchi Scan Karein</span>
+      </button>
     </div>
 
     <div class="quick-add-box">
