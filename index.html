@@ -429,56 +429,54 @@
 
 <!-- Clean Premium Menu Drawer -->
 <div id="overlay" class="overlay" onclick="closeMenu()"></div>
-<div id="drawer" class="drawer">
-  <div class="drawer-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1.5px solid #F0DFCF;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span style="font-size:1.4rem;">🪙</span>
-      <span class="logo-text" style="font-weight:900; font-size:1.15rem; color:#261818;">BaatBanao</span>
-    </div>
-    <button class="icon-btn" onclick="closeMenu()" style="background:#FFF0E6; border:none; width:32px; height:32px; border-radius:50%; font-size:16px; color:#FF725F; cursor:pointer;">✕</button>
+<nav id="drawer" class="drawer" aria-label="Main menu" aria-hidden="true">
+  <div class="drawer-header">
+    <a href="#home" class="drawer-brand" onclick="closeMenu()"><span aria-hidden="true">🪙</span><span class="logo-text">BaatBanao</span></a>
+    <button class="drawer-close" type="button" onclick="closeMenu()" aria-label="Menu band karein">✕</button>
   </div>
 
-  <div style="padding:12px 14px; overflow-y:auto; max-height:calc(100vh - 120px);">
-    
-    <!-- Core Tools Group -->
-    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#9D8781; letter-spacing:0.5px; padding:6px 12px 4px;">Main Features</div>
-    <div class="drawer-link" onclick="navigate('home');closeMenu()">🏠 Home</div>
-    <div class="drawer-link" onclick="navigate('vasooli');closeMenu()">⚡ Vasooli Reminder</div>
-    <div class="drawer-link" onclick="navigate('khata');closeMenu()">📒 Udhaar Khata</div>
-    <div class="drawer-link" onclick="navigate('bulk');closeMenu()">🚀 Bulk Queue</div>
-    <div class="drawer-link" onclick="navigate('billing');closeMenu()">🧾 Offline Billing</div>
+  <div class="drawer-body">
+    <div class="drawer-group">Main Features</div>
+    <a class="drawer-link" href="#home" onclick="closeMenu()"><span>🏠</span> Home</a>
+    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Vasooli Reminder</a>
+    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Udhaar Khata</a>
+    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Ek Hisaab (Roz ka)</a>
+    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Offline Billing</a>
+    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Bulk Queue</a>
 
-    <div style="height:1px; background:#F0DFCF; margin:10px 8px;"></div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-group">Utilities</div>
+    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Smart Templates</a>
+    <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Reminder History</a>
+    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> UPI Pay Link Generator</a>
+    <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> Install App</div>
 
-    <!-- Quick Utilities -->
-    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#9D8781; letter-spacing:0.5px; padding:6px 12px 4px;">Utilities</div>
-    <div class="drawer-link" onclick="navigate('templates');closeMenu()">🧩 Smart Templates</div>
-    <div class="drawer-link" onclick="navigate('history');closeMenu()">🕒 Reminder History</div>
-    <div class="drawer-link bb-install-menu-item" data-bb-install-trigger onclick="closeMenu()">📲 Install App</div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-group">Message Guides</div>
+    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Dost se paise wapas</a>
+    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Dukaan udhaar reminder</a>
+    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Rent reminder</a>
+    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Freelancer payment</a>
+    <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Bhojpuri message</a>
 
-    <div style="height:1px; background:#F0DFCF; margin:10px 8px;"></div>
-
-    <!-- Help & Support -->
-    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#9D8781; letter-spacing:0.5px; padding:6px 12px 4px;">Help & Support</div>
-    <a class="drawer-link" href="https://wa.me/919918996096?text=Namaste!%20Mujhe%20BaatBanao%20par%20help%20chahiye" target="_blank" rel="noopener" style="background:#EAF8F0; color:#087A43; font-weight:800; border-radius:12px; margin-bottom:6px; text-decoration:none; display:flex; justify-content:space-between; align-items:center;">
-      <span style="display:flex; align-items:center; gap:8px;">
-        <span>💬</span> WhatsApp Help (24x7)
-      </span>
-      <span style="font-size:11px; background:#25D366; color:#fff; padding:2px 8px; border-radius:10px; font-weight:800;">Chat</span>
+    <div class="drawer-sep"></div>
+    <div class="drawer-group">Help &amp; Support</div>
+    <a class="drawer-link drawer-wa" href="https://wa.me/919918996096?text=Namaste!%20Mujhe%20BaatBanao%20par%20help%20chahiye" target="_blank" rel="noopener">
+      <span class="drawer-wa-label"><span>💬</span> WhatsApp Help</span><span class="drawer-chip">Chat</span>
     </a>
 
-    <!-- Help & Settings Group -->
-    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#9D8781; letter-spacing:0.5px; padding:6px 12px 4px;">Preferences & Legal</div>
-    <div class="drawer-link" onclick="navigate('settings');closeMenu()">⚙️ Settings</div>
-    <div class="drawer-link" onclick="shareApp();closeMenu()">🔗 Share App</div>
-    <div class="drawer-link" onclick="location.href='/privacy';">🔒 Privacy Policy</div>
-    <div class="drawer-link" onclick="location.href='/about';">ℹ️ About Us</div>
+    <div class="drawer-sep"></div>
+    <div class="drawer-group">Preferences &amp; Legal</div>
+    <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Settings &amp; Backup</a>
+    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> Share App</div>
+    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy Policy</a>
+    <a class="drawer-link" href="/terms"><span>📜</span> Terms</a>
+    <a class="drawer-link" href="/about"><span>ℹ️</span> About Us</a>
+    <a class="drawer-link" href="/contact"><span>✉️</span> Contact</a>
   </div>
 
-  <div class="drawer-footer" style="padding:12px 20px; font-size:0.75rem; color:#9D8781; text-align:center; border-top:1px solid #F0DFCF;">
-    Made with ❤️ in India 🇮🇳 · Local-first khata
-  </div>
-</div>
+  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Local-first khata</div>
+</nav>
 
 <!-- Toast -->
 <div id="toast"></div>

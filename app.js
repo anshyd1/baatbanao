@@ -632,7 +632,7 @@ function viewHome(){
 
     <div class="mini-stats">
       <div><b>${pendingCount}</b><span>Pending</span></div>
-      <div><b>${pendingTotal ? fmtMoney(pendingTotal) : 'No amount'}</b><span>Total</span></div>
+      <div><b>${fmtMoney(pendingTotal || 0)}</b><span>Total</span></div>
     </div>
 
     <div class="features-grid">
@@ -832,6 +832,10 @@ function viewVasooli(){
   `;
 }
 
+// Safe for use inside onclick="fn('...')": encodes ' ( ) ! * that encodeURIComponent leaves raw.
+function encArg(str){
+  return encodeURIComponent(String(str == null ? '' : str)).replace(/[!'()*]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+}
 function escapeHtml(str){
   if(str===undefined || str===null) return '';
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -979,8 +983,8 @@ function showUpiQr(data={}){
         ${escapeHtml(amountText)}
       </div>
       <div class="btn-row" style="margin-top:14px;">
-        <button class="ghost-btn copy" onclick="copyUpiLink('${encodeURIComponent(upiLink)}')">Copy Link</button>
-        <button class="ghost-btn" onclick="shareUpiQr('${encodeURIComponent(upiLink)}','${encodeURIComponent(getSavedUpiName())}','${encodeURIComponent(amountText)}')">Share QR</button>
+        <button class="ghost-btn copy" onclick="copyUpiLink('${encArg(upiLink)}')">Copy Link</button>
+        <button class="ghost-btn" onclick="shareUpiQr('${encArg(upiLink)}','${encArg(getSavedUpiName())}','${encArg(amountText)}')">Share QR</button>
         <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI</button>
       </div>
       <small class="field-hint" style="display:block;margin-top:10px;">QR share karo ya UPI ID copy karke bhejo. WhatsApp message mein long link nahi bheja jayega.</small>
@@ -2232,8 +2236,30 @@ const BB_UPI_ID = 'ansh.y@ptyes';
 const BB_ADMIN_WHATSAPP = '919918996096';
 
 function isBBPro(){
-  return localStorage.getItem(BB_PRO_KEY) === '1';
+  if (localStorage.getItem(BB_PRO_KEY) !== '1') return false;
+  // A real unlock always stores the server-signed receipt (43 chars).
+  return /^[A-Za-z0-9_-]{43}$/.test(localStorage.getItem('bb_pro_receipt') || '');
 }
+
+function bbRevokePro(){
+  ['bb_pro_receipt','bb_pro_phone',BB_PRO_PLAN_KEY].forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem(BB_PRO_KEY);
+}
+
+// Background re-check with server (only when online; never blocks the UI).
+async function bbVerifyProReceipt(){
+  if (localStorage.getItem(BB_PRO_KEY) !== '1') return;
+  if (!isBBPro()) { bbRevokePro(); return; }
+  const phone = localStorage.getItem('bb_pro_phone');
+  const plan = localStorage.getItem(BB_PRO_PLAN_KEY) || 'pro';
+  if (!phone || !navigator.onLine) return; // older unlocks (before phone was saved) are grandfathered
+  try {
+    const res = await fetch('/api/verify', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, plan, receipt: localStorage.getItem('bb_pro_receipt') })});
+    if (res.status === 401 || res.status === 400) { bbRevokePro(); if (typeof renderApp === 'function') renderApp(); }
+  } catch(e) { /* offline / network — try again next launch */ }
+}
+setTimeout(bbVerifyProReceipt, 3000);
 
 function bbSimpleHash(str){
   let hash = 0;
@@ -2359,7 +2385,7 @@ async function bbRedeemCode(){
   const code = document.getElementById('bb-code-input').value.trim().toUpperCase();
   const msgEl = document.getElementById('bb-redeem-msg');
   if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
-  if (!/^[A-Z0-9]{10}$/.test(code)){ msgEl.textContent = '⚠️ 10-character activation code daalo.'; msgEl.style.color = '#C0392B'; return; }
+  if (!/^[A-Z0-9_-]{10}$/.test(code)){ msgEl.textContent = '⚠️ 10-character activation code daalo.'; msgEl.style.color = '#C0392B'; return; }
   msgEl.textContent = 'Code verify ho raha hai…';
   try {
     const res = await fetch('/api/redeem', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone, plan:bbSelectedPlan, code})});
@@ -2368,7 +2394,8 @@ async function bbRedeemCode(){
     bbTrack('pro_unlock_success', { plan: bbSelectedPlan });
     localStorage.setItem(BB_PRO_KEY, '1');
     localStorage.setItem(BB_PRO_PLAN_KEY, bbSelectedPlan);
-    localStorage.setItem('bb_pro_receipt', data.receipt || 'verified');
+    localStorage.setItem('bb_pro_receipt', data.receipt || '');
+    localStorage.setItem('bb_pro_phone', phone);
     msgEl.textContent = '🎉 BaatBanao Pro unlock ho gaya!'; msgEl.style.color = '#247C32';
     setTimeout(()=> navigate('profile'), 1400);
   } catch(e) {
@@ -2398,7 +2425,7 @@ function viewPay(){
         <span style="color:var(--pending-text);">${escapeHtml(amountText)}</span>
       </div>
       <div class="btn-row" style="width:100%;">
-        <button class="ghost-btn copy" onclick="copyUpiLink('${encodeURIComponent(upiLink)}')">Copy UPI Link</button>
+        <button class="ghost-btn copy" onclick="copyUpiLink('${encArg(upiLink)}')">Copy UPI Link</button>
         <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI App</button>
       </div>
       <div class="safety-banner" style="text-align:left;">Agar Open UPI kaam na kare toh QR scan karein ya UPI ID copy karein.</div>
@@ -2543,11 +2570,27 @@ function clearAllData(){
    =========================================================== */
 function openMenu(){
   document.getElementById('overlay').classList.add('show');
-  document.getElementById('drawer').classList.add('show');
+  const d = document.getElementById('drawer');
+  d.classList.add('show'); d.setAttribute('aria-hidden','false');
+  document.body.classList.add('menu-open');
 }
 function closeMenu(){
   document.getElementById('overlay').classList.remove('show');
-  document.getElementById('drawer').classList.remove('show');
+  const d = document.getElementById('drawer');
+  d.classList.remove('show'); d.setAttribute('aria-hidden','true');
+  document.body.classList.remove('menu-open');
+}
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMenu(); });
+
+function shareApp(){
+  const url = 'https://www.baatbanao.shop/?utm_source=share&utm_medium=app';
+  const text = 'Udhaar/payment ka polite WhatsApp reminder 5 second me banao — free, bina login: ';
+  bbTrack('share_app', {});
+  if(navigator.share){
+    navigator.share({ title:'BaatBanao', text, url }).catch(()=>{});
+  } else {
+    window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(text + url), '_blank', 'noopener');
+  }
 }
 
 /* ===========================================================
@@ -2632,6 +2675,23 @@ function renderApp(){
 function initApp() {
   state.route = getHashRoute();
   renderApp();
+  setTimeout(bbDataSafety, 5000);
+}
+
+/* Data safety: ask browser not to evict localStorage + gentle weekly backup nudge */
+function bbDataSafety(){
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); } catch(e){}
+  try {
+    const invoices = JSON.parse(localStorage.getItem('bb_invoices_v1') || '[]');
+    const hasData = (state.khata && state.khata.length) || (Array.isArray(invoices) && invoices.length);
+    if (!hasData) return;
+    const last = Date.parse(localStorage.getItem('bb_last_backup') || '') || 0;
+    const nudged = localStorage.getItem('bb_backup_nudge_date');
+    if (Date.now() - last > 7*864e5 && nudged !== todayISO()){
+      localStorage.setItem('bb_backup_nudge_date', todayISO());
+      showToast('💾 Hafte ka backup le lijiye — Menu → Settings & Backup');
+    }
+  } catch(e){}
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initApp);

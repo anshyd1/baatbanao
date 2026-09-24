@@ -35,8 +35,27 @@
     if(el) el.remove();
   }
   function showBanner(){
-    // Disabled to prevent blocking mobile CTAs and lower bounce rate
-    return;
+    // Compact, non-blocking consent chip (shown after a short delay so first CTA stays free).
+    if(seen() || document.getElementById(ID)) return;
+    setTimeout(function(){
+      if(seen() || document.getElementById(ID)) return;
+      var inApp = !!document.querySelector('.bottom-nav');
+      var el = document.createElement('div');
+      el.id = ID;
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-label', 'Cookie consent');
+      el.style.cssText = 'position:fixed;left:10px;right:10px;bottom:' + (inApp ? '86px' : '12px') + ';z-index:100050;max-width:460px;margin:0 auto;background:#2b2420;color:#fff;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;font:600 12.5px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25)';
+      el.innerHTML = '<span style="flex:1">Hum analytics cookies se app behtar banate hain. <a href="/privacy" style="color:#ffc7bd">Privacy</a></span>' +
+        '<button type="button" data-v="rejected" style="border:0;background:transparent;color:#d9cfc8;font:700 12.5px inherit;padding:8px 6px;cursor:pointer">Nahi</button>' +
+        '<button type="button" data-v="accepted" style="border:0;background:#FF6B57;color:#fff;font:800 12.5px inherit;padding:8px 14px;border-radius:10px;cursor:pointer">OK</button>';
+      el.addEventListener('click', function(e){
+        var b = e.target.closest('button[data-v]');
+        if(!b) return;
+        markSeen(b.getAttribute('data-v'));
+        closeBanner();
+      });
+      document.body.appendChild(el);
+    }, 4000);
   }
 
   // expose for debug / QA

@@ -22,3 +22,7 @@ build/
 # warna koi bhi user isko /ADMIN_redeem_code_tool.html khol ke unlock codes generate kar payega.
 ADMIN_redeem_code_tool.html
 ADMIN_*.html
+
+# Never commit Google service-account keys
+*-service-account*.json
+myautomation-*.json

@@ -60,4 +60,3 @@ Allow: /
 # Sitemaps & LLM Context Documents
 # ------------------------------------------------------------------------------
 Sitemap: https://www.baatbanao.shop/sitemap.xml
-Sitemap: https://www.baatbanao.shop/llms.txt

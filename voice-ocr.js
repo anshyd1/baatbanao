@@ -580,18 +580,26 @@
       if (!container) return;
       const msgs = this.generateMessageOptions(entry);
 
-      container.innerHTML = msgs.map((m) => `
+      const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      container.innerHTML = msgs.map((m, i) => `
         <div class="bb-msg-card">
           <div class="bb-msg-card-head">
-            <span class="bb-msg-tone">${m.tone}</span>
-            <button class="bb-msg-copy-btn" onclick="bbVoiceAssistant.copyMessage('${encodeURIComponent(m.text)}')">Copy</button>
+            <span class="bb-msg-tone">${esc(m.tone)}</span>
+            <button type="button" class="bb-msg-copy-btn" data-i="${i}">Copy</button>
           </div>
-          <div class="bb-msg-text">${m.text}</div>
-          <button class="bb-msg-wa-btn" onclick="bbVoiceAssistant.sendWhatsAppDirect('${encodeURIComponent(m.text)}')">
+          <div class="bb-msg-text">${esc(m.text)}</div>
+          <button type="button" class="bb-msg-wa-btn" data-i="${i}">
             <span>💬 WhatsApp par Bhejo</span>
           </button>
         </div>
       `).join('');
+      // Bind via JS (no inline strings) so names like "D'Souza" never break the buttons.
+      container.querySelectorAll('.bb-msg-copy-btn').forEach((b) => {
+        b.onclick = () => this.copyMessage(encodeURIComponent(msgs[+b.dataset.i].text));
+      });
+      container.querySelectorAll('.bb-msg-wa-btn').forEach((b) => {
+        b.onclick = () => this.sendWhatsAppDirect(encodeURIComponent(msgs[+b.dataset.i].text));
+      });
     },
 
     sendWhatsAppDirect(encodedText) {
@@ -818,6 +826,9 @@
         const optimizedBlob = await this.preprocessImage(fileOrBlob);
 
         // 2. Load Tesseract.js (v5)
+        if (!window.Tesseract && !navigator.onLine) {
+          throw new Error('OFFLINE_OCR');
+        }
         if (!window.Tesseract) {
           statusText.textContent = 'OCR Engine load ho raha hai...';
           progressBar.style.width = '30%';
@@ -858,7 +869,11 @@
 
       } catch (err) {
         console.error('OCR Error:', err);
-        alert('OCR scan me dikkat aayi. Kripya manual entry karein.');
+        const offline = (err && err.message === 'OFFLINE_OCR') || !navigator.onLine;
+        const msg = offline
+          ? '📶 Bill scan ke liye pehli baar internet chahiye. Abhi manual entry kar lijiye.'
+          : 'OCR scan me dikkat aayi. Kripya manual entry karein.';
+        if (typeof window.showToast === 'function') window.showToast(msg); else alert(msg);
         this.skipOcrToManual();
       }
     },

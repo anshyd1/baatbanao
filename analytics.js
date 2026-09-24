@@ -15,19 +15,20 @@
   function hasOldSeen(){
     try { return localStorage.getItem(OLD_KEY) === '1'; } catch(e){ return false; }
   }
-  function shouldLoadGA(){
-    // if requireConsent is explicitly false, always load (legacy override)
+  function consentGranted(){
     if(config.requireConsent === false) return true;
     var c = getConsentValue();
     if(c === 'accepted') return true;
     if(c === 'rejected') return false;
-    // migrate old banner OK -> accepted for existing users
     if(c === null && hasOldSeen()){
       try { localStorage.setItem(CONSENT_KEY, 'accepted'); } catch(e){}
       return true;
     }
-    return false; // no decision yet -> wait
+    return false;
   }
+  // Consent Mode v2: GA always loads, but without cookies until user accepts.
+  // Cookieless pings keep basic traffic counts alive (earlier: no consent => zero tracking).
+  function shouldLoadGA(){ return true; }
 
   function ensureDataLayer(){
     window.dataLayer = window.dataLayer || [];
@@ -129,6 +130,13 @@
     if(!shouldLoadGA()) return; // wait for consent
     scriptLoaded = true;
     ensureDataLayer();
+    var granted = consentGranted();
+    window.gtag('consent', 'default', {
+      analytics_storage: granted ? 'granted' : 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
+    });
     window.gtag('js', new Date());
     window.gtag('config', GA_ID, {
       send_page_view: false,
@@ -151,7 +159,7 @@
         measurementId: GA_ID || null,
         gtagLoaded: !!window.gtag,
         consent: getConsentValue(),
-        shouldLoad: shouldLoadGA()
+        consentGranted: consentGranted()
       };
     },
     pageview: sendPageView,
@@ -164,10 +172,14 @@
     return;
   }
 
-  // consent listeners — load GA only after Accept
-  window.addEventListener('bb-consent-accepted', function(){ tryLoadGA(); });
+  function updateConsent(granted){
+    if(typeof window.gtag !== 'function') return;
+    window.gtag('consent', 'update', { analytics_storage: granted ? 'granted' : 'denied' });
+  }
+  window.addEventListener('bb-consent-accepted', function(){ tryLoadGA(); updateConsent(true); });
+  window.addEventListener('bb-consent-rejected', function(){ updateConsent(false); });
   window.addEventListener('storage', function(e){
-    if(e && e.key === CONSENT_KEY && e.newValue === 'accepted') tryLoadGA();
+    if(e && e.key === CONSENT_KEY) updateConsent(e.newValue === 'accepted');
   });
 
   if(document.readyState === 'loading') {

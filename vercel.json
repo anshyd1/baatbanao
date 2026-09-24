@@ -131,6 +131,17 @@
   ],
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "baatbanao.vercel.app"
+        }
+      ],
+      "destination": "https://www.baatbanao.shop/:path*",
+      "permanent": true
+    },
+    {
       "source": "/index.html",
       "destination": "/",
       "permanent": true

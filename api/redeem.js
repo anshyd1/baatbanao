@@ -12,7 +12,7 @@ module.exports = (req, res) => {
   const secret = process.env.BB_REDEEM_SECRET;
   if (!secret || secret.length < 32) return res.status(503).json({ valid:false, error:'Activation is not configured' });
   const { phone='', plan='', code='' } = req.body || {};
-  if (!/^\d{10}$/.test(phone) || !/^[a-z0-9_-]{1,24}$/i.test(plan) || !/^[A-Z0-9]{10}$/.test(code))
+  if (!/^\d{10}$/.test(phone) || !/^[a-z0-9_-]{1,24}$/i.test(plan) || !/^[A-Z0-9_-]{10}$/.test(code))
     return res.status(400).json({ valid:false, error:'Invalid input' });
   const wanted = expectedCode(phone, plan, secret);
   const valid = crypto.timingSafeEqual(Buffer.from(wanted), Buffer.from(code));

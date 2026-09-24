@@ -1,6 +1,6 @@
 # BaatBanao (https://www.baatbanao.shop)
 
-> BaatBanao is an AI-assisted WhatsApp payment reminder and debt recovery utility tailored for India. It enables individuals, freelancers, landlords, tutors, and small shopkeepers to generate culturally nuanced, polite, funny, or professional payment reminder messages in Hinglish, Hindi, Bhojpuri, and English, paired with auto-generated instant UPI payment links and QR codes.
+> BaatBanao is a smart-template WhatsApp payment reminder and debt recovery utility tailored for India. It enables individuals, freelancers, landlords, tutors, and small shopkeepers to generate culturally nuanced, polite, funny, or professional payment reminder messages in Hinglish, Hindi, Bhojpuri, and English, paired with auto-generated instant UPI payment links and QR codes.
 
 ## Core Capabilities & Features
 - **Vasooli Mode**: 1-tap WhatsApp payment reminder message generator with tone control (Polite, Friendly, Professional, Funny/Shayari, Savage Safe).

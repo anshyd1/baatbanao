@@ -523,21 +523,47 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 .toggle .knob{ position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 2px 4px rgba(0,0,0,0.2); }
 .toggle.on .knob{ left:21px; }
 
-/* Menu drawer */
-.overlay{ position:fixed; top:0; right:0; bottom:0; left:0; inset:0; background:rgba(38,24,24,0.45); z-index:40; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+/* Menu drawer — sits above floating mic/camera buttons (z 990) */
+.overlay{ position:fixed; inset:0; background:rgba(38,24,24,0.45); z-index:1000; opacity:0; pointer-events:none; transition:opacity .2s ease; }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .drawer{
-  position:fixed; top:0; left:-300px; width:280px; height:100%; background:var(--bg-primary);
-  z-index:50; transition:left .25s ease; display:flex; flex-direction:column; padding:20px 18px;
+  position:fixed; top:0; bottom:0; left:0; width:min(84vw,300px); height:100%; height:100dvh; background:var(--bg-primary);
+  z-index:1001; transform:translateX(-105%); visibility:hidden; transition:transform .25s ease, visibility 0s linear .25s;
+  display:flex; flex-direction:column; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
   box-shadow:8px 0 30px rgba(0,0,0,0.15);
 }
-.drawer.show{ left:0; }
-.drawer-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-.drawer-link{ padding:13px 10px; border-radius:12px; font-weight:700; font-size:14px; color:var(--text-main); cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
-.drawer-link:active{ background:rgba(72,42,33,0.06); }
+.drawer.show{ transform:none; visibility:visible; transition:transform .25s ease; }
+body.menu-open{ overflow:hidden; }
+body.menu-open .bb-fab-group, body.menu-open #bb-cookie-banner{ display:none !important; }
+.drawer-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 16px 14px 20px; border-bottom:1.5px solid #F0DFCF; flex-shrink:0; }
+.drawer-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; font-size:1.3rem; }
+.drawer-brand .logo-text{ font-weight:900; font-size:1.12rem; color:#261818; }
+.drawer-close{ background:#FFF0E6; border:none; width:36px; height:36px; border-radius:50%; font-size:16px; color:#FF725F; cursor:pointer; }
+.drawer-body{ flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:8px 12px 12px; scrollbar-width:none; }
+.drawer-body::-webkit-scrollbar{ display:none; }
+.drawer-group{ font-size:0.7rem; font-weight:800; text-transform:uppercase; color:#9D8781; letter-spacing:0.5px; padding:10px 10px 4px; }
+.drawer-sep{ height:1px; background:#F0DFCF; margin:8px 6px; }
+.drawer-link{ padding:11px 10px; border-radius:12px; font-weight:700; font-size:14.5px; color:var(--text-main); cursor:pointer; display:flex; align-items:center; gap:10px; text-decoration:none; -webkit-tap-highlight-color:transparent; }
+.drawer-link > span:first-child{ width:22px; text-align:center; flex-shrink:0; }
+.drawer-link:active, .drawer-link:hover{ background:rgba(72,42,33,0.06); }
 .drawer-link.disabled{ color:var(--text-muted); }
 .drawer-link .badge{ font-size:10px; font-weight:800; background:var(--pending-bg); color:var(--pending-text); padding:2px 8px; border-radius:8px; }
-.drawer-footer{ margin-top:auto; text-align:center; font-size:12px; color:var(--text-muted); font-weight:700; padding-top:14px; }
+.drawer-wa{ background:#EAF8F0; color:#087A43; font-weight:800; justify-content:space-between; }
+.drawer-wa:hover{ background:#DDF3E7; }
+.drawer-wa-label{ display:flex; align-items:center; gap:10px; }
+.drawer-chip{ font-size:11px; background:#25D366; color:#fff; padding:2px 9px; border-radius:10px; font-weight:800; }
+.drawer-footer{ flex-shrink:0; text-align:center; font-size:12px; color:var(--text-muted); font-weight:700; padding:12px 20px; border-top:1px solid #F0DFCF; }
+
+/* Floating mic/camera: hide where page already has these actions or a sticky action bar */
+body[data-route="home"] .bb-fab-group,
+body[data-route="billing"] .bb-fab-group,
+body[data-route="invoice-new"] .bb-fab-group,
+body[data-route="khata-form"] .bb-fab-group,
+body[data-route="pay"] .bb-fab-group,
+body[data-route="pro"] .bb-fab-group{ display:none !important; }
+/* keep last content above the floating buttons on other routes */
+#content{ padding-bottom:max(24px, env(safe-area-inset-bottom)); }
+body:not([data-route="home"]) #content{ padding-bottom:84px; }
 
 /* Toast */
 #toast{
@@ -1176,3 +1202,14 @@ body[data-route="invoice-new"] .invoice-actions{bottom:0}body[data-route="invoic
 
 
 
+
+/* Mobile hero: keep text on the left so it never sits over the mascot coin */
+@media (max-width: 767px){
+  .hero-card-content{
+    width:66%;
+    background:linear-gradient(90deg, rgba(40,14,8,0.55) 0%, rgba(40,14,8,0.32) 70%, transparent 100%);
+    padding:18px 16px 18px 18px;
+  }
+  .hero-card-banner h2{ font-size:22px !important; line-height:1.2; }
+  .hero-card-banner p{ font-size:13px !important; }
+}

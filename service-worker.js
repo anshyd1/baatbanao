@@ -1,9 +1,9 @@
 /* ===========================================================
-   BaatBanao Service Worker v1.0.31
-   (v1.0.31: GA4 auto-load + cookie notice banner + cache refresh force)
+   BaatBanao Service Worker (version = CACHE_VERSION below)
+   v1.0.66: drawer/FAB fix, consent mode v2, voice card escaping, Pro verify
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.65';
+const CACHE_VERSION = 'baatbanao-v1.0.66';
 const CORE_ASSETS = [
   './',
   './index.html',
