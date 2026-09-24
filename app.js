@@ -21,7 +21,10 @@ function loadStore(key, fallback){
 }
 function saveStore(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
-let state = {
+// NOTE: `var` zaroori hai — `let` se top-level binding `window` property nahi banti,
+// jiski wajah se voice-ocr.js (window.state / window.persist) silently undefined padh raha tha
+// aur voice flow ka save/clear/remind dead ho gaya tha.
+var state = {
   khata: loadStore(STORE_KEYS.khata, []),
   history: loadStore(STORE_KEYS.history, []),
   settings: loadStore(STORE_KEYS.settings, {
@@ -2296,10 +2299,10 @@ function viewPro(){
       </p>
     </div>
 
-    <!-- VIP Tier Cards -->
+    <!-- VIP Tier Cards — FIX: false advertising hataya (Logo & Stamp exist nahi karta, GST Format incomplete hai) -->
     <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFD4C4;background:#FFF9F6;padding:16px;">
       <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">☕ Shagun & Chai Supporter</span><span class="amount" style="color:#247C32;font-weight:900;font-size:18px;">₹29</span></div>
-      <div class="meta" style="margin-top:6px;line-height:1.4;">Developer ko chai shagun + Profile par Gold VIP Supporter Badge + 15 Secret Savage Templates unlock!</div>
+      <div class="meta" style="margin-top:6px;line-height:1.4;">Developer ko chai shagun + Profile par Gold VIP Supporter Badge + Dil se thank you! 🙏<br/><small style="color:#8a7a72;">Tool 100% free rahega — ye optional support hai.</small></div>
       <button class="primary-btn" style="margin-top:12px;padding:12px;background:#FF725F;" onclick="bbSendTip(29)">₹29 Shagun Bhejo ☕</button>
     </div>
 
@@ -2307,17 +2310,17 @@ function viewPro(){
       <div style="background:#FF9900;color:#fff;font-size:10px;font-weight:900;display:inline-block;padding:2px 8px;border-radius:4px;margin-bottom:8px;text-transform:uppercase;">🔥 Most Popular</div>
       <div class="row-top"><span class="name" style="font-weight:800;font-size:16px;">👑 Pro Dukan & Freelancer Pass</span><span class="amount" style="color:#B45309;font-weight:900;font-size:20px;">₹99 <small style="font-size:11px;font-weight:600;">/ Lifetime</small></span></div>
       <div class="meta" style="margin-top:6px;line-height:1.4;">
-        ✓ Invoices & Slips se <b>Watermark permanently REMOVED</b><br/>
-        ✓ Bills par <b>Apna Shop/Brand Logo & Stamp</b><br/>
-        ✓ <b>Instant Dynamic Scannable UPI QR</b> on receipts<br/>
-        ✓ Unlimited Khata Customers
+        ✓ Invoices & Hisaab Parchi se <b>Watermark permanently REMOVED</b><br/>
+        ✓ <b>Unlimited Khata</b> + Bulk Reminder summary + CSV Export<br/>
+        ✓ <b>UPI QR</b> on receipts + Priority WhatsApp support<br/>
+        <small style="color:#8a7a72;">Note: Logo/Stamp & GST-compliant fields future update me aayenge.</small>
       </div>
       <button class="primary-btn" style="margin-top:12px;padding:13px;background:linear-gradient(90deg, #E67E22, #F39C12);font-weight:900;" onclick="bbSendTip(99)">₹99 Lifetime VIP Pass Le 👑</button>
     </div>
 
     <div class="list-card" style="margin-bottom:14px;border:1.5px solid #E2D9F3;background:#FAF8FF;padding:16px;">
       <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">🚀 Business Boss Pack</span><span class="amount" style="color:#6D45B8;font-weight:900;font-size:18px;">₹249</span></div>
-      <div class="meta" style="margin-top:6px;line-height:1.4;">Bulk Reminders via WhatsApp Web queue + Customer Ledger Excel/CSV Export + GST Format.</div>
+      <div class="meta" style="margin-top:6px;line-height:1.4;">Pro ke saare benefits + Future features (Logo/Stamp, Advanced Invoice) pe early access + Business shoutout.<br/><small style="color:#8a7a72;">Ye support pack hai — tool abhi bhi 100% free use kar sakte ho.</small></div>
       <button class="primary-btn" style="margin-top:12px;padding:12px;background:#6D45B8;" onclick="bbSendTip(249)">₹249 Business Pack 🚀</button>
     </div>
 
@@ -2348,10 +2351,22 @@ function bbStartPurchase(plan){
   bbSelectedPlan = plan;
   bbTrack('pro_checkout_start', { plan: plan });
   const step = document.getElementById('bb-pay-step');
+  if (!step) {
+    // FIX: checkout step ka DOM is build me maujood nahi hai, aur `step.style` null pe
+    // TypeError throw karta tha — Pro button poora dead ho jata tha.
+    // Ab gracefully UPI deep-link pe fall back karte hain (Pro CTA dikhawa ke liye rahega).
+    try {
+      if (typeof showToast === 'function') showToast('UPI app khul raha hai…');
+      window.location.href = bbBuildUpiLink(plan);
+    } catch (e) { /* UPI link banane me dikkat aaye to chupchap ignore */ }
+    return;
+  }
   step.style.display = 'block';
   step.scrollIntoView({behavior:'smooth'});
-  document.getElementById('bb-upi-btn').onclick = () => { window.location.href = bbBuildUpiLink(plan); };
-  document.getElementById('bb-wa-btn').onclick = () => { window.open(bbBuildWhatsAppScreenshotLink(plan), '_blank'); };
+  const upiBtn = document.getElementById('bb-upi-btn');
+  const waBtn = document.getElementById('bb-wa-btn');
+  if (upiBtn) upiBtn.onclick = () => { window.location.href = bbBuildUpiLink(plan); };
+  if (waBtn) waBtn.onclick = () => { window.open(bbBuildWhatsAppScreenshotLink(plan), '_blank'); };
 }
 
 async function bbRedeemCode(){
@@ -2535,6 +2550,18 @@ function clearAllData(){
   localStorage.removeItem(STORE_KEYS.history);
   localStorage.removeItem(STORE_KEYS.settings);
   localStorage.removeItem('bb_invoices_v1');
+  // FIX: upar ki 4 keys ke alawa bhi data bach raha tha (hisaab, pro unlock, daily counter).
+  // Ab saare app-owned keys clear karte hain — except consent choice (usay user ne chuna hai,
+  // dobara popup nahi dikhana chahiye) except jab user ne explicitly clear bola ho to wo bhi.
+  try {
+    const KEEP = ['bb_cookie_consent_v2', 'bb_cookie_notice_seen_v1'];
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.indexOf('bb_') === 0 || k.indexOf('BB_') === 0) && KEEP.indexOf(k) === -1) keys.push(k);
+    }
+    keys.forEach((k) => localStorage.removeItem(k));
+  } catch (e) { /* storage unavailable — ignore */ }
   location.reload();
 }
 

@@ -1,6 +1,8 @@
 /* ===========================================================
    BaatBanao Voice & OCR Assistant Module (v1.1.0)
-   100% Client-Side, Zero-Cost, Fast & Privacy-Safe
+   Client-Side Processing where possible, Zero-Cost, Fast
+   NOTE: Voice uses browser Web Speech API (may send audio to browser vendor service).
+   See privacy.html for details.
    Features:
    1. Voice-to-Khata & WhatsApp (Hindi & Hinglish Natural Speech)
    2. Number Input via Voice or Type with Khata Auto-Match
@@ -580,22 +582,58 @@
       if (!container) return;
       const msgs = this.generateMessageOptions(entry);
 
-      container.innerHTML = msgs.map((m) => `
-        <div class="bb-msg-card">
-          <div class="bb-msg-card-head">
-            <span class="bb-msg-tone">${m.tone}</span>
-            <button class="bb-msg-copy-btn" onclick="bbVoiceAssistant.copyMessage('${encodeURIComponent(m.text)}')">Copy</button>
-          </div>
-          <div class="bb-msg-text">${m.text}</div>
-          <button class="bb-msg-wa-btn" onclick="bbVoiceAssistant.sendWhatsAppDirect('${encodeURIComponent(m.text)}')">
-            <span>💬 WhatsApp par Bhejo</span>
-          </button>
-        </div>
-      `).join('');
+      // SECURITY FIX: pehle yahan template-string se `${m.text}` raw innerHTML me ja raha tha
+      // (stored XSS — kisi bhi naam/field me <img onerror=...> chal jata tha) aur onclick
+      // attribute me encodeURIComponent bhi single-quote escape nahi karta, to attribute
+      // injection bhi possible tha. Ab DOM nodes banate hain — textContent + addEventListener,
+      // koi HTML/JS string interpolation hi nahi.
+      container.textContent = '';
+      const frag = document.createDocumentFragment();
+
+      msgs.forEach((m) => {
+        const text = String((m && m.text != null) ? m.text : '');
+
+        const card = document.createElement('div');
+        card.className = 'bb-msg-card';
+
+        const head = document.createElement('div');
+        head.className = 'bb-msg-card-head';
+
+        const tone = document.createElement('span');
+        tone.className = 'bb-msg-tone';
+        tone.textContent = String((m && m.tone != null) ? m.tone : '');
+        head.appendChild(tone);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'bb-msg-copy-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.addEventListener('click', () => this.copyMessage(text));
+        head.appendChild(copyBtn);
+
+        const body = document.createElement('div');
+        body.className = 'bb-msg-text';
+        body.textContent = text;
+
+        const waBtn = document.createElement('button');
+        waBtn.type = 'button';
+        waBtn.className = 'bb-msg-wa-btn';
+        const waLabel = document.createElement('span');
+        waLabel.textContent = '\uD83D\uDCAC WhatsApp par Bhejo';
+        waBtn.appendChild(waLabel);
+        waBtn.addEventListener('click', () => this.sendWhatsAppDirect(text));
+
+        card.appendChild(head);
+        card.appendChild(body);
+        card.appendChild(waBtn);
+        frag.appendChild(card);
+      });
+
+      container.appendChild(frag);
     },
 
-    sendWhatsAppDirect(encodedText) {
-      const text = decodeURIComponent(encodedText);
+    sendWhatsAppDirect(text) {
+      text = String(text == null ? '' : text);
       const phone = document.getElementById('bb-edit-phone').value.trim();
       const amt = document.getElementById('bb-edit-amount').value.trim();
 
@@ -610,8 +648,8 @@
       }
     },
 
-    copyMessage(encodedText) {
-      const text = decodeURIComponent(encodedText);
+    copyMessage(text) {
+      text = String(text == null ? '' : text);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
           if (typeof window.showToast === 'function') window.showToast('Message copied! ✅');
@@ -897,7 +935,11 @@
             for (let j = m.length - 1; j >= 0; j--) {
               const rawNum = m[j].replace(/[^\d]/g, '');
               const val = parseInt(rawNum, 10);
-              if (val > 10 && val !== 2026 && (!phone || rawNum !== phone)) {
+              // FIX: pehle 2026 hardcoded tha — 2027 me toot jata. Ab current year + agle saal exclude karte hain,
+              // aur saath me invoice numbers (e.g. 2025) ko amount samajhne ka bug kam karte hain.
+              var _nowY = new Date().getFullYear();
+              var _isYearLike = val === _nowY || val === _nowY + 1 || val === _nowY - 1 || (val >= 2020 && val <= 2035 && String(val).length === 4);
+              if (val > 10 && !_isYearLike && (!phone || rawNum !== phone)) {
                 amount = val;
                 break;
               }
@@ -911,7 +953,11 @@
       if (!amount) {
         const allNums = text.match(/\b\d{2,6}\b/g);
         if (allNums) {
-          const valid = allNums.map(n => parseInt(n, 10)).filter(n => n > 20 && n !== 2026 && n !== parseInt(phone, 10));
+          var __nowY = new Date().getFullYear();
+          const valid = allNums.map(n => parseInt(n, 10)).filter(function(n){
+            var isYearLike = n === __nowY || n === __nowY + 1 || n === __nowY - 1 || (n >= 2020 && n <= 2035 && String(n).length === 4);
+            return n > 20 && !isYearLike && n !== parseInt(phone, 10);
+          });
           if (valid.length > 0) amount = Math.max(...valid);
         }
       }

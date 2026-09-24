@@ -13,9 +13,12 @@ This file lists the external APIs, integrations, deployment connections, and sen
   - `analytics.js`
   - `app.js`
   - `install.js`
-- Current behavior:
-  - loads directly without analytics consent gating
-  - site keeps only a cookie notice/banner
+- Current behavior (fixed Sep 2026):
+  - loads only after `bb_cookie_consent_v2 === 'accepted'` (see `analytics.js` `shouldLoadGA()`)
+  - listens to `bb-consent-accepted` event + `storage` event for cross-tab consent
+  - cookie banner (`cookie-banner.js`) re-enabled — bottom sheet, non-blocking, Accept/Reject
+  - GA4 `allow_google_signals: false` + `send_page_view: false` (manual page_view)
+  - AdSense readiness: for EEA/UK, a Google-certified CMP will be required (currently custom banner — must switch to Google Privacy & Messaging before AdSense)
 
 ### 2) Google Search Console API
 - Purpose: property access checks, sitemap status checks, and lightweight reporting

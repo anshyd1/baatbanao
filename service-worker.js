@@ -3,7 +3,7 @@
    (v1.0.31: GA4 auto-load + cookie notice banner + cache refresh force)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.65';
+const CACHE_VERSION = 'baatbanao-v1.0.66'; // Sep 24: P0/P1 hardening — XSS fix, var state, Pro fallback, dead assets delete, cookie banner re-enable, pricing sync
 const CORE_ASSETS = [
   './',
   './index.html',

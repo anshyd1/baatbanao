@@ -73,6 +73,9 @@ th{background:#f7f3ef}
 <li><b>Google AdSense</b> — ads dikhane ke liye, unki apni privacy policy lagti hai.</li>
 <li><b>Google Analytics (GA4)</b> — anonymous page-view tracking ke liye.</li>
 <li><b>Vercel</b> — website hosting (India ke bahar servers, par sirf website files, aapka data nahi).</li>
+<li><b>Voice Input (Web Speech API)</b> — jab aap mic use karte ho, browser (Chrome/Android) audio ko apne speech-to-text service ko bhej sakta hai transcription ke liye. Ye browser ka behavior hai, BaatBanao ka server audio receive/store nahi karta. Mic permission aap control karte ho — block kar sakte ho, tab voice feature kaam nahi karega.</li>
+<li><b>OCR (Tesseract.js via CDN)</b> — bill scan ke liye Tesseract library <code>cdn.jsdelivr.net</code> se load hoti hai. Image processing browser me hoti hai (server pe upload nahi), par library files CDN se aati hain — unki privacy policy / caching CDN provider ke mutabik hai.</li>
+<li><b>QR Code (api.qrserver.com / goqr.me)</b> — UPI QR banane ke liye encoded UPI string unki API ko bheji jaati hai (image generate karne ke liye). UPI ID aur amount isme shaamil ho sakta hai. QR content unke server pe ~30 second cache ho sakta hai, log nahi hota (unke privacy page ke mutabik).</li>
 </ul>
 <h2>Aapke rights</h2>
 <p>Aap kisi bhi waqt apne phone me site clear karke saara data delete kar sakte hain (browser storage clear karo). Koi account nahi hai, kisi server pe kuch nahi hai.</p>

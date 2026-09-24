@@ -7,7 +7,17 @@ function bbLoadInvoices(){
 function bbSaveInvoices(list){ localStorage.setItem(BB_INVOICE_KEY,JSON.stringify(list.slice(0,300))); }
 function bbInvoiceNumber(){
   const y=new Date().getFullYear(), list=bbLoadInvoices();
-  const n=Math.max(0,...list.map(x=>{const m=String(x.number||'').match(new RegExp(`^BB-${y}-(\\d+)$`));return m?Number(m[1]):0;}))+1;
+  // FIX: pehle max+1 se number reuse ho jata tha deletion ke baad.
+  // Ab last used counter localStorage me store karte hain — monotonic.
+  const COUNTER_KEY = 'bb_invoice_last_no_'+y;
+  let last = 0;
+  try { last = Number(localStorage.getItem(COUNTER_KEY)||0); } catch(e){}
+  const maxInList = Math.max(0,...list.map(x=>{
+    const m=String(x.number||'').match(new RegExp(`^BB-${y}-(\\d+)$`));
+    return m?Number(m[1]):0;
+  }));
+  const n = Math.max(last, maxInList) + 1;
+  try { localStorage.setItem(COUNTER_KEY, String(n)); } catch(e){}
   return `BB-${y}-${String(n).padStart(3,'0')}`;
 }
 function bbNewInvoiceDraft(){
@@ -86,7 +96,25 @@ function bbShowUndo(message,undoFn){
 }
 function bbDeleteInvoicePayment(id,pid){if(!confirm('Ye payment entry delete karein?'))return;const list=bbLoadInvoices(),snapshot=JSON.stringify(list),inv=list.find(x=>x.id===id);if(!inv)return;inv.payments=(inv.payments||[]).filter(p=>p.id!==pid);bbSaveInvoices(list);document.getElementById('invoice-payment-sheet')?.remove();renderApp();bbShowUndo('Payment entry delete hui',()=>{bbSaveInvoices(JSON.parse(snapshot));renderApp();});}
 function bbDeleteAllInvoices(){if(!confirm('Saare saved bills aur unki payment history permanently delete karein?'))return;if(!confirm('Final confirmation: all invoices delete?'))return;bbSaveInvoices([]);renderApp();showToast('Saare bills delete ho gaye');}
-function bbDuplicateInvoice(id){const x=bbLoadInvoices().find(v=>v.id===id);if(!x)return;state.invoiceDraft={...JSON.parse(JSON.stringify(x)),id:'inv-'+Date.now().toString(36),number:bbInvoiceNumber(),date:todayISO(),createdAt:Date.now()};document.getElementById('bb-invoice-sheet')?.remove();navigate('invoice-new');}
+function bbDuplicateInvoice(id){
+  const x=bbLoadInvoices().find(v=>v.id===id);
+  if(!x) return;
+  // FIX: pehle payments bhi deep-clone ho jaate the — duplicate invoice Paid dikhta tha.
+  // Ab payments reset karte hain, sirf items/buyer copy.
+  const clone = JSON.parse(JSON.stringify(x));
+  delete clone.payments;
+  state.invoiceDraft={
+    ...clone,
+    id:'inv-'+Date.now().toString(36),
+    number:bbInvoiceNumber(),
+    date:todayISO(),
+    dueDate:'',
+    createdAt:Date.now(),
+    updatedAt:Date.now()
+  };
+  document.getElementById('bb-invoice-sheet')?.remove();
+  navigate('invoice-new');
+}
 function bbDeleteInvoice(id){if(!confirm('Ye bill permanently delete karein?'))return;bbSaveInvoices(bbLoadInvoices().filter(v=>v.id!==id));document.getElementById('bb-invoice-sheet')?.remove();renderApp();showToast('Bill delete hua');}
 function bbPreviewInvoice(inv){
   if(!inv)return;window._bbPreviewInvoice=inv;const t=bbInvoiceTotals(inv), rows=(inv.items||[]).map(i=>`<tr><td>${escapeHtml(i.description||'Item')}</td><td>${bbMoney(i.qty)}</td><td>₹${bbMoney(Number(i.qty)*Number(i.rate))}</td></tr>`).join('');
