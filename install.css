@@ -35,7 +35,7 @@ body.bb-installed .bb-install-btn{ display:none !important; }
   background:#261818; color:#fff; padding:10px 12px 10px 16px; border-radius:14px;
   font-family:inherit; font-weight:700; font-size:13px;
   box-shadow:0 12px 24px rgba(0,0,0,0.28);
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:center; gap:10px; white-space:nowrap; max-width:calc(100vw - 24px);
   opacity:0; transition:opacity .25s ease, transform .25s ease;
   z-index:100100;
 }

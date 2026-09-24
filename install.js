@@ -92,6 +92,8 @@
 
   function promptSwUpdate(worker){
     if (document.getElementById('bb-update-banner')) return;
+    // Cookie chip isi jagah aata hai — update ke waqt use hata do (next visit par phir aayega)
+    const ck = document.getElementById('bb-cookie-banner'); if (ck) ck.remove();
     const b = document.createElement('div');
     b.id = 'bb-update-banner';
     b.className = 'bb-update-banner';
