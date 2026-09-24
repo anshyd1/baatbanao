@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '1.0.50';
+  const APP_VERSION = '1.0.66'; // bumped for P0/P1 hardening + drawer fix
 
   /* ---------- NUKE ALL EXISTING TOASTS ON LOAD ---------- */
   function nukeAllToasts(){
