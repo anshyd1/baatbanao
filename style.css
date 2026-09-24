@@ -534,7 +534,7 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 }
 .drawer.show{ transform:none; visibility:visible; transition:transform .25s ease; }
 body.menu-open{ overflow:hidden; }
-body.menu-open .bb-fab-group, body.menu-open #bb-cookie-banner{ display:none !important; }
+body.menu-open .bb-fab-group, body.menu-open #bb-cookie-banner, body.menu-open #bb-update-banner{ display:none !important; }
 .drawer-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 16px 14px 20px; border-bottom:1.5px solid #F0DFCF; flex-shrink:0; }
 .drawer-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; font-size:1.3rem; }
 .drawer-brand .logo-text{ font-weight:900; font-size:1.12rem; color:#261818; }

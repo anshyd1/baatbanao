@@ -1,9 +1,9 @@
 /* ===========================================================
    BaatBanao Service Worker (version = CACHE_VERSION below)
-   v1.0.66: drawer/FAB fix, consent mode v2, voice card escaping, Pro verify
+   v1.0.69: JS/CSS network-first + ?v= cache-busting (old CSS + new HTML mismatch fix)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.68';
+const CACHE_VERSION = 'baatbanao-v1.0.69';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -83,8 +83,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // JS/CSS: network-first so a new HTML never runs with old cached CSS/JS (menu toot jaata tha).
+  // Offline: cache fallback (query string ignore karke).
+  const isCode = req.destination === 'script' || req.destination === 'style' || /\.(js|css)$/.test(url.pathname);
+  if (isCode) {
+    event.respondWith(
+      fetch(req).then(res => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const clone = res.clone();
+          caches.open(CACHE_VERSION).then(c => c.put(req, clone));
+        }
+        return res;
+      }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || Response.error()))
+    );
+    return;
+  }
+
+  // Images/fonts etc: cache-first + background refresh
   event.respondWith(
-    caches.match(req).then((cached) => {
+    caches.match(req, { ignoreSearch: true }).then((cached) => {
       if (cached) {
         fetch(req).then(res => {
           if (res && res.status === 200 && res.type === 'basic') {
