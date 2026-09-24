@@ -66,6 +66,10 @@
           console.log('[BB] SW v' + APP_VERSION);
           reg.update().catch(()=>{});
           if (reg.waiting) promptSwUpdate(reg.waiting);
+          // Installed PWA memory me rehta hai; wapas khulne par bhi naya version check karo
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update().catch(()=>{});
+          });
           reg.addEventListener('updatefound', () => {
             const nw = reg.installing;
             if (!nw) return;

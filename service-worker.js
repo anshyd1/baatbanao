@@ -3,7 +3,7 @@
    v1.0.66: drawer/FAB fix, consent mode v2, voice card escaping, Pro verify
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.66';
+const CACHE_VERSION = 'baatbanao-v1.0.67';
 const CORE_ASSETS = [
   './',
   './index.html',

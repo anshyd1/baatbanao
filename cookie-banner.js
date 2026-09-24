@@ -37,8 +37,9 @@
   function showBanner(){
     // Compact, non-blocking consent chip (shown after a short delay so first CTA stays free).
     if(seen() || document.getElementById(ID)) return;
-    setTimeout(function(){
+    setTimeout(function tryShow(){
       if(seen() || document.getElementById(ID)) return;
+      if(document.getElementById('bb-update-banner')){ setTimeout(tryShow, 5000); return; }
       var inApp = !!document.querySelector('.bottom-nav');
       var el = document.createElement('div');
       el.id = ID;
