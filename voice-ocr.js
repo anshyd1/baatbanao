@@ -1002,10 +1002,11 @@
           position: fixed;
           bottom: 78px;
           right: 14px;
-          z-index: 990;
+          z-index: 30;
           display: flex;
           align-items: center;
           gap: 8px;
+          transition: opacity .2s ease, transform .2s ease;
         }
         .bb-fab-btn {
           border: none;
