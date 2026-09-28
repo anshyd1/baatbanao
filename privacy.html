@@ -49,12 +49,13 @@ th{background:#f7f3ef}
 <script defer src="/analytics-config.js"></script>
 <script defer src="/analytics.js"></script>
 <script defer src="/cookie-banner.js"></script>
+<link rel="stylesheet" href="/blog.css?v=3">
 </head>
 <body>
 <header class="hd"><span class="lg">🪙 BaatBanao</span><a class="cta" href="https://www.baatbanao.shop/#vasooli">Free Tool →</a></header>
 <main>
 <h1>Privacy Policy</h1>
-<p class="sub">Last updated: September 2026. Short + seedha, bina legal jargon ke.</p>
+<p class="sub">Last updated: 28 September 2026. Short + seedha, bina legal jargon ke.</p>
 <h2>Kya hum collect karte hain</h2>
 <ul>
 <li><b>Khata data (naam, amount, phone, message)</b> browser storage (localStorage) me save hota hai; BaatBanao ke database par upload nahi hota. Jab aap WhatsApp/UPI action use karte hain, selected details destination app ko ja sakti hain. QR banane ke liye encoded UPI payment details third-party QR service ko bheji ja sakti hain.</li>
@@ -70,18 +71,27 @@ th{background:#f7f3ef}
 </ul>
 <h2>Third-party services</h2>
 <ul>
-<li><b>Google AdSense</b> — ads dikhane ke liye, unki apni privacy policy lagti hai.</li>
-<li><b>Google Analytics (GA4)</b> — anonymous page-view tracking ke liye.</li>
-<li><b>Vercel</b> — website hosting (India ke bahar servers, par sirf website files, aapka data nahi).</li>
+<li><b>Google Analytics 4</b> — anonymous page-view / click counts. Consent Mode v2 ke saath: jab tak aap cookie notice par "OK" nahi dabate, analytics storage denied rehti hai. Naam, phone ya message content kabhi analytics me nahi jaata.</li>
+<li><b>Google AdSense (advertising)</b> — content/guide pages par ads dikh sakte hain. Google aur uske certified vendors cookies ya device identifiers (jaise advertising ID) use kar sakte hain taaki aapki is site aur doosri sites ki visits ke aadhar par ads dikhaye ja sakein. Aap personalised ads yahan band kar sakte hain: <a href="https://www.google.com/settings/ads" rel="noopener" target="_blank">Google Ads Settings</a>, aur third-party vendor cookies yahan opt-out kar sakte hain: <a href="https://www.aboutads.info/choices" rel="noopener" target="_blank">aboutads.info</a>. Google ka data use: <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">How Google uses information from partner sites</a>. EEA/UK users ko ads se pehle alag consent choice dikhegi.</li>
+<li><b>Vercel</b> — website hosting aur CDN. Sirf website files serve hoti hain; aapka khata data server par nahi jaata. Server logs me standard technical data (IP, user-agent) short time ke liye reh sakta hai.</li>
+<li><b>WhatsApp / UPI apps</b> — jab aap "WhatsApp par bhejo" ya "Open UPI app" dabate hain, wo message/payment details seedha us app ko jaati hain (WhatsApp, GPay, PhonePe, Paytm etc.) — unki apni privacy policies lagti hain.</li>
+<li><b>QR codes</b> — UPI QR aapke phone/browser me hi banta hai (local library); UPI details kisi QR server ko nahi bheji jaati.</li>
+<li><b>Bill/Parchi scan (OCR)</b> — photo aapke browser me hi process hoti hai (Tesseract.js). Library file ek public CDN se download hoti hai, lekin aapki photo upload nahi hoti.</li>
 </ul>
+<h2>Cookies aur consent</h2>
+<p>Pehli visit par ek chhota cookie notice dikhta hai. "OK" = analytics cookies allowed; "Nahi" = sirf zaroori (functional) storage. Aap kabhi bhi browser settings se cookies clear/block kar sakte hain — app phir bhi chalegi, kyunki khata data localStorage me hai (cookie nahi). Ads live hone par EEA/UK/CH visitors ko Google-certified consent message alag se dikhega.</p>
+<h2>Data retention aur delete</h2>
+<p>Khata, history, bills aur settings sirf aapke device par hain — jab tak aap delete nahi karte, wahin rehte hain. App me <b>Settings → Clear all app data</b> se ek tap me sab delete ho jaata hai. Backup file (JSON) aap khud download karte hain; hum uski copy nahi rakhte.</p>
 <h2>Aapke rights</h2>
 <p>Aap kisi bhi waqt apne phone me site clear karke saara data delete kar sakte hain (browser storage clear karo). Koi account nahi hai, kisi server pe kuch nahi hai.</p>
 <p>Sawaal? <a href="/contact">Contact page</a> se likho.</p>
 </main>
-<footer>
-<p>BaatBanao 🪙 — Paisa bhi wapas, rishta bhi safe.</p>
-<p><a href="/about">About</a>·<a href="/contact">Contact</a>·<a href="/privacy">Privacy</a>·<a href="/terms">Terms</a>·<a href="/disclaimer">Disclaimer</a></p>
-<p>© 2026 BaatBanao · Made in India 🇮🇳</p>
-</footer>
+
+<footer class="bb-foot"><div class="in">
+<div><div class="brand">🪙 BaatBanao</div><p>Free WhatsApp payment reminder + UPI link tool. Hinglish, Hindi, Bhojpuri aur English mein — paisa bhi wapas, rishta bhi safe. 100% client-side, koi login nahi.</p><p style="margin-top:8px"><a href="/" style="display:inline;color:#a53228;font-weight:800">Open the free tool →</a></p></div>
+<div><h4>Guides</h4><a href="/guides">All guides</a><a href="/dost-se-paise-wapas-message">Dost se paise wapas</a><a href="/kirayedaar-rent-reminder-message">Rent reminder</a><a href="/freelancer-payment-reminder-message">Freelancer payment</a><a href="/upi-payment-link-generator">UPI link generator</a><a href="/udhaar-khata-kaise-banaayein">Udhaar khata</a></div>
+<div><h4>BaatBanao</h4><a href="/about">About</a><a href="/author/ansh-yadav">Author</a><a href="/editorial-policy">Editorial policy</a><a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/disclaimer">Disclaimer</a></div>
+<div class="copy">© 2026 BaatBanao · Made in India 🇮🇳 · Content is general communication guidance, not legal or financial advice.</div>
+</div></footer>
 </body>
 </html>

@@ -36,6 +36,18 @@ python3 -m http.server 8080
 
 Then open `http://localhost:8080`.
 
+## SEO pages pipeline
+
+Guide pages are generated, never hand-edited:
+
+```bash
+python3 seo/generate_pages.py   # writes the 16 Hinglish guide pages (source of truth: this script)
+python3 seo/enhance_pages.py    # post-processor: breadcrumb + byline + featured image + schema + footer + /guides hub + sitemap.xml
+```
+
+`enhance_pages.py` is idempotent (it strips its own marked blocks before re-inserting), so run it after every `generate_pages.py` run.
+Featured images live in `assets/blog/<slug>.jpg` (1200×630); the shared article stylesheet is `blog.css`.
+
 ## Deployment notes
 - Preferred canonical domain: `https://www.baatbanao.shop`
 - `robots.txt` and `sitemap.xml` are configured for the custom domain

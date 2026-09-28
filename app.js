@@ -545,7 +545,11 @@ function getHashRoute(){
   const raw = (window.location.hash || '').replace('#','') || 'home';
   return (raw.split('?')[0] || 'home');
 }
+function bbCloseOverlays(){
+  document.querySelectorAll('.bb-sheet-wrap, #bb-invoice-preview, #bb-upi-modal, #slip-modal-overlay, #hisaab-sheet, #hisaab-settle-sheet').forEach(e => e.remove());
+}
 function navigate(route, params={}){
+  bbCloseOverlays();
   const routeName = String(route || 'home').split('?')[0] || 'home';
   state.route = routeName;
   state.routeParams = params;
@@ -557,6 +561,7 @@ function navigate(route, params={}){
 }
 
 window.addEventListener('hashchange', ()=>{
+  bbCloseOverlays();
   state.route = getHashRoute();
   renderApp();
 });
@@ -767,8 +772,8 @@ function viewVasooli(){
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
       <h1>Vasooli Mode 💸</h1>
     </div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Professional flow: amount bhi optional hai. Naam/number daaloge toh message aur direct WhatsApp better chalega.</p>
-
+    <div class="form-card">
+    <div class="form-card-head"><span class="step-dot">1</span><div><b>Details daalo</b><small>Sab optional hai — jitna doge, message utna personal banega.</small></div></div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block">
         <label class="field-label">Amount (optional)</label>
@@ -823,8 +828,9 @@ function viewVasooli(){
       <label class="field-label">Note (optional)</label>
       <textarea id="f-note" placeholder="Example: 2 mahine se pending hai, aaj chahiye" oninput="updateForm('note', this.value)">${escapeHtml(s.note)}</textarea>
     </div>
+    </div>
 
-    <button class="primary-btn" onclick="handleGenerate()">Message Banao ✨</button>
+    <button class="primary-btn primary-btn-lg" onclick="handleGenerate()">Message Banao ✨</button>
 
     <div class="safety-banner">Tip: Naam blank chhodoge toh message “Bhai/Customer” style mein banega. Message bhejne se pehle check/edit kar lein.</div>
 
@@ -956,6 +962,30 @@ function parsePayParams(){
     tn:p.get('tn') || p.get('t') || ''
   };
 }
+/* Local QR (vendor/qrcode.js) — koi third-party QR server nahi, offline bhi chalta hai */
+function bbQrSvg(text, size=260){
+  try{
+    if(!window.qrcode) return '';
+    const qr = qrcode(0,'M'); qr.addData(text); qr.make();
+    return qr.createSvgTag({cellSize:4, margin:2, scalable:true}).replace('<svg ', `<svg width="${size}" height="${size}" role="img" aria-label="UPI QR" `);
+  }catch(e){ return ''; }
+}
+function bbQrPngBlob(text, px=800){
+  return new Promise((resolve,reject)=>{
+    try{
+      const qr = qrcode(0,'M'); qr.addData(text); qr.make();
+      const n = qr.getModuleCount(), cell = Math.floor(px/(n+4)), c = document.createElement('canvas');
+      c.width = c.height = cell*(n+4);
+      const ctx = c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.fillStyle='#000';
+      for(let r=0;r<n;r++) for(let col=0;col<n;col++) if(qr.isDark(r,col)) ctx.fillRect((col+2)*cell,(r+2)*cell,cell,cell);
+      c.toBlob(b => b ? resolve(b) : reject(new Error('blob')), 'image/png');
+    }catch(e){ reject(e); }
+  });
+}
+function bbQrBox(text, size=260){
+  const svg = bbQrSvg(text, size);
+  return `<div class="bb-qr-box">${svg || '<div class="qr-fallback">QR library load nahi hui —<br/>link copy karke bhejo</div>'}</div>`;
+}
 function showUpiQr(data={}){
   if(!canUseUpi()){
     showToast('Settings mein apna UPI ID save karo');
@@ -963,7 +993,6 @@ function showUpiQr(data={}){
     return;
   }
   const upiLink = buildUpiLink(data);
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=${encodeURIComponent(upiLink)}`;
   const old = document.getElementById('bb-upi-modal');
   if(old) old.remove();
   const amountText = hasValidAmount(data.amount) ? displayAmount(data.amount) : 'Payer amount enter karega';
@@ -976,7 +1005,7 @@ function showUpiQr(data={}){
         <b style="font-family:Manrope,sans-serif;font-size:18px;">UPI QR</b>
         <button class="icon-btn" onclick="closeUpiQr()">✕</button>
       </div>
-      <img src="${qrSrc}" alt="UPI QR" width="260" height="260" style="width:260px;max-width:100%;border-radius:18px;background:#fff;padding:8px;border:1px solid var(--border-soft);"/>
+      ${bbQrBox(upiLink, 260)}
       <div style="margin-top:10px;color:var(--text-secondary);font-size:13px;font-weight:800;line-height:1.45;">
         ${escapeHtml(getSavedUpiName())}<br/>
         <span style="color:var(--text-main);">${escapeHtml(getSavedUpiId())}</span><br/>
@@ -1002,28 +1031,23 @@ async function shareUpiQr(encodedUpi, encodedName='', encodedAmount=''){
   const upi = decodeURIComponent(encodedUpi || '');
   const name = decodeURIComponent(encodedName || 'UPI Payment');
   const amount = decodeURIComponent(encodedAmount || '');
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&margin=18&data=${encodeURIComponent(upi)}`;
   const shareText = `${name}\n${amount ? amount + '\n' : ''}UPI QR / Pay link:\n${upi}`;
   bbTrack('upi_qr_share', { route: state.route || 'unknown', has_amount: !!amount });
+  let blob = null;
+  try{ blob = await bbQrPngBlob(upi, 800); }catch(e){ blob = null; }
   try{
-    if(navigator.share && navigator.canShare){
-      const res = await fetch(qrSrc);
-      const blob = await res.blob();
-      const file = new File([blob], 'upi-qr.png', { type: blob.type || 'image/png' });
-      if(navigator.canShare({ files:[file] })){
-        await navigator.share({ title:'UPI QR', text:shareText, files:[file] });
-        return;
-      }
+    if(blob && navigator.share && navigator.canShare){
+      const file = new File([blob], 'upi-qr.png', { type:'image/png' });
+      if(navigator.canShare({ files:[file] })){ await navigator.share({ title:'UPI QR', text:shareText, files:[file] }); return; }
     }
-    if(navigator.share){
-      await navigator.share({ title:'UPI QR', text:shareText, url:qrSrc });
-      return;
-    }
-    window.open(qrSrc, '_blank');
-    showToast('QR image open ho gaya — share/download kar lo');
-  }catch(e){
-    window.open(qrSrc, '_blank');
-    showToast('QR image open ho gaya — share/download kar lo');
+    if(navigator.share){ await navigator.share({ title:'UPI QR', text:shareText }); return; }
+  }catch(e){ if(e && e.name === 'AbortError') return; }
+  if(blob){
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'upi-qr.png'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    showToast('QR image download ho gayi — ab share karo');
+  } else {
+    copyTextValue(upi, 'UPI link copied ✅');
   }
 }
 function showUpiQrForKhata(id){
@@ -1134,7 +1158,7 @@ function handleGenerate(){
 
     // Free tier: small watermark at message end (viral loop + Pro upsell).
     // Pro users: never added. Can also be toggled off in Settings.
-    const bbWm = (!isBBPro() && state.settings.watermarkEnabled) ? '\n\n— via baatbanao.shop' : '';
+    const bbWm = (!isBBPro() && state.settings.watermarkEnabled) ? '\n\n— Free reminder tool: baatbanao.shop' : '';
     if(bbWm) messages.forEach(m => { m.text = (m.text || '').trimEnd() + bbWm; });
 
     // save to history
@@ -2293,9 +2317,11 @@ function bbRecordGeneration(){
   localStorage.setItem(BB_DAILY_COUNT_KEY, String(newCount));
 }
 
+const BB_PLANS = { shagun:{ amount:29, label:'Shagun & Chai Supporter' }, pro:{ amount:99, label:'Pro Dukan & Freelancer Pass' }, business:{ amount:249, label:'Business Boss Pack' } };
 function bbBuildUpiLink(plan){
-  const amount = plan === 'business' ? 499 : 149;
-  const note = encodeURIComponent(`BaatBanao ${plan === 'business' ? 'Business Pack' : 'Pro'}`);
+  const p = BB_PLANS[plan] || BB_PLANS.pro;
+  const amount = p.amount;
+  const note = encodeURIComponent(`BaatBanao ${p.label}`);
   return `upi://pay?pa=${BB_UPI_ID}&pn=BaatBanao&am=${amount}&cu=INR&tn=${note}`;
 }
 
@@ -2326,7 +2352,7 @@ function viewPro(){
     <div class="list-card" style="margin-bottom:12px;border:1.5px solid #FFD4C4;background:#FFF9F6;padding:16px;">
       <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">☕ Shagun & Chai Supporter</span><span class="amount" style="color:#247C32;font-weight:900;font-size:18px;">₹29</span></div>
       <div class="meta" style="margin-top:6px;line-height:1.4;">Developer ko chai shagun + Profile par Gold VIP Supporter Badge + 15 Secret Savage Templates unlock!</div>
-      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#FF725F;" onclick="bbSendTip(29)">₹29 Shagun Bhejo ☕</button>
+      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#FF725F;" onclick="bbSendTip(29,'shagun')">₹29 Shagun Bhejo ☕</button>
     </div>
 
     <div class="list-card" style="margin-bottom:14px;border:2px solid #FFB84D;background:#FFFDF5;padding:16px;box-shadow:0 6px 20px rgba(245,158,11,0.12);">
@@ -2338,13 +2364,27 @@ function viewPro(){
         ✓ <b>Instant Dynamic Scannable UPI QR</b> on receipts<br/>
         ✓ Unlimited Khata Customers
       </div>
-      <button class="primary-btn" style="margin-top:12px;padding:13px;background:linear-gradient(90deg, #E67E22, #F39C12);font-weight:900;" onclick="bbSendTip(99)">₹99 Lifetime VIP Pass Le 👑</button>
+      <button class="primary-btn" style="margin-top:12px;padding:13px;background:linear-gradient(90deg, #E67E22, #F39C12);font-weight:900;" onclick="bbSendTip(99,'pro')">₹99 Lifetime VIP Pass Le 👑</button>
     </div>
 
     <div class="list-card" style="margin-bottom:14px;border:1.5px solid #E2D9F3;background:#FAF8FF;padding:16px;">
       <div class="row-top"><span class="name" style="font-weight:800;font-size:15px;">🚀 Business Boss Pack</span><span class="amount" style="color:#6D45B8;font-weight:900;font-size:18px;">₹249</span></div>
       <div class="meta" style="margin-top:6px;line-height:1.4;">Bulk Reminders via WhatsApp Web queue + Customer Ledger Excel/CSV Export + GST Format.</div>
-      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#6D45B8;" onclick="bbSendTip(249)">₹249 Business Pack 🚀</button>
+      <button class="primary-btn" style="margin-top:12px;padding:12px;background:#6D45B8;" onclick="bbSendTip(249,'business')">₹249 Business Pack 🚀</button>
+    </div>
+
+    <!-- Activation code (payment ke baad WhatsApp par milta hai) -->
+    <div class="list-card pro-redeem" id="bb-redeem">
+      <div class="pro-redeem-head"><span>🔑</span><div><b>Activation code daalo</b><small>Payment ke baad WhatsApp par jo 10-character code mila, wahi number ke saath yahan daalo.</small></div></div>
+      <div class="pro-redeem-grid">
+        <select id="bb-plan-select" onchange="bbSelectedPlan=this.value" aria-label="Plan">
+          ${Object.keys(BB_PLANS).map(k => `<option value="${k}" ${bbSelectedPlan===k?'selected':''}>₹${BB_PLANS[k].amount} · ${BB_PLANS[k].label}</option>`).join('')}
+        </select>
+        <input id="bb-phone-input" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit WhatsApp number" value="${escapeHtml(localStorage.getItem('bb_pro_phone')||'')}"/>
+        <input id="bb-code-input" inputmode="text" autocapitalize="characters" autocomplete="one-time-code" maxlength="10" placeholder="ACTIVATION CODE" style="text-transform:uppercase;letter-spacing:2px;"/>
+      </div>
+      <button class="primary-btn" style="margin-top:10px;" onclick="bbRedeemCode()">Unlock karo 👑</button>
+      <div id="bb-redeem-msg" class="pro-redeem-msg" aria-live="polite"></div>
     </div>
 
     <!-- Help & Instant WhatsApp Verification -->
@@ -2359,31 +2399,24 @@ function viewPro(){
 }
 
 
-function bbSendTip(amount){
-  bbTrack('tip_click', { amount: amount });
-  const upiUrl = `upi://pay?pa=ansh.y@ptyes&pn=BaatBanao%20Support&am=${amount}&cu=INR&tn=BaatBanao%20Chai%20Tip`;
-  // Payment cannot be verified from a UPI deep-link. Never unlock here.
-  showToast(`UPI app khul raha hai. Payment ke baad WhatsApp par activation code lein.`);
-  setTimeout(() => {
-    window.location.href = upiUrl;
-  }, 600);
-}
-
-let bbSelectedPlan = 'pro';
-function bbStartPurchase(plan){
+let bbSelectedPlan = localStorage.getItem('bb_pro_plan') || 'pro';
+function bbSendTip(amount, plan){
+  plan = plan || (amount >= 249 ? 'business' : amount >= 99 ? 'pro' : 'shagun');
   bbSelectedPlan = plan;
-  bbTrack('pro_checkout_start', { plan: plan });
-  const step = document.getElementById('bb-pay-step');
-  step.style.display = 'block';
-  step.scrollIntoView({behavior:'smooth'});
-  document.getElementById('bb-upi-btn').onclick = () => { window.location.href = bbBuildUpiLink(plan); };
-  document.getElementById('bb-wa-btn').onclick = () => { window.open(bbBuildWhatsAppScreenshotLink(plan), '_blank'); };
+  const sel = document.getElementById('bb-plan-select'); if(sel) sel.value = plan;
+  bbTrack('pro_checkout_start', { plan, amount });
+  const upiUrl = bbBuildUpiLink(plan);
+  // Payment cannot be verified from a UPI deep-link. Never unlock here — code WhatsApp par milega.
+  showToast('UPI app khul raha hai. Payment ke baad WhatsApp par screenshot bhejo — activation code milega.');
+  setTimeout(() => { window.location.href = upiUrl; }, 600);
+  setTimeout(() => { const r = document.getElementById('bb-redeem'); if(r) r.scrollIntoView({behavior:'smooth', block:'center'}); }, 1800);
 }
 
 async function bbRedeemCode(){
   const phone = document.getElementById('bb-phone-input').value.replace(/\D/g,'');
   const code = document.getElementById('bb-code-input').value.trim().toUpperCase();
   const msgEl = document.getElementById('bb-redeem-msg');
+  const sel = document.getElementById('bb-plan-select'); if(sel && sel.value) bbSelectedPlan = sel.value;
   if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
   if (!/^[A-Z0-9_-]{10}$/.test(code)){ msgEl.textContent = '⚠️ 10-character activation code daalo.'; msgEl.style.color = '#C0392B'; return; }
   msgEl.textContent = 'Code verify ho raha hai…';
@@ -2396,10 +2429,11 @@ async function bbRedeemCode(){
     localStorage.setItem(BB_PRO_PLAN_KEY, bbSelectedPlan);
     localStorage.setItem('bb_pro_receipt', data.receipt || '');
     localStorage.setItem('bb_pro_phone', phone);
-    msgEl.textContent = '🎉 BaatBanao Pro unlock ho gaya!'; msgEl.style.color = '#247C32';
+    msgEl.textContent = '🎉 BaatBanao Pro unlock ho gaya! Watermark hat gaya, brand stamp on.'; msgEl.style.color = '#247C32';
+    showToast('👑 Pro active!');
     setTimeout(()=> navigate('profile'), 1400);
   } catch(e) {
-    msgEl.textContent = '❌ Code verify nahi hua. Number, plan aur code check karo.'; msgEl.style.color = '#C0392B';
+    msgEl.textContent = (!navigator.onLine) ? '📴 Internet chahiye code verify karne ke liye.' : '❌ Code verify nahi hua. Number, plan aur code check karo — ya WhatsApp par poochho.'; msgEl.style.color = '#C0392B';
   }
 }
 
@@ -2412,13 +2446,12 @@ function viewPay(){
       <div class="safety-banner">Payment link invalid hai. UPI ID check karein.</div>
     `;
   }
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=12&data=${encodeURIComponent(upiLink)}`;
   const amountText = hasValidAmount(pay.am) ? displayAmount(pay.am) : 'Amount payer enter karega';
   return `
     <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Pay via UPI</h1></div>
     <div class="output-card" style="align-items:center;text-align:center;">
       <span class="tag">UPI Payment</span>
-      <img src="${qrSrc}" alt="UPI QR" width="280" height="280" style="width:280px;max-width:100%;border-radius:18px;background:#fff;padding:8px;border:1px solid var(--border-soft);"/>
+      ${bbQrBox(upiLink, 280)}
       <div style="font-weight:900;color:var(--text-main);line-height:1.5;">
         ${escapeHtml(pay.pn || 'UPI Payment')}<br/>
         <span style="color:var(--text-secondary);font-size:13px;">${escapeHtml(normalizeUpiId(pay.pa))}</span><br/>
@@ -2557,11 +2590,12 @@ function toggleSetting(key){
   renderApp();
 }
 function clearAllData(){
-  if(!confirm('Sabhi data (Khata + History + Settings) delete karna hai? Yeh wapas nahi hoga.')) return;
-  localStorage.removeItem(STORE_KEYS.khata);
-  localStorage.removeItem(STORE_KEYS.history);
-  localStorage.removeItem(STORE_KEYS.settings);
-  localStorage.removeItem('bb_invoices_v1');
+  if(!confirm('Sabhi data (Khata + Ek Hisaab + Bills + History + Settings + Pro) delete karna hai? Yeh wapas nahi hoga. Pehle backup le liya?')) return;
+  ['bb_khata','bb_history','bb_settings','bb_invoices_v1','bb_hisaab_v1','bb_pro_unlocked','bb_pro_plan','bb_pro_receipt','bb_pro_phone',
+   'bb_last_backup','bb_last_restore','bb_backup_nudge_date','bb_daily_gen_count','bb_daily_gen_date'].forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage).filter(k => k.startsWith('bb_')).forEach(k => localStorage.removeItem(k));
+  try { sessionStorage.clear(); } catch(e){}
+  bbTrack('clear_all_data', {});
   location.reload();
 }
 

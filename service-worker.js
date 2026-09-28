@@ -3,7 +3,7 @@
    v1.0.69: JS/CSS network-first + ?v= cache-busting (old CSS + new HTML mismatch fix)
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.69';
+const CACHE_VERSION = 'baatbanao-v1.0.70';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -11,6 +11,8 @@ const CORE_ASSETS = [
   './pay/index.html',
   './style.css',
   './app.js',
+  './vendor/qrcode.js',
+  './blog.css',
   './voice-ocr.js',
   './billing.js',
   './hisaab.js',
