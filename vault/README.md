@@ -1,5 +1,8 @@
 # BaatBanao Vault
 
+> ⚠️ **Note from `main` (28 Sep 2026):** read [`READ_ME_FIRST_FROM_MAIN.md`](READ_ME_FIRST_FROM_MAIN.md) and [`/HANDOFF_VAULT.md`](../HANDOFF_VAULT.md) before continuing — data contracts, URLs and the Codex P1 fixes for PR #1.
+
+
 **Visual multi-account balance module for BaatBanao 2.0 — prototype, planning and launch assets.**
 
 Vault shows every account a user holds — cash, bank, UPI wallets, gold and receivables — as eight translucent boxes whose liquid level is the balance. Money pours in, drains out, arcs between boxes and stays frozen while it is still owed. It is designed as the daily-use home tab of BaatBanao, alongside the existing **Khata** (receivables ledger) and **Baat** (reminder messages).
