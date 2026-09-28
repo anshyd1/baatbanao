@@ -1,0 +1,23 @@
+name: paanikhata_icecubes
+description: BaatBanao Vault — visual multi-account balance module (liquid level = balance). Physics tray, Align, Find box, add-money pour, detail with undo.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # ---- baad me (v0.2+) ----
+  # hive_flutter: ^1.1.0          # offline persistence (accounts + txns)
+  # speech_to_text: ^7.0.0        # "box 6 me 300 aaya" voice entry
+  # flame_forge2d: ^0.18.0        # agar real rigid-body (rotated square) collisions chahiye
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
