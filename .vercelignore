@@ -1,0 +1,6 @@
+# Keep the public static site (www.baatbanao.shop) lean.
+# The Vault module (Flutter source, design assets, demo videos) ships via its own
+# GitHub Actions pipeline (.github/workflows/build-vault.yml) and app.baatbanao.shop.
+vault/
+.github/
+seo/__pycache__/

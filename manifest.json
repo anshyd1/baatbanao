@@ -16,10 +16,10 @@
   "lang": "hi-IN",
   "dir": "ltr",
   "categories": [
+    "finance",
     "productivity",
     "business",
-    "finance",
-    "social"
+    "utilities"
   ],
   "prefer_related_applications": false,
   "icons": [
@@ -84,6 +84,29 @@
           "sizes": "192x192"
         }
       ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshots/home.jpg",
+      "sizes": "780x1688",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "BaatBanao home — Vasooli Mode, Khata, Ek Hisaab"
+    },
+    {
+      "src": "/assets/screenshots/vasooli.jpg",
+      "sizes": "780x1688",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Ready WhatsApp payment reminder with tone options"
+    },
+    {
+      "src": "/assets/screenshots/upi-qr.jpg",
+      "sizes": "780x1688",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "UPI QR + link generated on-device"
     }
   ]
 }

@@ -1,27 +1,200 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.baatbanao.shop/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
-  <url><loc>https://www.baatbanao.shop/dost-se-paise-wapas-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/paise-mangne-ke-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/kirayedaar-rent-reminder-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/tuition-fees-reminder-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/kirana-shop-udhaar-reminder</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/payment-reminder-customer-whatsapp</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/udhar-funny-shayari</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/paise-wapas-mangne-ka-tarika</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/bhojpuri-udhaar-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/upi-payment-link-generator</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/udhaar-khata-kaise-banaayein</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/freelancer-payment-reminder-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/client-invoice-follow-up-message</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/contact</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/privacy</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/terms</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/disclaimer</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/polite-payment-reminder-message-english</loc><lastmod>2026-09-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/payment-reminder-no-reply-message</loc><lastmod>2026-09-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/final-payment-reminder-message</loc><lastmod>2026-09-17</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://www.baatbanao.shop/author/ansh-yadav</loc><lastmod>2026-09-17</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
-  <url><loc>https://www.baatbanao.shop/editorial-policy</loc><lastmod>2026-09-17</lastmod><changefreq>yearly</changefreq><priority>0.5</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://www.baatbanao.shop/</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/og-share-card.jpg</image:loc>
+      <image:title>BaatBanao — WhatsApp payment reminder + UPI link</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/guides</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/og-share-card.jpg</image:loc>
+      <image:title>BaatBanao guides</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/dost-se-paise-wapas-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/dost-se-paise-wapas-message.jpg</image:loc>
+      <image:title>Dost se paise wapas</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/paise-mangne-ke-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/paise-mangne-ke-message.jpg</image:loc>
+      <image:title>Paise mangne ke message</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/paise-wapas-mangne-ka-tarika</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/paise-wapas-mangne-ka-tarika.jpg</image:loc>
+      <image:title>Paise wapas mangne ka tarika</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/kirayedaar-rent-reminder-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/kirayedaar-rent-reminder-message.jpg</image:loc>
+      <image:title>Rent reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/kirana-shop-udhaar-reminder</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/kirana-shop-udhaar-reminder.jpg</image:loc>
+      <image:title>Dukaan udhaar reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/tuition-fees-reminder-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/tuition-fees-reminder-message.jpg</image:loc>
+      <image:title>Tuition fees reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/freelancer-payment-reminder-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/freelancer-payment-reminder-message.jpg</image:loc>
+      <image:title>Freelancer payment reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/client-invoice-follow-up-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/client-invoice-follow-up-message.jpg</image:loc>
+      <image:title>Client invoice follow-up</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/payment-reminder-customer-whatsapp</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/payment-reminder-customer-whatsapp.jpg</image:loc>
+      <image:title>Customer payment reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/polite-payment-reminder-message-english</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/polite-payment-reminder-message-english.jpg</image:loc>
+      <image:title>Polite reminders (English)</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/final-payment-reminder-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/final-payment-reminder-message.jpg</image:loc>
+      <image:title>Final payment reminder</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/payment-reminder-no-reply-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/payment-reminder-no-reply-message.jpg</image:loc>
+      <image:title>No reply follow-up</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/udhar-funny-shayari</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/udhar-funny-shayari.jpg</image:loc>
+      <image:title>Udhar funny shayari</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/bhojpuri-udhaar-message</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/bhojpuri-udhaar-message.jpg</image:loc>
+      <image:title>Bhojpuri udhaar message</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/upi-payment-link-generator</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/upi-payment-link-generator.jpg</image:loc>
+      <image:title>UPI payment link generator</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/udhaar-khata-kaise-banaayein</loc>
+    <lastmod>2026-09-28</lastmod>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://www.baatbanao.shop/assets/blog/udhaar-khata-kaise-banaayein.jpg</image:loc>
+      <image:title>Udhaar khata guide</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/about</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/contact</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/privacy</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/terms</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/disclaimer</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/editorial-policy</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.baatbanao.shop/author/ansh-yadav</loc>
+    <lastmod>2026-09-17</lastmod>
+    <priority>0.4</priority>
+  </url>
 </urlset>

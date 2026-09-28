@@ -208,7 +208,7 @@
     startVoice() {
       if (typeof bbTrack === 'function') bbTrack('voice_command_start', {});
       if (!this.recognition) {
-        alert('Aapke browser me voice recognition support nahi mila. Kripya Chrome ya Edge use karein.');
+        (typeof window.showToast === 'function' ? window.showToast : alert)('🎙️ Is browser me voice support nahi hai — Chrome/Edge use karo. Neeche type karke bhi likh sakte ho.');
         return;
       }
       try {
@@ -519,7 +519,8 @@
       const head = document.getElementById('bb-assist-head-title');
       const stageResult = document.getElementById('bb-stage-result');
 
-      head.textContent = entry._isOcr ? '📷 Parchi Scan Result' : '🎙️ Entry Samjhi Gayi!';
+      head.textContent = entry._isOcr ? (entry._confidence >= 2 ? '📷 Parchi Scan Result' : '📷 Scan hua — ek baar check karo') : '🎙️ Entry Samjhi Gayi!';
+      if (entry._isOcr && entry._confidence < 2 && typeof window.showToast === 'function') window.showToast('Naam/amount ek baar verify kar lo — parchi ka print halka tha.');
       stageResult.style.display = 'block';
       modal.style.display = 'flex';
 
@@ -623,10 +624,10 @@
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
           if (typeof window.showToast === 'function') window.showToast('Message copied! ✅');
-          else alert('Message copied!');
+          else if (typeof window.showToast === 'function') window.showToast('Message copied ✅');
         });
       } else {
-        alert('Copied: ' + text);
+        if (typeof window.showToast === 'function') window.showToast('Copied ✅'); else console.log('Copied: ' + text);
       }
     },
 
@@ -889,65 +890,96 @@
     },
 
     parseOcrText(text) {
-      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      let phone = '';
-      let amount = null;
-      let name = '';
-      let date_str = '';
+      const rawLines = String(text || '').split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+      const warn = [];
+      let phone = '', amount = null, name = '', date_str = '';
 
-      // 1. Mobile Number (10-digit)
-      const phoneMatch = text.match(/\b([6-9]\d{9})\b/);
+      // 1. Mobile number (10-digit, Indian) — bhi allow "+91 98765 43210" / "98765-43210"
+      const phoneSrc = text.replace(/(\+?91[\s-]?)?(\d{5})[\s-](\d{5})/g, (m, c, a, b) => `${a}${b}`);
+      const phoneMatch = phoneSrc.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
       if (phoneMatch) phone = phoneMatch[1];
 
-      // 2. Date
-      const dateMatch = text.match(/\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})\b/);
+      // 2. Date (dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy, "12 Sep 2026")
+      const dateRe = /\b(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?,?\s*\d{2,4})\b/i;
+      const dateMatch = text.match(dateRe);
       if (dateMatch) date_str = dateMatch[1];
 
-      // 3. Amount Extraction
-      for (let i = lines.length - 1; i >= 0; i--) {
-        const line = lines[i];
-        if (/(total|grand|net|amount|bal|balance|due|₹|rs\.?|kul|baaki)/i.test(line)) {
-          const m = line.match(/(?:₹|rs\.?)?\s*(\d+[\d,]*)/ig);
-          if (m) {
-            for (let j = m.length - 1; j >= 0; j--) {
-              const rawNum = m[j].replace(/[^\d]/g, '');
-              const val = parseInt(rawNum, 10);
-              if (val > 10 && val !== 2026 && (!phone || rawNum !== phone)) {
-                amount = val;
-                break;
-              }
-            }
-          }
+      // Helper: numbers on a line, minus dates / phone / invoice numbers / GST / PIN / years
+      const numbersIn = (line) => {
+        let l = line.replace(new RegExp(dateRe.source, 'gi'), ' ')
+                    .replace(/\d{1,2}:\d{2}(\s*[ap]m)?/gi, ' ')                 // time
+                    .replace(/\b\d{2}[A-Z]{5}\d{4}[A-Z][A-Z\d]Z[A-Z\d]\b/g, ' ')    // GSTIN
+                    .replace(/(?:inv(?:oice)?|bill|receipt|order|memo|sr|s\.no|no|#)\s*[.:#-]?\s*\d+/gi, ' ')
+                    .replace(/\b(?:pin|pincode|zip)\s*[:\-]?\s*\d{6}\b/gi, ' ')
+                    .replace(/\b\d{1,3}(?:\.\d+)?\s*%/g, ' ');                       // 18%
+        if (phone) l = l.split(phone).join(' ');
+        const out = [];
+        const re = /(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:\.\d{1,2})?)(?:\s*\/-)?/gi;
+        let m;
+        while ((m = re.exec(l))) {
+          const rawNum = m[1].replace(/,/g, '');
+          const val = Math.round(parseFloat(rawNum));
+          if (!isFinite(val) || val < 1) continue;
+          const hasCurrency = /₹|rs|inr|rupees/i.test(m[0]) || /\/-\s*$/.test(m[0]);
+          if (!hasCurrency && val >= 1990 && val <= 2099 && rawNum.length === 4) continue; // saal
+          if (rawNum.replace(/\..*$/, '').length >= 8) continue;                          // account / ref numbers
+          out.push(val);
         }
-        if (amount) break;
-      }
+        return out;
+      };
 
-      // Fallback amount: find largest reasonable number
+      // 3. Amount: highest-priority keyword line jeetti hai; same line par rightmost number
+      const priority = [
+        [/(grand\s*total|net\s*(?:payable|amount|total)|total\s*(?:due|payable|amount)|amount\s*(?:due|payable)|balance\s*due|bakaya|baaki|baki|kul\s*(?:rakam|jod)|payable)/i, 5],
+        [/(\bdue\b|\bbalance\b|\bbal\b|outstanding|pending|udhaar|udhar)/i, 4],
+        [/(\btotal\b|\bamount\b|\bamt\b|\bkul\b|\bjod\b|\bsum\b)/i, 3],
+        [/(₹|\brs\.?|\binr\b|\/-)/i, 2],
+      ];
+      let best = { score: -1, val: null, idx: -1 };
+      rawLines.forEach((line, idx) => {
+        if (/(paid|received|advance|discount|cgst|sgst|igst|gst\s*@|tax|qty|rate|mrp|change|round)/i.test(line) && !/(due|balance|bal|baaki|bakaya|total\s*(?:due|payable))/i.test(line)) return;
+        let score = 0;
+        for (const [re, sc] of priority) { if (re.test(line)) { score = sc; break; } }
+        if (!score) return;
+        let nums = numbersIn(line);
+        if (!nums.length && rawLines[idx + 1] && !/[a-z]{4,}/i.test(rawLines[idx + 1])) nums = numbersIn(rawLines[idx + 1]); // value next line par
+        if (!nums.length) return;
+        const val = nums[nums.length - 1];
+        // baad wali "total/due" line ko tie par preference (bills me neeche hota hai)
+        if (score > best.score || (score === best.score && idx > best.idx)) best = { score, val, idx };
+      });
+      if (best.val) amount = best.val;
+
+      // Fallback: sabse bada plausible number (₹/Rs wale ko preference)
       if (!amount) {
-        const allNums = text.match(/\b\d{2,6}\b/g);
-        if (allNums) {
-          const valid = allNums.map(n => parseInt(n, 10)).filter(n => n > 20 && n !== 2026 && n !== parseInt(phone, 10));
-          if (valid.length > 0) amount = Math.max(...valid);
-        }
+        const withCur = [], plain = [];
+        rawLines.forEach(line => numbersIn(line).forEach(v => (/₹|rs\.?|inr|\/-/i.test(line) ? withCur : plain).push(v)));
+        const pool = (withCur.length ? withCur : plain).filter(v => v >= 10 && v <= 5000000);
+        if (pool.length) { amount = Math.max(...pool); warn.push('amount'); }
       }
 
-      // 4. Customer Name Match
-      for (const line of lines) {
-        const nm = line.match(/(?:customer\s*name|tenant\s*name|client\s*name|billed\s*to(?:\s*\([^\)]*\))?|customer|client|naam|name|shri|m\/s|tenant|owner)\s*[:\-]?\s*([A-Za-z\u0900-\u097F\s]{2,30})/i);
-        if (nm) {
-          name = nm[1].replace(/\b(date|mob|mobile|phone|ph|dt|inv|bill)\b.*$/i, '').trim();
-          break;
-        }
+      // 4. Naam: keyword ke saath (same line ya next line), warna pehli "insaan jaisi" line
+      const nameKey = /(?:customer\s*name|tenant\s*name|client\s*name|party\s*name|bill(?:ed)?\s*to|sold\s*to|ship\s*to|received\s*from|customer|client|party|naam|name|shri|smt|m\/s|tenant|owner|mr\.?|mrs\.?|ms\.?)\s*[:\-–]?\s*(.*)$/i;
+      const clip = (v) => v.replace(/^\s*\([^)]*\)\s*[:\-–]?\s*/, '').replace(/\b(date|dt|mob|mobile|phone|ph|no|inv|invoice|bill|amount|amt|total|due|gst|address|add)\b.*$/i, '')
+                           .replace(/[^A-Za-z\u0900-\u097F .&'-]/g, ' ').replace(/\s+/g, ' ').trim();
+      for (let i = 0; i < rawLines.length && !name; i++) {
+        const m = rawLines[i].match(nameKey);
+        if (!m) continue;
+        let v = clip(m[1] || '');
+        if (v.length < 2 && rawLines[i + 1]) v = clip(rawLines[i + 1]);
+        if (v.length >= 2 && !/^(name|naam|customer|client|invoice|bill)$/i.test(v)) name = v.slice(0, 40);
       }
-
       if (!name) {
-        for (const line of lines) {
-          if (/^[A-Za-z\s]{3,20}$/.test(line) && !/invoice|cash|memo|bill|parchi|tax|receipt|store|market/i.test(line)) {
-            name = line.trim();
-            break;
+        const skip = /invoice|cash|memo|bill|parchi|tax|receipt|store|stores|market|shop|traders|enterprises|pvt|ltd|llp|kirana|medical|electronics|mobile|thank|visit|again|total|amount|date|gst|phone|address|road|nagar|colony|city|estimate|quotation|payment|paid|due|balance|description|item|qty|rate/i;
+        for (const line of rawLines) {
+          const clean = line.replace(/[^A-Za-z\u0900-\u097F .'-]/g, '').trim();
+          const words = clean.split(/\s+/).filter(Boolean);
+          if (clean.length >= 3 && clean.length <= 30 && words.length >= 1 && words.length <= 3 && clean.length / Math.max(1, line.length) > 0.75 && !skip.test(clean)) {
+            name = clean; warn.push('name'); break;
           }
         }
       }
+      if (name) name = name.replace(/\b\w/g, c => c.toUpperCase());
 
       return {
         name: name || 'Customer',
@@ -956,7 +988,9 @@
         type: 'lena',
         dueDate: date_str,
         dueText: date_str ? `Date: ${date_str}` : 'Parchi Hisaab',
-        raw: text.slice(0, 100)
+        raw: text.slice(0, 100),
+        _warn: warn,
+        _confidence: (amount && best.score >= 3 ? 1 : 0) + (name && !warn.includes('name') ? 1 : 0)
       };
     },
 
