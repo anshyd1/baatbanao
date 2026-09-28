@@ -20,10 +20,12 @@ Vault shows every account a user holds — cash, bank, UPI wallets, gold and rec
 
 ## Downloads
 
-Release **`vault-v0.1`** (GitHub Releases):
+| Release | Contents |
+|---|---|
+| **`vault-v0.2`** (CI build) | `app-arm64-v8a-release.apk` (recommended), `app-armeabi-v7a-release.apk` (32-bit phones), `app-x86_64-release.apk` (emulators), `vault-web.zip` (web bundle). App label: **BaatBanao Vault**. |
+| `vault-v0.1` | `BaatBanao_Vault_v0.1_package.zip` — demo videos, web build with one-click local launchers, source and design files. |
 
-- `BaatBanao_Vault_v0.1_arm64_test.apk` — Android 7+, arm64, debug-signed test build. Data is in-memory in this build. *Note: the prototype label ("PaaniKhata") is still visible in this build; the next build is labelled "BaatBanao Vault".*
-- `BaatBanao_Vault_v0.1_package.zip` — demo videos, Flutter web build with one-click local launchers, source and design files.
+All builds are debug-signed test builds; data is held in memory. Every push that touches `vault/app/**` is built by **GitHub Actions** (`.github/workflows/build-vault.yml`); pushing a tag `vault-v*` attaches the artifacts to a release.
 
 ## Running the prototype
 
@@ -41,7 +43,7 @@ flutter build web --release                   # web build (serve with any static
 | Item | Status |
 |---|---|
 | Interaction prototype (Flutter) | Complete, compile-verified |
-| Test APK (arm64) | Published in release `vault-v0.1` |
+| Test APKs (arm64 / armv7 / x86_64) + web bundle | Built by CI, published in release `vault-v0.2` |
 | Product plan, market research | Complete (this folder) |
 | Poster and sketch set | Complete (this folder) |
 | Phase 1 — Flutter shell (Khata + Baat port, Hive, import) | Next |
