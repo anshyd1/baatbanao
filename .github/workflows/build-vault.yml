@@ -38,15 +38,17 @@ jobs:
           sed -i 's/-Xmx560m/-Xmx3g/; s/org.gradle.daemon=false/org.gradle.daemon=true/; s/org.gradle.workers.max=1/org.gradle.workers.max=4/' android/gradle.properties
 
       - run: flutter pub get
-      - name: Analyze (advisory for now)
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-        continue-on-error: true
-      - name: Tests (advisory for now)
-        run: flutter test
-        continue-on-error: true
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
 
       - name: Build APKs (arm64, armv7, x86_64)
         run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
+
+      - name: Add web platform files (project was created for Android only)
+        run: |
+          flutter create . --platforms web --project-name paanikhata_icecubes --org shop.baatbanao
+          sed -i 's#<title>.*</title>#<title>BaatBanao Vault</title>#; s#content="A new Flutter project."#content="BaatBanao Vault — every rupee, in its place."#' web/index.html
+          sed -i 's#"name": ".*"#"name": "BaatBanao Vault"#; s#"short_name": ".*"#"short_name": "Vault"#; s#"description": ".*"#"description": "BaatBanao Vault — visual multi-account balances."#' web/manifest.json
 
       - name: Build web bundle
         run: |
