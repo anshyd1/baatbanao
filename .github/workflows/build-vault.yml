@@ -1,0 +1,75 @@
+# .github/workflows/build-vault.yml
+# Builds BaatBanao Vault (APK per ABI + web bundle) on GitHub's runners on every push to vault/app.
+# On a tag like vault-v0.2 it also attaches the APKs and a zipped web build to the GitHub Release.
+name: Build Vault (APK + Web)
+
+on:
+  push:
+    branches: [feat/vault, main]
+    tags: ['vault-v*']
+    paths: ['vault/app/**', '.github/workflows/build-vault.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vault/app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
+
+      - name: Use a normal Gradle heap on CI (repo defaults are tuned for a 2 GB machine)
+        run: |
+          sed -i 's/-Xmx560m/-Xmx3g/; s/org.gradle.daemon=false/org.gradle.daemon=true/; s/org.gradle.workers.max=1/org.gradle.workers.max=4/' android/gradle.properties
+
+      - run: flutter pub get
+      - name: Analyze (advisory for now)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+      - name: Tests (advisory for now)
+        run: flutter test
+        continue-on-error: true
+
+      - name: Build APKs (arm64, armv7, x86_64)
+        run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
+
+      - name: Build web bundle
+        run: |
+          flutter build web --release
+          cd build && zip -qr vault-web.zip web
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vault-apks
+          path: vault/app/build/app/outputs/flutter-apk/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vault-web
+          path: vault/app/build/vault-web.zip
+
+      - name: Attach to release (tags only)
+        if: startsWith(github.ref, 'refs/tags/vault-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          files: |
+            vault/app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            vault/app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            vault/app/build/app/outputs/flutter-apk/app-x86_64-release.apk
+            vault/app/build/vault-web.zip
