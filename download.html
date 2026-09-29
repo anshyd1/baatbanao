@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="hi-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>BaatBanao Vault — Download latest app</title>
+  <meta name="description" content="Download the latest BaatBanao Vault Android app or open the web app.">
+  <meta name="theme-color" content="#eef6ff">
+  <link rel="icon" href="assets/favicon-32.png">
+  <style>
+    :root{color-scheme:light;--ink:#142033;--muted:#637087;--blue:#2d73df;--blue-dark:#1c4da2;--green:#168b58;--line:#dbe5f1;--card:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(145deg,#f7fbff 0%,#eaf3ff 50%,#fff8ed 100%);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink)}
+    .wrap{width:min(720px,100%);margin:auto;padding:20px 18px 44px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 28px}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;letter-spacing:-.3px}
+    .brand img{width:38px;height:38px;border-radius:12px;box-shadow:0 5px 14px #5f86b733}
+    .web-link{font-size:13px;font-weight:800;color:var(--blue-dark);text-decoration:none;background:#fff;border:1px solid var(--line);padding:9px 12px;border-radius:999px}
+    .hero{text-align:center;padding:10px 0 20px}
+    .cube{width:92px;height:92px;margin:0 auto 18px;border-radius:25px;position:relative;overflow:hidden;background:linear-gradient(145deg,#cfe5ff,#8cb9f4);border:3px solid #4d86db;box-shadow:0 15px 25px #326bbb38, inset 8px 8px 15px #ffffff66}
+    .cube:after{content:"";position:absolute;left:-10%;right:-10%;bottom:-10%;height:62%;background:#3478f6d9;border-radius:48% 48% 0 0;transform:rotate(-5deg)}
+    .cube span{position:absolute;z-index:1;inset:0;display:grid;place-items:center;font-size:27px;font-weight:950;color:#173b77}
+    h1{font-size:clamp(30px,8vw,48px);line-height:1.04;letter-spacing:-1.5px;margin:0 0 12px}
+    .hero p{margin:0 auto;color:var(--muted);font-size:16px;line-height:1.55;max-width:570px}
+    .version{display:inline-flex;margin-top:16px;padding:7px 12px;border-radius:999px;background:#e5f5ec;color:#126f48;font-size:13px;font-weight:850}
+    .card{background:#ffffffdd;border:1px solid var(--line);border-radius:25px;padding:20px;margin-top:16px;box-shadow:0 14px 35px #31547b12}
+    .card h2{font-size:20px;margin:0 0 5px;letter-spacing:-.3px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 15px;line-height:1.5}
+    .download{display:flex;align-items:center;justify-content:space-between;gap:15px;text-decoration:none;color:#fff;background:linear-gradient(135deg,var(--blue),var(--blue-dark));border-radius:17px;padding:14px 16px;margin:10px 0;box-shadow:0 8px 18px #2d73df35}
+    .download strong{display:block;font-size:16px}.download small{display:block;color:#d9e8ff;font-size:12px;margin-top:3px}
+    .download b{font-size:25px;line-height:1}
+    .secondary{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+    .secondary a{flex:1 1 190px;text-align:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--blue-dark);padding:12px 14px;border-radius:14px;font-size:14px;font-weight:850}
+    .steps{display:grid;gap:10px;margin-top:13px}.step{display:flex;gap:10px;align-items:flex-start;color:#3b4b62;font-size:14px;line-height:1.45}.num{flex:0 0 25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#e7f0ff;color:var(--blue-dark);font-weight:900;font-size:12px}
+    .note{margin-top:17px;padding:13px 14px;border-radius:15px;background:#fff5dd;color:#765319;font-size:13px;line-height:1.5}
+    footer{text-align:center;color:#7a879a;font-size:12px;margin-top:25px;line-height:1.6}
+    #status{font-size:12px;color:var(--muted);margin-top:9px;text-align:center;min-height:18px}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="brand"><img src="assets/icon-192.png" alt="BaatBanao">BaatBanao Vault</div>
+      <a class="web-link" href="/app/">Open web app ↗</a>
+    </header>
+
+    <section class="hero">
+      <div class="cube" aria-hidden="true"><span>₹</span></div>
+      <h1>Har rupee, apni jagah.</h1>
+      <p>Playable liquid cubes ke saath apne cash, bank, UPI aur goals ko manage karein. Latest Android app yahin se download karein—GitHub page dhoondhne ki zaroorat nahi.</p>
+      <div class="version" id="version">Latest Vault release · v0.4.0</div>
+    </section>
+
+    <section class="card">
+      <h2>Android app download</h2>
+      <p class="sub">Aksar phones ke liye ARM64 version choose karein.</p>
+      <a id="arm64" class="download" href="https://github.com/anshyd1/baatbanao/releases/download/vault-v0.4/app-arm64-v8a-release.apk">
+        <span><strong>Download for Android</strong><small>ARM64 · recommended for modern phones</small></span><b>↓</b>
+      </a>
+      <div class="secondary">
+        <a id="armv7" href="https://github.com/anshyd1/baatbanao/releases/download/vault-v0.4/app-armeabi-v7a-release.apk">Older 32-bit phone</a>
+        <a id="x64" href="https://github.com/anshyd1/baatbanao/releases/download/vault-v0.4/app-x86_64-release.apk">Android emulator</a>
+      </div>
+      <div id="status" role="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>Install or update safely</h2>
+      <div class="steps">
+        <div class="step"><span class="num">1</span><span>APK download hone ke baad file open karein.</span></div>
+        <div class="step"><span class="num">2</span><span>Chrome ko “Install unknown apps” permission dein, agar Android pooche.</span></div>
+        <div class="step"><span class="num">3</span><span>Purana app uninstall na karein. New APK ko usi app ke upar install karein.</span></div>
+      </div>
+      <div class="note">Vault ka local data app ke andar rehta hai. Update ke liye uninstall na karein, warna local balances/history delete ho sakti hai.</div>
+    </section>
+
+    <section class="card">
+      <h2>Download nahi karna?</h2>
+      <p class="sub">Web version browser mein kholkar home screen par install kiya ja sakta hai.</p>
+      <div class="secondary"><a href="/app/">Open BaatBanao Vault Web ↗</a></div>
+    </section>
+
+    <footer>BaatBanao · Vault · Khata · Baat<br>Offline-first personal money space</footer>
+  </main>
+  <script>
+    // Keep this page useful for future releases while retaining a working fallback.
+    fetch('https://api.github.com/repos/anshyd1/baatbanao/releases/latest', {headers:{Accept:'application/vnd.github+json'}})
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(release => {
+        const files = Object.fromEntries((release.assets || []).map(a => [a.name, a.browser_download_url]));
+        const find = (name, id) => { if (files[name]) document.getElementById(id).href = files[name]; };
+        find('app-arm64-v8a-release.apk','arm64'); find('app-armeabi-v7a-release.apk','armv7'); find('app-x86_64-release.apk','x64');
+        const version = release.tag_name ? release.tag_name.replace(/^vault-v/, 'v') : '';
+        if (version) document.getElementById('version').textContent = 'Latest Vault release · ' + version;
+        document.getElementById('status').textContent = 'Latest download links refreshed.';
+      }).catch(() => {});
+  </script>
+</body>
+</html>

@@ -2,6 +2,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/download",
+      "destination": "/download.html"
+    },
+    {
+      "source": "/vault-download",
+      "destination": "/download.html"
+    },
+    {
       "source": "/guides",
       "destination": "/guides.html"
     },
