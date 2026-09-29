@@ -230,11 +230,11 @@
 <!-- Full styles -->
 <!-- style.css stays render-blocking on purpose: it's small and needed
      immediately to avoid a flash of unstyled home page. -->
-<link rel="stylesheet" href="style.css?v=1.0.70">
-<link rel="stylesheet" href="install.css?v=1.0.70" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="style.css?v=1.1.0">
+<link rel="stylesheet" href="install.css?v=1.1.0" media="print" onload="this.media='all'">
 <noscript>
-  <link rel="stylesheet" href="install.css?v=1.0.70">
-  </noscript>
+  <link rel="stylesheet" href="install.css?v=1.1.0">
+</noscript>
 
 <script type="application/ld+json">
 {
@@ -439,53 +439,53 @@
 <nav id="drawer" class="drawer" aria-label="Main menu" aria-hidden="true">
   <div class="drawer-header">
     <a href="#home" class="drawer-brand" onclick="closeMenu()"><span aria-hidden="true">🪙</span><span class="logo-text">BaatBanao</span></a>
-    <button class="drawer-close" type="button" onclick="closeMenu()" aria-label="Menu band karein">✕</button>
+    <button class="drawer-close" type="button" onclick="closeMenu()" aria-label="Close menu">✕</button>
   </div>
 
   <div class="drawer-body">
-    <div class="drawer-group">Main Features</div>
-    <a class="drawer-link" href="#home" onclick="closeMenu()"><span>🏠</span> Home</a>
-    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Vasooli Reminder</a>
-    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Udhaar Khata</a>
-    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Ek Hisaab (Roz ka)</a>
-    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Offline Billing</a>
-    <a class="drawer-link" href="/app"><span>🧊</span> Open BaatBanao Vault</a>
-    <a class="drawer-link" href="/download"><span>⬇️</span> Download Vault</a>
-    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Bulk Queue</a>
+    <div class="drawer-group">Core Operations</div>
+    <a class="drawer-link" href="#home" onclick="closeMenu()"><span>🏠</span> Home Dashboard</a>
+    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Smart Payment Recovery</a>
+    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Digital Credit Ledger</a>
+    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Daily Cash Flow Ledger</a>
+    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Pro Invoicing &amp; Receipts</a>
+    <a class="drawer-link" href="/app"><span>🧊</span> Launch BaatBanao Vault (Web)</a>
+    <a class="drawer-link" href="/download"><span>⬇️</span> Download Vault App (v0.4.2)</a>
+    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Batch Recovery Dispatch</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Utilities</div>
-    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Smart Templates</a>
-    <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Reminder History</a>
-    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> UPI Pay Link Generator</a>
-    <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> Install App</div>
+    <div class="drawer-group">Productivity Suite</div>
+    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Contextual Template Engine</a>
+    <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Dispatch History &amp; Logs</a>
+    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> Instant UPI QR Generator</a>
+    <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> Install Native PWA</div>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Message Guides</div>
-    <a class="drawer-link" href="/guides"><span>📚</span> Saare Guides (16)</a>
-      <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Dost se paise wapas</a>
-    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Dukaan udhaar reminder</a>
-    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Rent reminder</a>
-    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Freelancer payment</a>
-    <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Bhojpuri message</a>
+    <div class="drawer-group">Communication Blueprints</div>
+    <a class="drawer-link" href="/guides"><span>📚</span> All Recovery Blueprints (16)</a>
+    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Peer-to-Peer Loans</a>
+    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Retail Store Credit</a>
+    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Property Rental Dues</a>
+    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Client Invoices &amp; Retainers</a>
+    <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Regional Dialects (Bhojpuri)</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Help &amp; Support</div>
-    <a class="drawer-link drawer-wa" href="https://wa.me/919918996096?text=Namaste!%20Mujhe%20BaatBanao%20par%20help%20chahiye" target="_blank" rel="noopener">
-      <span class="drawer-wa-label"><span>💬</span> WhatsApp Help</span><span class="drawer-chip">Chat</span>
+    <div class="drawer-group">Assistance &amp; Priority Help</div>
+    <a class="drawer-link drawer-wa" href="https://wa.me/919918996096?text=Hello!%20I%20need%20assistance%20with%20BaatBanao" target="_blank" rel="noopener">
+      <span class="drawer-wa-label"><span>💬</span> WhatsApp Direct Support</span><span class="drawer-chip">Priority</span>
     </a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Preferences &amp; Legal</div>
-    <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Settings &amp; Backup</a>
-    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> Share App</div>
-    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy Policy</a>
-    <a class="drawer-link" href="/terms"><span>📜</span> Terms</a>
-    <a class="drawer-link" href="/about"><span>ℹ️</span> About Us</a>
-    <a class="drawer-link" href="/contact"><span>✉️</span> Contact</a>
+    <div class="drawer-group">System &amp; Governance</div>
+    <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Security &amp; Data Backup</a>
+    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> Share Application</div>
+    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy &amp; Data Governance</a>
+    <a class="drawer-link" href="/terms"><span>📜</span> Terms of Service</a>
+    <a class="drawer-link" href="/about"><span>ℹ️</span> About Platform</a>
+    <a class="drawer-link" href="/contact"><span>✉️</span> Official Contact</a>
   </div>
 
-  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Local-first khata</div>
+  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Zero-Knowledge Local Ledger</div>
 </nav>
 
 <!-- Toast -->
@@ -493,13 +493,13 @@
 
 <script defer src="vendor/html2canvas.min.js"></script>
 <script defer src="vendor/jspdf.umd.min.js"></script>
-<script src="backup.js?v=1.0.70" defer></script>
-<script src="billing.js?v=1.0.70" defer></script>
-<script src="hisaab.js?v=1.0.70" defer></script>
-<script defer src="vendor/qrcode.js?v=1.0.70"></script>
-  <script src="app.js?v=1.0.70" defer></script>
-<script src="install.js?v=1.0.70" defer></script>
-<script src="voice-ocr.js?v=1.0.70" defer></script>
+<script src="backup.js?v=1.1.0" defer></script>
+<script src="billing.js?v=1.1.0" defer></script>
+<script src="hisaab.js?v=1.1.0" defer></script>
+<script defer src="vendor/qrcode.js?v=1.1.0"></script>
+<script src="app.js?v=1.1.0" defer></script>
+<script src="install.js?v=1.1.0" defer></script>
+<script src="voice-ocr.js?v=1.1.0" defer></script>
 <script>
 function shareApp(){
   if(navigator.share){

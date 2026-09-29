@@ -1,9 +1,9 @@
 /* ===========================================================
    BaatBanao Service Worker (version = CACHE_VERSION below)
-   v1.0.69: JS/CSS network-first + ?v= cache-busting (old CSS + new HTML mismatch fix)
+   v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.0.70';
+const CACHE_VERSION = 'baatbanao-v1.1.0';
 const CORE_ASSETS = [
   './',
   './index.html',

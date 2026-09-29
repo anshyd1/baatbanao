@@ -2261,8 +2261,10 @@ const BB_ADMIN_WHATSAPP = '919918996096';
 
 function isBBPro(){
   if (localStorage.getItem(BB_PRO_KEY) !== '1') return false;
-  // A real unlock always stores the server-signed receipt (43 chars).
-  return /^[A-Za-z0-9_-]{43}$/.test(localStorage.getItem('bb_pro_receipt') || '');
+  // A real unlock always stores the server-signed receipt (43 chars) and a valid 10-digit phone.
+  const receipt = localStorage.getItem('bb_pro_receipt') || '';
+  const phone = localStorage.getItem('bb_pro_phone') || '';
+  return /^[A-Za-z0-9_-]{43}$/.test(receipt) && /^\d{10}$/.test(phone);
 }
 
 function bbRevokePro(){
@@ -2273,14 +2275,25 @@ function bbRevokePro(){
 // Background re-check with server (only when online; never blocks the UI).
 async function bbVerifyProReceipt(){
   if (localStorage.getItem(BB_PRO_KEY) !== '1') return;
-  if (!isBBPro()) { bbRevokePro(); return; }
+  const receipt = localStorage.getItem('bb_pro_receipt');
   const phone = localStorage.getItem('bb_pro_phone');
+  if (!phone || !receipt || !isBBPro()) {
+    bbRevokePro();
+    if (typeof renderApp === 'function') renderApp();
+    return;
+  }
+  if (!navigator.onLine) return;
   const plan = localStorage.getItem(BB_PRO_PLAN_KEY) || 'pro';
-  if (!phone || !navigator.onLine) return; // older unlocks (before phone was saved) are grandfathered
   try {
-    const res = await fetch('/api/verify', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ phone, plan, receipt: localStorage.getItem('bb_pro_receipt') })});
-    if (res.status === 401 || res.status === 400) { bbRevokePro(); if (typeof renderApp === 'function') renderApp(); }
+    const res = await fetch('/api/verify', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ phone, plan, receipt })
+    });
+    if (res.status === 401 || res.status === 400) {
+      bbRevokePro();
+      if (typeof renderApp === 'function') renderApp();
+    }
   } catch(e) { /* offline / network — try again next launch */ }
 }
 setTimeout(bbVerifyProReceipt, 3000);

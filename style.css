@@ -1288,3 +1288,42 @@ input::placeholder, textarea::placeholder{ color:#B8A49C; font-weight:500; }
 /* Desktop scrollbars */
 @media (min-width:900px){ *::-webkit-scrollbar{ width:10px; height:10px; } *::-webkit-scrollbar-thumb{ background:#E4CDBB; border-radius:10px; border:2px solid var(--bg-primary); } }
 @media (prefers-reduced-motion:reduce){ *, *::before, *::after{ transition:none !important; animation:none !important; } }
+
+/* ===========================================================
+   HIGH-TECH BRAND DECORATION & MODERN FINTECH POLISH
+   =========================================================== */
+.topbar{
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 249, 232, 0.92);
+  border-bottom: 1px solid rgba(240, 223, 207, 0.8);
+}
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.logo-wrap::after {
+  content: "v1.1";
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--coral-dark);
+  background: rgba(255, 114, 95, 0.12);
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 114, 95, 0.25);
+  margin-left: 4px;
+}
+.drawer-link {
+  border-radius: 14px;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 700;
+}
+.drawer-link:hover {
+  background: rgba(255, 114, 95, 0.08);
+  transform: translateX(3px);
+}
+.hero-cta-pill {
+  box-shadow: 0 4px 14px rgba(255, 114, 95, 0.28);
+}
