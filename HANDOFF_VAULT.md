@@ -49,3 +49,13 @@ _Written 28 Sep 2026 so the two work-streams do not step on each other. Keep thi
 ## 5. Open decisions for the owner
 - The Vault plan says "PWA frozen (bug fixes only)". v1.0.70 is compatible with that: it is fixes + presentation, no new data formats.
 - Home tab: Vault plan proposes Vault as the home tab; SEO pages link to `/#vasooli`, `/#khata`, `/#billing` deep links — keep those hashes working (or redirect) in the Flutter shell.
+
+## 6. Vault stream update — 29 Sep 2026 (v0.3, Phase 1 shipped)
+
+- `feat/vault` merged into `main` (PR #1). Vault work now continues on `main` under `vault/**`; `.vercelignore` keeps it off the site.
+- Release `vault-v0.3` (Android APKs + web zip): https://github.com/anshyd1/baatbanao/releases/tag/vault-v0.3 — stable link for the site: `https://github.com/anshyd1/baatbanao/releases/latest/download/app-arm64-v8a-release.apk` (releases are no longer marked pre-release so `latest` resolves).
+- **Web build is served from `www.baatbanao.shop/app/`** (root folder `app/`, `<base href="/app/">`, `noindex`). Same origin was chosen deliberately: the automatic `bb_khata` / `bb_settings` import from `localStorage` (§2.1) only works same-origin — `app.baatbanao.shop` would need the backup-JSON path for everyone. `/` and all content pages are untouched. If a subdomain is still preferred later, only `--base-href` in the workflow and the folder change.
+- The workflow (`.github/workflows/build-vault.yml`) now publishes `app/` to `main` automatically on every `vault-v*` tag (bot commit "chore(app): publish Vault web …"). CanvasKit loads from Google's CDN, so the folder is ~5 MB. Please do not hand-edit `app/`.
+- Importer contract implemented per §2.1/§2.2: accepts the backup envelope (`app: BaatBanao`, `version: 1`, `data.bb_khata`) and raw `bb_khata` arrays; string amounts with commas and epoch timestamps are tolerated; `tone`/`language` are normalised. Not yet imported: `bb_history`, `bb_invoices_v1`, `bb_hisaab_v1`, Pro keys.
+- Still open from §5: `/#vasooli`, `/#khata`, `/#billing` deep links are not mapped in the Flutter shell yet (planned: `/app/#khata` → Khata tab, `/app/#vasooli` → Baat tab).
+- Next from this side: `/vault` landing page through `seo/generate_pages.py` + `enhance_pages.py` (per §3.2) with a 1200×630 featured image, and Play Store readiness (release signing in CI, listing copy, screenshots).

@@ -1,6 +1,7 @@
 # .github/workflows/build-vault.yml
 # Builds BaatBanao Vault (APK per ABI + web bundle) on GitHub's runners on every push to vault/app.
-# On a tag like vault-v0.2 it also attaches the APKs and a zipped web build to the GitHub Release.
+# On a tag like vault-v0.3 it also attaches the APKs and a zipped web build to the GitHub Release,
+# then publishes the web build to www.baatbanao.shop/app/ by committing it to main (folder app/).
 name: Build Vault (APK + Web)
 
 on:
@@ -49,10 +50,12 @@ jobs:
           flutter create . --platforms web --project-name paanikhata_icecubes --org shop.baatbanao
           sed -i 's#<title>.*</title>#<title>BaatBanao Vault</title>#; s#content="A new Flutter project."#content="BaatBanao Vault — every rupee, in its place."#' web/index.html
           sed -i 's#"name": ".*"#"name": "BaatBanao Vault"#; s#"short_name": ".*"#"short_name": "Vault"#; s#"description": ".*"#"description": "BaatBanao Vault — visual multi-account balances."#' web/manifest.json
+          # app shell is not a content page: keep it out of the search index; fix the iOS title
+          sed -i 's#<meta charset="UTF-8">#<meta charset="UTF-8">\n  <meta name="robots" content="noindex">#; s#content="paanikhata_icecubes"#content="BaatBanao Vault"#' web/index.html
 
-      - name: Build web bundle
+      - name: Build web bundle (served from www.baatbanao.shop/app/)
         run: |
-          flutter build web --release
+          flutter build web --release --base-href /app/
           cd build && zip -qr vault-web.zip web
 
       - uses: actions/upload-artifact@v4
@@ -69,9 +72,31 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/vault-v')
         uses: softprops/action-gh-release@v2
         with:
-          prerelease: true
+          prerelease: false
           files: |
             vault/app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             vault/app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
             vault/app/build/app/outputs/flutter-apk/app-x86_64-release.apk
             vault/app/build/vault-web.zip
+
+      - name: Publish web build to main → www.baatbanao.shop/app/ (tags only)
+        if: startsWith(github.ref, 'refs/tags/vault-v')
+        working-directory: ${{ github.workspace }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth 1 origin main
+          git worktree add -B deploy-site ../site origin/main
+          rm -rf ../site/app && mkdir -p ../site/app
+          cp -r vault/app/build/web/. ../site/app/
+          # CanvasKit is loaded from Google's CDN (Flutter default); the local copy and symbol maps are not needed on the site
+          rm -rf ../site/app/canvaskit && find ../site/app -name '*.symbols' -delete
+          cd ../site
+          git add -A app
+          if git diff --cached --quiet; then echo "web build unchanged"; exit 0; fi
+          git commit -q -m "chore(app): publish Vault web ${GITHUB_REF_NAME} to /app/"
+          for i in 1 2 3; do
+            if git push origin deploy-site:main; then break; fi
+            git fetch origin main && git rebase origin/main
+          done
