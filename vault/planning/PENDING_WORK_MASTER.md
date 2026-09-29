@@ -1,10 +1,22 @@
 # BaatBanao Vault — Pending Work Master List
 
 **Date:** 29 September 2026
-**Current shipped build:** `v0.4.0+4` / Git tag `vault-v0.4`
+**Current shipped build:** `v0.4.2+6` / Git tag `vault-v0.4.2`
+**Next patch in progress:** `v0.4.3+7` — real sound service, visible cube actions, pinch zoom and release QA.
 **Reference:** User-provided screenshot of the authentic cube-based Vault app.
 
 This document separates what is already shipped from what is still incomplete. It is the working backlog for the next fixes and releases.
+
+### Live QA snapshot — 29 September 2026
+
+- `https://www.baatbanao.shop/app` is serving Vault `v0.4.2+6`.
+- `/download` is serving the professional-English BaatBanao Vault landing page and direct APK choices.
+- v0.4.2 addressed the web tray jank and made the home menu draggable/scrollable.
+- v0.4.3 source now contains the real audio layer, pinch camera, visible per-cube action affordance and safer Khata delete flow; these still require CI/device QA before being called shipped.
+- Still not complete after that patch: full device/update QA, stable production signing verification, and the final Khata ↔ Baat regression pass.
+- SEO audience retention work now links the main SEO homepage directly to Vault and its download page; article-to-tool conversion and analytics must still be measured.
+
+Do not mark the product complete until the acceptance checklist at the end passes on a real Android phone and the web app after a clean-cache reload.
 
 ---
 
@@ -34,7 +46,7 @@ These are product requirements, not optional suggestions.
 
 ---
 
-## 1. Already shipped in v0.4 — verify, polish and regression-test
+## 1. Already shipped through v0.4.2 — verify, polish and regression-test
 
 These parts exist in the current code, but are not considered completely polished until device QA is complete.
 

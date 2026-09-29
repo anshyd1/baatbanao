@@ -82,6 +82,7 @@ class Store extends ChangeNotifier {
     store._syncLocked(animate: false);
     world.hapticsEnabled = settings.hapticsEnabled;
     world.soundEnabled = settings.soundEnabled;
+    world.soundVolume = settings.soundVolume;
     world.reduceMotion = settings.reduceMotion;
     world.lowBalanceAlerts = settings.lowBalanceAlerts;
     world.overdueAlerts = settings.overdueAlerts;
@@ -89,6 +90,7 @@ class Store extends ChangeNotifier {
     world.onPreferencesChanged = () {
       settings.hapticsEnabled = world.hapticsEnabled;
       settings.soundEnabled = world.soundEnabled;
+      settings.soundVolume = world.soundVolume;
       settings.reduceMotion = world.reduceMotion;
       settings.lowBalanceAlerts = world.lowBalanceAlerts;
       settings.overdueAlerts = world.overdueAlerts;
@@ -248,11 +250,13 @@ class Store extends ChangeNotifier {
           settings.upiId = s.upiId;
           settings.soundEnabled = s.soundEnabled;
           settings.hapticsEnabled = s.hapticsEnabled;
+          settings.soundVolume = s.soundVolume;
           settings.reduceMotion = s.reduceMotion;
           settings.lowBalanceAlerts = s.lowBalanceAlerts;
           settings.overdueAlerts = s.overdueAlerts;
           world.hapticsEnabled = settings.hapticsEnabled;
           world.soundEnabled = settings.soundEnabled;
+          world.soundVolume = settings.soundVolume;
           world.reduceMotion = settings.reduceMotion;
           world.lowBalanceAlerts = settings.lowBalanceAlerts;
           world.overdueAlerts = settings.overdueAlerts;

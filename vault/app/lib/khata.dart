@@ -89,9 +89,12 @@ class _KhataScreenState extends State<KhataScreen> {
   void _actions(BuildContext context, KhataEntry e) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             title: Text(e.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
             subtitle: Text('${inr(e.outstanding)} baaki of ${inr(e.amount)}${e.dueDate.isNotEmpty ? ' · due ${fmtDue(e.dueDate)}' : ''}'),
@@ -134,14 +137,31 @@ class _KhataScreenState extends State<KhataScreen> {
           ListTile(
             leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFD9534F)),
             title: const Text('Delete'),
-            onTap: () {
+            onTap: () async {
               Navigator.pop(ctx);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: Text('Delete ${e.name}’s entry?'),
+                  content: const Text('This removes the Khata entry and adjusts the locked balance. This action cannot be undone.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                    FilledButton.tonal(
+                      style: FilledButton.styleFrom(foregroundColor: const Color(0xFFD9534F)),
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm != true || !context.mounted) return;
               store.remove(e.id);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e.name} ka khata hataya')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${e.name}’s entry deleted')));
             },
           ),
           const SizedBox(height: 8),
-        ]),
+          ]),
+        ),
       ),
     );
   }

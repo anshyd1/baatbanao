@@ -133,6 +133,7 @@ class AppSettings {
     this.defaultTone = 'Friendly',
     this.upiId = '',
     this.soundEnabled = false,
+    this.soundVolume = 0.62,
     this.hapticsEnabled = true,
     this.reduceMotion = false,
     this.lowBalanceAlerts = true,
@@ -142,6 +143,7 @@ class AppSettings {
   String defaultTone;
   String upiId;
   bool soundEnabled;
+  double soundVolume;
   bool hapticsEnabled;
   bool reduceMotion;
   bool lowBalanceAlerts;
@@ -152,6 +154,7 @@ class AppSettings {
         defaultTone: KhataEntry.normalizeTone(j['defaultTone']),
         upiId: (j['upiId'] ?? '').toString(),
         soundEnabled: j['soundEnabled'] == true,
+        soundVolume: ((j['soundVolume'] ?? 0.62) as num).toDouble().clamp(0.0, 1.0).toDouble(),
         hapticsEnabled: j['hapticsEnabled'] != false,
         reduceMotion: j['reduceMotion'] == true,
         lowBalanceAlerts: j['lowBalanceAlerts'] != false,
@@ -163,6 +166,7 @@ class AppSettings {
         'defaultTone': defaultTone,
         'upiId': upiId,
         'soundEnabled': soundEnabled,
+        'soundVolume': soundVolume,
         'hapticsEnabled': hapticsEnabled,
         'reduceMotion': reduceMotion,
         'lowBalanceAlerts': lowBalanceAlerts,

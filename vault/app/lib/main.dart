@@ -13,6 +13,7 @@
 // Laptop: flutter run -d chrome   |   flutter run -d windows / macos / linux
 // ---------------------------------------------------------------------------
 
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -20,8 +21,9 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'shell.dart';
+import 'sound_service.dart';
 
-const vaultVersion = '0.4.2';
+const vaultVersion = '0.4.3';
 const vaultReleaseUrl = 'https://www.baatbanao.shop/download';
 
 Future<void> openVaultRelease(BuildContext context) async {
@@ -200,13 +202,14 @@ class CubeBody {
 }
 
 class _PointerControl {
-  _PointerControl({required this.id, required this.body, required this.downAt, required this.start, required this.last, required this.grab});
+  _PointerControl({required this.id, required this.body, required this.downAt, required this.start, required this.last, required this.grab, this.actionTap = false});
   final int id;
   final CubeBody body;
   final double downAt;
   final Offset start;
   Offset last;
   final Offset grab;
+  final bool actionTap;
   Offset velocity = Offset.zero;
   bool moved = false;
   bool lifted = false;
@@ -245,7 +248,11 @@ class World extends ChangeNotifier {
   /// Store wires this callback so preferences use the same JSON save path as balances.
   void Function()? onPreferencesChanged;
   bool hapticsEnabled = true;
-  bool soundEnabled = false;
+  final SoundService soundService = SoundService();
+  bool get soundEnabled => soundService.enabled;
+  set soundEnabled(bool value) => soundService.enabled = value;
+  double get soundVolume => soundService.volume;
+  set soundVolume(double value) => soundService.volume = value.clamp(0.0, 1.0).toDouble();
   bool reduceMotion = false;
   bool lowBalanceAlerts = true;
   bool overdueAlerts = true;
@@ -270,8 +277,17 @@ class World extends ChangeNotifier {
     if (hapticsEnabled) HapticFeedback.mediumImpact();
   }
 
-  void soundClick() {
-    if (soundEnabled) SystemSound.play(SystemSoundType.click);
+  void soundCue(VaultSound cue) {
+    if (soundEnabled) unawaited(soundService.play(cue));
+  }
+
+  void soundClick() => soundCue(VaultSound.tap);
+
+  void updateSoundVolume(double value) {
+    soundVolume = value;
+    onPreferencesChanged?.call();
+    dataVersion.value++;
+    onData?.call();
   }
 
   void updatePreferences({bool? haptics, bool? sound, bool? motion, bool? lowAlerts, bool? overdue}) {
@@ -303,6 +319,11 @@ class World extends ChangeNotifier {
   List<Offset> slots = [];
   bool _placed = false;
 
+  // Camera state for pinch zoom and two-finger panning. Cube physics remains
+  // in tray coordinates; only the viewport transform changes.
+  double cameraScale = 1.0;
+  Offset cameraOffset = Offset.zero;
+
   bool aligning = false;
   int? findN;
   double findT = 0; // 0..1 dim/glow progress
@@ -333,6 +354,29 @@ class World extends ChangeNotifier {
     _placed = false;
     tray = Size.zero;
     slots = [];
+    cameraScale = 1.0;
+    cameraOffset = Offset.zero;
+  }
+
+  void setCamera({required double scale, required Offset offset}) {
+    final nextScale = scale.clamp(1.0, 2.4).toDouble();
+    if (nextScale <= 1.001) {
+      cameraScale = 1.0;
+      cameraOffset = Offset.zero;
+    } else {
+      final maxX = math.max(0.0, tray.width * (nextScale - 1) / 2);
+      final maxY = math.max(0.0, tray.height * (nextScale - 1) / 2);
+      cameraScale = nextScale;
+      cameraOffset = Offset(offset.dx.clamp(-maxX, maxX).toDouble(), offset.dy.clamp(-maxY, maxY).toDouble());
+    }
+    notifyListeners();
+  }
+
+  void resetCamera() {
+    if (cameraScale == 1.0 && cameraOffset == Offset.zero) return;
+    cameraScale = 1.0;
+    cameraOffset = Offset.zero;
+    notifyListeners();
   }
 
   String? addBox({required String name, required String type, required double goal, required double lowBalanceAt, required Color color, double openingBalance = 0}) {
@@ -347,6 +391,7 @@ class World extends ChangeNotifier {
       txns.insert(0, Txn(account.n, openingBalance, 'Opening balance · $clean', true, DateTime.now()));
     }
     relayout();
+    soundCue(VaultSound.success);
     _persist(structure: true);
     return null;
   }
@@ -362,6 +407,7 @@ class World extends ChangeNotifier {
     account.goal = goal > account.balance ? goal : account.balance;
     account.lowBalanceAt = lowBalanceAt;
     account.color = color;
+    soundCue(VaultSound.success);
     _persist();
     return null;
   }
@@ -374,6 +420,7 @@ class World extends ChangeNotifier {
     if (body.acc.balance.abs() > 0.01) return 'Pehle is box ka balance transfer karke zero karo';
     archivedBodies.add(bodies.removeAt(i));
     relayout();
+    soundCue(VaultSound.success);
     _persist(structure: true);
     return null;
   }
@@ -383,6 +430,7 @@ class World extends ChangeNotifier {
     if (i < 0) return 'Archived box nahi mila';
     bodies.add(archivedBodies.removeAt(i));
     relayout();
+    soundCue(VaultSound.success);
     _persist(structure: true);
     return null;
   }
@@ -401,6 +449,7 @@ class World extends ChangeNotifier {
     } else {
       archivedBodies.removeAt(archivedIndex);
     }
+    soundCue(VaultSound.success);
     _persist(structure: true);
     return null;
   }
@@ -430,6 +479,7 @@ class World extends ChangeNotifier {
 
   void align() {
     aligning = true;
+    resetCamera();
     hapticLight();
   }
 
@@ -438,7 +488,7 @@ class World extends ChangeNotifier {
     if (time - _lastHaptic > 0.08) {
       _lastHaptic = time;
       hapticLight(); // "haptic tick" har takkar pe (rate-limited)
-      soundClick();
+      soundCue(VaultSound.bump);
     }
   }
 
@@ -578,7 +628,7 @@ class World extends ChangeNotifier {
     b.pourUntil = time + 1.3;
     b.pourIn = isIn;
     hapticMedium();
-    soundClick();
+    soundCue(isIn ? VaultSound.pour : VaultSound.drain);
     dataVersion.value++;
     onData?.call();
     return true;
@@ -609,6 +659,7 @@ class World extends ChangeNotifier {
       txns.remove(target);
     }
     hapticLight();
+    soundCue(VaultSound.undo);
     dataVersion.value++;
     onData?.call();
     return null;
@@ -638,7 +689,7 @@ class World extends ChangeNotifier {
     to.pourUntil = time + 1.3;
     to.pourIn = true;
     hapticMedium();
-    soundClick();
+    soundCue(VaultSound.transfer);
     dataVersion.value++;
     onData?.call();
     return null;
@@ -680,6 +731,12 @@ class TrayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final found = w.findN == null ? null : w.byN(w.findN!);
     final lifted = w.bodies.where((b) => b.lifted).toList();
+
+    final center = Offset(size.width / 2, size.height / 2);
+    canvas.save();
+    canvas.translate(center.dx + w.cameraOffset.dx, center.dy + w.cameraOffset.dy);
+    canvas.scale(w.cameraScale);
+    canvas.translate(-center.dx, -center.dy);
 
     for (final b in w.bodies) {
       if (b.lifted || identical(b, found)) continue;
@@ -724,6 +781,7 @@ class TrayPainter extends CustomPainter {
           ..color = const Color(0xFFFF6E46).withAlpha((200 * (1 - age)).round().clamp(0, 255).toInt()),
       );
     }
+    canvas.restore();
   }
 
   void _cube(Canvas canvas, CubeBody b, double scale) {
@@ -829,6 +887,14 @@ class TrayPainter extends CustomPainter {
     _text(canvas, '${(pct * 100).round()}%', Offset(hs - 12 * k, -hs + 22 * k), 15 * k, anchor: Alignment.centerRight, color: const Color(0xFF323232));
     _text(canvas, b.acc.name, Offset(0, -8 * k), 19 * k);
     _text(canvas, inr(b.displayBal), Offset(0, 18 * k), 19 * k);
+
+    // Always-visible actions affordance; tap the three dots to open edit,
+    // archive, transfer and safe-delete actions for this individual cube.
+    final menu = Offset(hs - 20 * k, hs - 20 * k);
+    canvas.drawCircle(menu, 14 * k, Paint()..color = Colors.white.withAlpha(225));
+    for (var i = -1; i <= 1; i++) {
+      canvas.drawCircle(menu + Offset(0, i * 4 * k), 1.7 * k, Paint()..color = const Color(0xFF25334A));
+    }
     canvas.restore();
   }
 
@@ -906,6 +972,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late final Ticker _ticker;
   Duration _last = Duration.zero;
   final Map<int, _PointerControl> _pointers = {};
+  final Map<int, Offset> _freePointers = {};
+  double? _pinchStartDistance;
+  Offset _pinchStartFocal = Offset.zero;
+  double _pinchStartScale = 1.0;
+  Offset _pinchStartOffset = Offset.zero;
 
   @override
   void initState() {
@@ -933,6 +1004,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       control.body.lifted = false;
     }
     _pointers.clear();
+    _freePointers.clear();
     world.onStructureChanged = null;
     _ticker.dispose();
     super.dispose();
@@ -948,14 +1020,52 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return null;
   }
 
+  // The visible three-dot affordance is deliberately a small corner target so
+  // normal flicks and long-press drags keep their original behaviour.
+  CubeBody? _hitAction(Offset p) {
+    final hs = world.cube / 2;
+    for (final b in world.bodies.reversed) {
+      final target = b.pos + Offset(hs - 20, hs - 20);
+      if ((p - target).distance <= 24) return b;
+    }
+    return null;
+  }
+
   Offset _clampInTray(Offset p) {
     final hs = world.cube / 2;
     return Offset(p.dx.clamp(6 + hs, world.tray.width - 6 - hs).toDouble(), p.dy.clamp(6 + hs, world.tray.height - 6 - hs).toDouble());
   }
 
+  Offset _toTrayPoint(Offset screenPoint) {
+    final center = Offset(world.tray.width / 2, world.tray.height / 2);
+    return center + (screenPoint - center - world.cameraOffset) / world.cameraScale;
+  }
+
+  void _updatePinch() {
+    if (_freePointers.length < 2) {
+      _pinchStartDistance = null;
+      return;
+    }
+    final points = _freePointers.values.take(2).toList();
+    final focal = (points[0] + points[1]) / 2;
+    final distance = (points[1] - points[0]).distance;
+    if (distance < 2) return;
+    final center = Offset(world.tray.width / 2, world.tray.height / 2);
+    if (_pinchStartDistance == null) {
+      _pinchStartDistance = distance;
+      _pinchStartFocal = focal;
+      _pinchStartScale = world.cameraScale;
+      _pinchStartOffset = world.cameraOffset;
+    }
+    final focusWorld = center + (_pinchStartFocal - center - _pinchStartOffset) / _pinchStartScale;
+    final nextScale = _pinchStartScale * distance / _pinchStartDistance!;
+    final nextOffset = focal - center - (focusWorld - center) * nextScale;
+    world.setCamera(scale: nextScale, offset: nextOffset);
+  }
+
   void _updateLongPresses() {
     for (final control in _pointers.values) {
-      if (control.lifted || !control.longPressAllowed) continue;
+      if (control.actionTap || control.lifted || !control.longPressAllowed) continue;
       if (world.time - control.downAt < 0.42) continue;
       control.lifted = true;
       control.body.lifted = true;
@@ -965,30 +1075,48 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _pointerDown(PointerDownEvent event) {
     if (world.findN != null) world.setFind(null);
-    final body = _hit(event.localPosition);
-    if (body == null || _pointers.values.any((p) => identical(p.body, body))) return;
-    body.kinematic = true;
+    final trayPoint = _toTrayPoint(event.localPosition);
+    final actionBody = _hitAction(trayPoint);
+    final body = actionBody ?? _hit(trayPoint);
+    if (body == null) {
+      _freePointers[event.pointer] = event.localPosition;
+      _updatePinch();
+      return;
+    }
+    if (_pointers.values.any((p) => identical(p.body, body))) return;
+    final actionTap = actionBody != null;
+    if (!actionTap) body.kinematic = true;
     _pointers[event.pointer] = _PointerControl(
       id: event.pointer,
       body: body,
       downAt: world.time,
-      start: event.localPosition,
-      last: event.localPosition,
-      grab: event.localPosition - body.pos,
+      start: trayPoint,
+      last: trayPoint,
+      grab: trayPoint - body.pos,
+      actionTap: actionTap,
     );
     world.hapticSelection();
+    world.soundCue(VaultSound.tap);
   }
 
   void _pointerMove(PointerMoveEvent event) {
     final control = _pointers[event.pointer];
-    if (control == null) return;
-    final delta = event.localPosition - control.last;
-    control.last = event.localPosition;
-    if ((event.localPosition - control.start).distance > 12 && !control.lifted) {
+    if (control == null) {
+      if (_freePointers.containsKey(event.pointer)) {
+        _freePointers[event.pointer] = event.localPosition;
+        _updatePinch();
+      }
+      return;
+    }
+    if (control.actionTap) return;
+    final trayPoint = _toTrayPoint(event.localPosition);
+    final delta = trayPoint - control.last;
+    control.last = trayPoint;
+    if ((trayPoint - control.start).distance > 12 && !control.lifted) {
       control.longPressAllowed = false;
     }
     if (delta.distance > 0.5) control.moved = true;
-    control.body.pos = _clampInTray(event.localPosition - control.grab);
+    control.body.pos = _clampInTray(trayPoint - control.grab);
     control.velocity = delta * 60;
     control.body.vel = control.velocity;
     if (control.lifted) {
@@ -1004,6 +1132,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final tap = !cancelled && !control.moved && !control.lifted && duration < 0.42;
     body.lifted = false;
     body.kinematic = false;
+    if (tap && control.actionTap) {
+      unawaited(showBoxActions(context, world, body.acc));
+      return;
+    }
     if (tap) {
       body.vel = Offset.zero;
       body.angV = 0;
@@ -1017,8 +1149,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     world.hapticLight();
   }
 
-  void _pointerUp(PointerUpEvent event) => _finishPointer(event.pointer);
-  void _pointerCancel(PointerCancelEvent event) => _finishPointer(event.pointer, cancelled: true);
+  void _pointerUp(PointerUpEvent event) {
+    if (_freePointers.containsKey(event.pointer)) {
+      _freePointers.remove(event.pointer);
+      _updatePinch();
+      return;
+    }
+    _finishPointer(event.pointer);
+  }
+
+  void _pointerCancel(PointerCancelEvent event) {
+    if (_freePointers.containsKey(event.pointer)) {
+      _freePointers.remove(event.pointer);
+      _updatePinch();
+      return;
+    }
+    _finishPointer(event.pointer, cancelled: true);
+  }
 
   // ---------- sheets ----------
   Future<void> _findBox() async {
@@ -1159,8 +1306,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _Chip(icon: Icons.grid_view_rounded, label: 'Align', onTap: world.align),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 _Chip(icon: Icons.tag_rounded, label: 'Find box', onTap: _findBox),
+                const SizedBox(width: 10),
+                _Chip(icon: Icons.zoom_out_map_rounded, label: 'Fit', onTap: world.resetCamera),
               ],
             ),
             const SizedBox(height: 14),
@@ -1656,9 +1805,23 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
             SwitchListTile(
               secondary: const Icon(Icons.volume_up_rounded),
               title: const Text('Cube sounds'),
-              subtitle: const Text('Click/pour feedback; off by default'),
+              subtitle: const Text('Tap, bump, pour, drain and save feedback'),
               value: world.soundEnabled,
               onChanged: (v) => world.updatePreferences(sound: v),
+            ),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              leading: const Icon(Icons.volume_down_rounded),
+              title: const Text('Effect volume'),
+              subtitle: Slider(
+                value: world.soundVolume,
+                min: 0,
+                max: 1,
+                divisions: 10,
+                label: '${(world.soundVolume * 100).round()}%',
+                onChanged: world.soundEnabled ? world.updateSoundVolume : null,
+              ),
+              trailing: Text('${(world.soundVolume * 100).round()}%'),
             ),
             SwitchListTile(
               secondary: const Icon(Icons.vibration_rounded),
