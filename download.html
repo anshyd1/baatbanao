@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="hi-IN">
+<html lang="en-IN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>BaatBanao Vault — Download latest app</title>
+  <title>BaatBanao Vault — Download the latest app</title>
   <meta name="description" content="Download the latest BaatBanao Vault Android app or open the web app.">
   <meta name="theme-color" content="#eef6ff">
   <link rel="icon" href="assets/favicon-32.png">
@@ -41,21 +41,21 @@
   <main class="wrap">
     <header>
       <div class="brand"><img src="assets/icon-192.png" alt="BaatBanao">BaatBanao Vault</div>
-      <a class="web-link" href="/app/">Open web app ↗</a>
+      <a class="web-link" href="https://www.baatbanao.shop/app" target="_blank" rel="noopener">Open Web App ↗</a>
     </header>
 
     <section class="hero">
       <div class="cube" aria-hidden="true"><span>₹</span></div>
-      <h1>Har rupee, apni jagah.</h1>
-      <p>Playable liquid cubes ke saath apne cash, bank, UPI aur goals ko manage karein. Latest Android app yahin se download karein—GitHub page dhoondhne ki zaroorat nahi.</p>
+      <h1>Every rupee, in its place.</h1>
+      <p>Manage cash, bank accounts, UPI and goals with playful liquid cubes. Download the latest BaatBanao Vault Android app directly from this page.</p>
       <div class="version" id="version">Latest Vault release · v0.4.1</div>
     </section>
 
     <section class="card">
-      <h2>Android app download</h2>
-      <p class="sub">Zyadatar naye Android phones ke liye BaatBanao Vault ka “Recommended” version choose karein.</p>
+      <h2>Download the Android app</h2>
+      <p class="sub">Choose the recommended version for most modern Android phones.</p>
       <a id="arm64" class="download" href="https://github.com/anshyd1/baatbanao/releases/download/vault-v0.4.1/app-arm64-v8a-release.apk">
-        <span><strong>BaatBanao Vault — Recommended</strong><small>Most modern phones · 64-bit</small></span><b>↓</b>
+        <span><strong>BaatBanao Vault — Recommended</strong><small>For most modern Android phones · 64-bit</small></span><b>↓</b>
       </a>
       <div class="secondary">
         <a id="armv7" href="https://github.com/anshyd1/baatbanao/releases/download/vault-v0.4.1/app-armeabi-v7a-release.apk">BaatBanao Vault — Older phones</a>
@@ -67,20 +67,20 @@
     <section class="card">
       <h2>Install or update safely</h2>
       <div class="steps">
-        <div class="step"><span class="num">1</span><span>APK download hone ke baad file open karein.</span></div>
-        <div class="step"><span class="num">2</span><span>Chrome ko “Install unknown apps” permission dein, agar Android pooche.</span></div>
-        <div class="step"><span class="num">3</span><span>Purana app uninstall na karein. New APK ko usi app ke upar install karein.</span></div>
+        <div class="step"><span class="num">1</span><span>Open the downloaded APK file.</span></div>
+        <div class="step"><span class="num">2</span><span>If prompted, allow Chrome to install unknown apps.</span></div>
+        <div class="step"><span class="num">3</span><span>Install the new APK over the existing app. Do not uninstall the old app.</span></div>
       </div>
-      <div class="note">Vault ka local data app ke andar rehta hai. Update ke liye uninstall na karein, warna local balances/history delete ho sakti hai.</div>
+      <div class="note">Your Vault data is stored locally on your device. Do not uninstall the existing app before updating, or your local balances and history may be lost.</div>
     </section>
 
     <section class="card">
-      <h2>Download nahi karna?</h2>
-      <p class="sub">Web version browser mein kholkar home screen par install kiya ja sakta hai.</p>
-      <div class="secondary"><a href="/app/">Open BaatBanao Vault Web ↗</a></div>
+      <h2>Prefer not to install?</h2>
+      <p class="sub">Use BaatBanao Vault in your browser, or add the web app to your home screen.</p>
+      <div class="secondary"><a href="https://www.baatbanao.shop/app" target="_blank" rel="noopener">Open BaatBanao Vault Web App ↗</a></div>
     </section>
 
-    <footer>BaatBanao · Vault · Khata · Baat<br>Offline-first personal money space</footer>
+    <footer>BaatBanao · Vault · Khata · Baat<br>Offline-first personal finance space</footer>
   </main>
   <script>
     // Keep this page useful for future releases while retaining a working fallback.
@@ -92,7 +92,7 @@
         find('app-arm64-v8a-release.apk','arm64'); find('app-armeabi-v7a-release.apk','armv7'); find('app-x86_64-release.apk','x64');
         const version = release.tag_name ? release.tag_name.replace(/^vault-v/, 'v') : '';
         if (version) document.getElementById('version').textContent = 'Latest Vault release · ' + version;
-        document.getElementById('status').textContent = 'Latest download links refreshed.';
+        document.getElementById('status').textContent = 'Download links updated.';
       }).catch(() => {});
   </script>
 </body>
