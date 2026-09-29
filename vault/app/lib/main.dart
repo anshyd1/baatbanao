@@ -23,7 +23,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'shell.dart';
 import 'sound_service.dart';
 
-const vaultVersion = '0.4.3';
+const vaultVersion = '0.4.4';
 const vaultReleaseUrl = 'https://www.baatbanao.shop/download';
 
 Future<void> openVaultRelease(BuildContext context) async {

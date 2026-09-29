@@ -1,7 +1,7 @@
 name: paanikhata_icecubes
 description: BaatBanao Vault — visual multi-account balance module (liquid level = balance). Physics tray, Align, Find box, add-money pour, detail with undo.
 publish_to: "none"
-version: 0.4.3+7
+version: 0.4.4+8
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
