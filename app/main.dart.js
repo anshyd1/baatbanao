@@ -28226,7 +28226,7 @@ _.w=h},
 a09(a){var s=0,r=A.O(t.H)
 var $async$a09=A.P(function(b,c){if(b===1)return A.L(c,r)
 for(;;)switch(s){case 0:s=2
-return A.S(A.azU(A.hR("https://github.com/anshyd1/baatbanao/releases/latest",0,null),B.q1),$async$a09)
+return A.S(A.azU(A.hR("https://www.baatbanao.shop/download",0,null),B.q1),$async$a09)
 case 2:if(!c&&a.e!=null)a.a2(t.J).f.f4(B.VU)
 return A.M(null,r)}})
 return A.N($async$a09,r)},
@@ -102779,7 +102779,7 @@ B.a0z=new A.aj("Open the latest APK release",null,null,null,null,null,null,null,
 B.a0A=new A.aj("Add money",null,null,null,null,null,null,null,null,null)
 B.YD=new A.k(!0,B.cw,null,null,null,null,null,B.ig,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.a0B=new A.aj("Locked Khata box ko direct edit nahi kar sakte. Khata tab se uski entries manage hoti hain.",null,B.YD,null,null,null,null,null,null,null)
-B.a0C=new A.aj("Current version v0.4.0 \xb7 APK release page",null,null,null,null,null,null,null,null,null)
+B.a0C=new A.aj("Current version v0.4.1 \xb7 APK release page",null,null,null,null,null,null,null,null,null)
 B.a0E=new A.aj("Locked Box se nikal ke kisi box me daalo",null,null,null,null,null,null,null,null,null)
 B.a0G=new A.aj("Sound, haptics and motion",null,null,null,null,null,null,null,null,null)
 B.a0H=new A.aj("Next",null,null,null,null,null,null,null,null,null)
