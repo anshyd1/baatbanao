@@ -21,7 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'shell.dart';
 
-const vaultVersion = '0.4.0';
+const vaultVersion = '0.4.1';
 const vaultReleaseUrl = 'https://www.baatbanao.shop/download';
 
 Future<void> openVaultRelease(BuildContext context) async {
