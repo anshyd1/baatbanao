@@ -18,6 +18,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import 'shell.dart';
+
 void main() => runApp(const PaaniKhataApp());
 
 class PaaniKhataApp extends StatelessWidget {
@@ -32,7 +34,7 @@ class PaaniKhataApp extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF3478F6),
         scaffoldBackgroundColor: const Color(0xFFF3F6FA),
       ),
-      home: const HomeScreen(),
+      home: const BootScreen(),
     );
   }
 }
@@ -40,13 +42,25 @@ class PaaniKhataApp extends StatelessWidget {
 // =========================== MODEL ===========================
 
 class Account {
-  Account({required this.n, required this.name, required this.balance, required this.goal, required this.color});
+  Account({required this.n, required this.name, required this.balance, required this.goal, required this.color, this.locked = false});
   final int n; // box number: FIXED, kabhi nahi badalta (position badal sakti hai)
   String name;
   double balance;
   double goal; // scale ka top (auto-adjust: balance > goal ho to goal = balance)
   final Color color;
+  /// Locked Box: balance is derived from the Khata (receivables) and cannot be edited directly.
+  bool locked;
   double get pct => goal <= 0 ? 0 : (balance / goal).clamp(0.0, 1.0).toDouble();
+
+  Map<String, dynamic> toJson() => {'n': n, 'name': name, 'balance': balance, 'goal': goal, 'color': color.toARGB32(), 'locked': locked};
+  factory Account.fromJson(Map<String, dynamic> j) => Account(
+        n: (j['n'] as num).toInt(),
+        name: (j['name'] ?? 'Box').toString(),
+        balance: ((j['balance'] ?? 0) as num).toDouble(),
+        goal: ((j['goal'] ?? 2000) as num).toDouble(),
+        color: Color(((j['color'] ?? 0xFF3478F6) as num).toInt()),
+        locked: j['locked'] == true,
+      );
 }
 
 class Txn {
@@ -56,6 +70,15 @@ class Txn {
   final String note;
   final bool isIn; // true = aaya (green), false = gaya (red)
   final DateTime ts;
+
+  Map<String, dynamic> toJson() => {'accN': accN, 'amt': amt, 'note': note, 'isIn': isIn, 'ts': ts.millisecondsSinceEpoch};
+  factory Txn.fromJson(Map<String, dynamic> j) => Txn(
+        (j['accN'] as num).toInt(),
+        ((j['amt'] ?? 0) as num).toDouble(),
+        (j['note'] ?? '').toString(),
+        j['isIn'] == true,
+        DateTime.fromMillisecondsSinceEpoch(((j['ts'] ?? 0) as num).toInt()),
+      );
 }
 
 /// Indian format: 250000 -> ₹2,50,000
@@ -87,7 +110,7 @@ List<Account> seedAccounts() => [
       Account(n: 5, name: 'Paytm', balance: 900, goal: 2000, color: const Color(0xFF3CAAF0)),
       Account(n: 6, name: 'ICICI', balance: 1200, goal: 2000, color: const Color(0xFF4650BE)),
       Account(n: 7, name: 'Gold', balance: 2500, goal: 2500, color: const Color(0xFFDCAA28)),
-      Account(n: 8, name: 'Udhaar', balance: 300, goal: 2000, color: const Color(0xFF828C96)),
+      Account(n: 8, name: 'Udhaar', balance: 0, goal: 2000, color: const Color(0xFF828C96), locked: true), // Locked Box: Khata se derived
     ];
 
 List<Txn> seedTxns() {
@@ -135,6 +158,16 @@ class World extends ChangeNotifier {
   }
   static const int maxFree = 5, maxPro = 12;
 
+  /// Called after every balance mutation (persistence hook).
+  void Function()? onData;
+
+  CubeBody? get lockedBody {
+    for (final b in bodies) {
+      if (b.acc.locked) return b;
+    }
+    return null;
+  }
+
   final List<CubeBody> bodies = [];
   final List<Txn> txns;
   final List<Bump> bumps = [];
@@ -150,7 +183,9 @@ class World extends ChangeNotifier {
   double time = 0;
   double _lastHaptic = -1;
 
-  double get total => bodies.fold(0.0, (s, b) => s + b.acc.balance);
+  /// Liquid money only (locked/receivable boxes excluded).
+  double get total => bodies.where((b) => !b.acc.locked).fold(0.0, (s, b) => s + b.acc.balance);
+  double get lockedTotal => bodies.where((b) => b.acc.locked).fold(0.0, (s, b) => s + b.acc.balance);
 
   CubeBody byN(int n) => bodies.firstWhere((b) => b.acc.n == n);
 
@@ -309,16 +344,34 @@ class World extends ChangeNotifier {
   }
 
   /// +Aaya / −Kharch apply. Cash negative nahi ja sakta -> false return (warn).
-  bool apply(int n, double amt, bool isIn, String note) {
+  bool apply(int n, double amt, bool isIn, String note, {bool force = false}) {
     final b = byN(n);
+    if (b.acc.locked && !force) return false; // Locked Box: Khata se chalta hai
     if (!isIn && b.acc.name == 'Cash' && b.acc.balance - amt < 0) return false;
     b.acc.balance += isIn ? amt : -amt;
+    if (b.acc.balance < 0 && b.acc.locked) b.acc.balance = 0;
     if (b.acc.balance > b.acc.goal) b.acc.goal = b.acc.balance; // scale auto-adjust
     txns.insert(0, Txn(n, amt, note, isIn, DateTime.now()));
     b.pourUntil = time + 1.3;
     b.pourIn = isIn;
     HapticFeedback.mediumImpact();
+    onData?.call();
     return true;
+  }
+
+  /// Set a locked box to an exact derived value (no txn record).
+  void setLockedBalance(double v, {bool animate = true}) {
+    final b = lockedBody;
+    if (b == null) return;
+    final up = v > b.acc.balance;
+    if (animate && (v - b.acc.balance).abs() > 0.5) {
+      b.pourUntil = time + 1.3;
+      b.pourIn = up;
+    }
+    b.acc.balance = v < 0 ? 0 : v;
+    if (b.acc.balance > b.acc.goal) b.acc.goal = b.acc.balance;
+    if (!animate) b.displayBal = b.acc.balance;
+    onData?.call();
   }
 
   void setFind(int? n) {
@@ -436,6 +489,24 @@ class TrayPainter extends CustomPainter {
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(hs - 22, -hs + 24, 9, s - 68), const Radius.circular(5)), Paint()..color = Colors.white.withAlpha(70));
     canvas.restore();
 
+    if (b.acc.locked) {
+      // frost: locked money (receivables) — white haze + lock glyph
+      canvas.drawRRect(rr, Paint()..color = Colors.white.withAlpha(115));
+      final lk = s / 150;
+      final lc = Offset(hs - 24 * lk, hs - 24 * lk);
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: lc + Offset(0, 4 * lk), width: 18 * lk, height: 14 * lk), Radius.circular(3 * lk)), Paint()..color = const Color(0xFF505A66));
+      canvas.drawArc(
+        Rect.fromCenter(center: lc - Offset(0, 4 * lk), width: 12 * lk, height: 14 * lk),
+        math.pi,
+        math.pi,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5 * lk
+          ..color = const Color(0xFF505A66),
+      );
+    }
+
     // borders
     canvas.drawRRect(
       rr,
@@ -528,13 +599,14 @@ class TrayPainter extends CustomPainter {
 // =========================== HOME SCREEN ===========================
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.world});
+  final World world;
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  late final World world;
+  World get world => widget.world;
   late final Ticker _ticker;
   Duration _last = Duration.zero;
   CubeBody? _active;
@@ -544,7 +616,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    world = World(seedAccounts(), seedTxns());
     _ticker = createTicker(_onTick)..start();
   }
 
@@ -558,7 +629,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _ticker.dispose();
-    world.dispose();
     super.dispose();
   }
 
@@ -675,7 +745,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final ok = world.apply(res.$1, res.$2, isIn, res.$3);
     final msg = ok
         ? 'Box ${res.$1} · ${world.byN(res.$1).acc.name}   ${isIn ? '+' : '−'}${inr(res.$2)}'
-        : 'Cash negative nahi ho sakta — pehle Cash me paisa add karo';
+        : (world.byN(res.$1).acc.locked ? 'Box ${res.$1} locked hai — ye Khata se chalta hai (udhaar wahan likho)' : 'Cash negative nahi ho sakta — pehle Cash me paisa add karo');
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg, style: TextStyle(color: ok ? const Color(0xFF78E696) : Colors.white, fontWeight: FontWeight.w700)),
       backgroundColor: ok ? const Color(0xFF1E242E) : const Color(0xFFE14646),
@@ -693,12 +763,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             const SizedBox(height: 10),
             AnimatedBuilder(
               animation: world,
-              builder: (_, __) => Text('Total ${inr(world.total)} · ${world.bodies.length} boxes',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF14181E))),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(top: 4, bottom: 10),
-              child: Text('flick · long-press drag · Align · Find box · tap = detail', style: TextStyle(fontSize: 13, color: Color(0xFF5A6473))),
+              builder: (_, __) => Column(
+                children: [
+                  Text('Total ${inr(world.total)} · ${world.bodies.length} boxes',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF14181E))),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 10),
+                    child: Text(
+                      world.lockedTotal > 0
+                          ? 'Locked in Khata ${inr(world.lockedTotal)} · flick · Align · Find · tap = detail'
+                          : 'flick · long-press drag · Align · Find box · tap = detail',
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF5A6473)),
+                    ),
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: Padding(
