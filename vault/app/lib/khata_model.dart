@@ -128,16 +128,44 @@ class KhataEntry {
 }
 
 class AppSettings {
-  AppSettings({this.defaultLanguage = 'Hinglish', this.defaultTone = 'Friendly', this.upiId = ''});
+  AppSettings({
+    this.defaultLanguage = 'Hinglish',
+    this.defaultTone = 'Friendly',
+    this.upiId = '',
+    this.soundEnabled = false,
+    this.hapticsEnabled = true,
+    this.reduceMotion = false,
+    this.lowBalanceAlerts = true,
+    this.overdueAlerts = true,
+  });
   String defaultLanguage;
   String defaultTone;
   String upiId;
+  bool soundEnabled;
+  bool hapticsEnabled;
+  bool reduceMotion;
+  bool lowBalanceAlerts;
+  bool overdueAlerts;
 
   factory AppSettings.fromJson(Map<String, dynamic> j) => AppSettings(
         defaultLanguage: KhataEntry.normalizeLang(j['defaultLanguage']),
         defaultTone: KhataEntry.normalizeTone(j['defaultTone']),
         upiId: (j['upiId'] ?? '').toString(),
+        soundEnabled: j['soundEnabled'] == true,
+        hapticsEnabled: j['hapticsEnabled'] != false,
+        reduceMotion: j['reduceMotion'] == true,
+        lowBalanceAlerts: j['lowBalanceAlerts'] != false,
+        overdueAlerts: j['overdueAlerts'] != false,
       );
 
-  Map<String, dynamic> toJson() => {'defaultLanguage': defaultLanguage, 'defaultTone': defaultTone, 'upiId': upiId};
+  Map<String, dynamic> toJson() => {
+        'defaultLanguage': defaultLanguage,
+        'defaultTone': defaultTone,
+        'upiId': upiId,
+        'soundEnabled': soundEnabled,
+        'hapticsEnabled': hapticsEnabled,
+        'reduceMotion': reduceMotion,
+        'lowBalanceAlerts': lowBalanceAlerts,
+        'overdueAlerts': overdueAlerts,
+      };
 }

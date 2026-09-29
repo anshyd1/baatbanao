@@ -40,6 +40,7 @@ class Store extends ChangeNotifier {
     }
 
     List<Account> accounts;
+    List<Account> archivedAccounts;
     List<Txn> txns;
     List<KhataEntry> khata;
     AppSettings settings;
@@ -47,12 +48,14 @@ class Store extends ChangeNotifier {
 
     if (j != null) {
       accounts = ((j['accounts'] as List?) ?? []).map((e) => Account.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+      archivedAccounts = ((j['archivedAccounts'] as List?) ?? []).map((e) => Account.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       txns = ((j['txns'] as List?) ?? []).map((e) => Txn.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       khata = ((j['khata'] as List?) ?? []).map((e) => KhataEntry.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       settings = AppSettings.fromJson(Map<String, dynamic>.from((j['settings'] as Map?) ?? {}));
       if (accounts.isEmpty) accounts = seedAccounts();
     } else {
       accounts = seedAccounts();
+      archivedAccounts = [];
       txns = seedTxns();
       settings = AppSettings();
       khata = [];
@@ -73,11 +76,25 @@ class Store extends ChangeNotifier {
       if (khata.isEmpty) khata = seedKhata();
     }
 
-    final world = World(accounts, txns);
+    final world = World(accounts, txns, archivedAccounts: archivedAccounts);
     final store = Store._(prefs, world, khata, settings);
     store.lastImportInfo = importInfo;
     store._syncLocked(animate: false);
+    world.hapticsEnabled = settings.hapticsEnabled;
+    world.soundEnabled = settings.soundEnabled;
+    world.reduceMotion = settings.reduceMotion;
+    world.lowBalanceAlerts = settings.lowBalanceAlerts;
+    world.overdueAlerts = settings.overdueAlerts;
     world.onData = store._dirty;
+    world.onPreferencesChanged = () {
+      settings.hapticsEnabled = world.hapticsEnabled;
+      settings.soundEnabled = world.soundEnabled;
+      settings.reduceMotion = world.reduceMotion;
+      settings.lowBalanceAlerts = world.lowBalanceAlerts;
+      settings.overdueAlerts = world.overdueAlerts;
+      store.notifyListeners();
+      store._dirty();
+    };
     if (j == null) await store.save();
     return store;
   }
@@ -86,6 +103,7 @@ class Store extends ChangeNotifier {
         'version': 1,
         'savedAt': DateTime.now().toIso8601String(),
         'accounts': world.bodies.map((b) => b.acc.toJson()).toList(),
+        'archivedAccounts': world.archivedAccounts.map((a) => a.toJson()).toList(),
         'txns': world.txns.take(2000).map((t) => t.toJson()).toList(),
         'khata': khata.map((k) => k.toJson()).toList(),
         'settings': settings.toJson(),
@@ -148,6 +166,7 @@ class Store extends ChangeNotifier {
     final delta = e.outstanding - before;
     final lb = world.lockedBody;
     if (lb != null && delta.abs() > 0.5) {
+      lb.acc.historicallyUsed = true;
       world.txns.insert(0, Txn(lb.acc.n, delta.abs(), '${delta > 0 ? 'Udhaar' : 'Adjust'} · ${e.name}', delta > 0, DateTime.now()));
     }
     _syncLocked();
@@ -161,6 +180,7 @@ class Store extends ChangeNotifier {
     final e = khata.removeAt(i);
     final lb = world.lockedBody;
     if (lb != null && !e.isPaid && e.outstanding > 0.5) {
+      lb.acc.historicallyUsed = true;
       world.txns.insert(0, Txn(lb.acc.n, e.outstanding, 'Hataya · ${e.name}', false, DateTime.now()));
     }
     _syncLocked();
@@ -179,6 +199,7 @@ class Store extends ChangeNotifier {
     world.apply(boxN, amount, true, 'Vasooli · ${e.name}');
     final lb = world.lockedBody;
     if (lb != null) {
+      lb.acc.historicallyUsed = true;
       world.txns.insert(0, Txn(lb.acc.n, amount, 'Vasooli → Box $boxN · ${e.name}', false, DateTime.now()));
     }
     _syncLocked();
@@ -224,6 +245,17 @@ class Store extends ChangeNotifier {
           final s = AppSettings.fromJson(Map<String, dynamic>.from(d['bb_settings'] as Map));
           settings.defaultLanguage = s.defaultLanguage;
           settings.defaultTone = s.defaultTone;
+          settings.upiId = s.upiId;
+          settings.soundEnabled = s.soundEnabled;
+          settings.hapticsEnabled = s.hapticsEnabled;
+          settings.reduceMotion = s.reduceMotion;
+          settings.lowBalanceAlerts = s.lowBalanceAlerts;
+          settings.overdueAlerts = s.overdueAlerts;
+          world.hapticsEnabled = settings.hapticsEnabled;
+          world.soundEnabled = settings.soundEnabled;
+          world.reduceMotion = settings.reduceMotion;
+          world.lowBalanceAlerts = settings.lowBalanceAlerts;
+          world.overdueAlerts = settings.overdueAlerts;
         }
       } else if (m['khata'] is List) {
         incoming = parseKhataList(m['khata']);

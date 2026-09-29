@@ -84,7 +84,7 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final overdue = store.overdueCount;
+    final overdue = store.settings.overdueAlerts ? store.overdueCount : 0;
     final pending = store.pendingCount;
     return Scaffold(
       body: IndexedStack(
