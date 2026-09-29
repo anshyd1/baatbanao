@@ -17,8 +17,19 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'shell.dart';
+
+const vaultVersion = '0.4.0';
+const vaultReleaseUrl = 'https://github.com/anshyd1/baatbanao/releases/latest';
+
+Future<void> openVaultRelease(BuildContext context) async {
+  final ok = await launchUrl(Uri.parse(vaultReleaseUrl), mode: LaunchMode.externalApplication);
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Release page open nahi hua')));
+  }
+}
 
 void main() => runApp(const PaaniKhataApp());
 
@@ -1048,6 +1059,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Navigator.pop(sheetContext);
             Navigator.of(context).push(MaterialPageRoute(builder: (_) => PreferencesScreen(world: world)));
           }),
+          ListTile(leading: const Icon(Icons.system_update_alt_rounded), title: const Text('Download latest update'), subtitle: const Text('Open the latest APK release'), onTap: () {
+            Navigator.pop(sheetContext);
+            openVaultRelease(context);
+          }),
         ]),
       ),
     );
@@ -1606,6 +1621,16 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
         builder: (context, _, __) => ListView(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 28),
           children: [
+            const _SectionLabel('APP UPDATE'),
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              leading: const Icon(Icons.system_update_alt_rounded),
+              title: const Text('Download latest update', style: TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: const Text('Current version v$vaultVersion · APK release page'),
+              trailing: const Icon(Icons.open_in_new_rounded),
+              onTap: () => openVaultRelease(context),
+            ),
+            const SizedBox(height: 12),
             const _SectionLabel('FEEDBACK'),
             SwitchListTile(
               secondary: const Icon(Icons.volume_up_rounded),
