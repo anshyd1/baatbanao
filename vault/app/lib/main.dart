@@ -21,7 +21,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'shell.dart';
 
-const vaultVersion = '0.4.1';
+const vaultVersion = '0.4.2';
 const vaultReleaseUrl = 'https://www.baatbanao.shop/download';
 
 Future<void> openVaultRelease(BuildContext context) async {
@@ -672,6 +672,9 @@ class World extends ChangeNotifier {
 class TrayPainter extends CustomPainter {
   TrayPainter(this.w) : super(repaint: w);
   final World w;
+  // Text layout is expensive on Flutter Web. Keep stable labels/balances cached
+  // between the 60 fps canvas repaints.
+  final Map<String, TextPainter> _textCache = {};
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -733,8 +736,9 @@ class TrayPainter extends CustomPainter {
     canvas.translate(b.pos.dx, b.pos.dy);
     canvas.rotate(b.ang);
 
-    // shadow (cheap, GPU friendly)
-    canvas.drawShadow(Path()..addRRect(rr.shift(const Offset(0, 6))), const Color(0xFF14284F), b.lifted ? 16 : 6, false);
+    // A flat translucent shadow is much cheaper than drawShadow on mobile Web.
+    // It keeps the liquid-cube depth without forcing a blurred path every frame.
+    canvas.drawRRect(rr.shift(b.lifted ? const Offset(0, 8) : const Offset(0, 5)), Paint()..color = const Color(0x2414284F));
 
     // base tint
     canvas.drawRRect(rr, Paint()..color = Color.lerp(Colors.white, col, 0.13)!);
@@ -870,10 +874,16 @@ class TrayPainter extends CustomPainter {
   }
 
   void _text(Canvas canvas, String s, Offset at, double size, {Alignment anchor = Alignment.center, Color color = const Color(0xFF141414)}) {
-    final tp = TextPainter(
-      text: TextSpan(text: s, style: TextStyle(fontSize: size, fontWeight: FontWeight.w700, color: color)),
-      textDirection: TextDirection.ltr,
-    )..layout();
+    final key = '$s|${size.toStringAsFixed(2)}|${color.toARGB32()}';
+    var tp = _textCache[key];
+    if (tp == null) {
+      tp = TextPainter(
+        text: TextSpan(text: s, style: TextStyle(fontSize: size, fontWeight: FontWeight.w700, color: color)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      _textCache[key] = tp;
+      if (_textCache.length > 512) _textCache.clear();
+    }
     final dx = anchor == Alignment.centerRight ? at.dx - tp.width : (anchor == Alignment.centerLeft ? at.dx : at.dx - tp.width / 2);
     tp.paint(canvas, Offset(dx, at.dy - tp.height / 2));
   }
@@ -1035,35 +1045,46 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Future<void> _openHomeMenu() async {
     await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const ListTile(title: Text('Vault menu', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20))),
-          ListTile(leading: const Icon(Icons.add_box_rounded), title: const Text('Add new box'), onTap: () {
-            Navigator.pop(sheetContext);
-            showBoxEditor(context, world);
-          }),
-          ListTile(leading: const Icon(Icons.dashboard_customize_rounded), title: const Text('Manage boxes'), subtitle: Text('${world.bodies.length} active · ${world.archivedBodies.length} archived'), onTap: () {
-            Navigator.pop(sheetContext);
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => ManageBoxesScreen(world: world)));
-          }),
-          ListTile(leading: const Icon(Icons.swap_horiz_rounded), title: const Text('Transfer between boxes'), onTap: () {
-            Navigator.pop(sheetContext);
-            _transfer();
-          }),
-          ListTile(leading: const Icon(Icons.warning_amber_rounded), title: const Text('Alerts'), subtitle: Text(world.hasLowBalances ? 'Low-balance boxes need attention' : 'No active box warnings'), onTap: () {
-            Navigator.pop(sheetContext);
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => AlertsScreen(world: world)));
-          }),
-          ListTile(leading: const Icon(Icons.settings_rounded), title: const Text('Preferences'), subtitle: const Text('Sound, haptics and motion'), onTap: () {
-            Navigator.pop(sheetContext);
-            Navigator.of(context).push(MaterialPageRoute(builder: (_) => PreferencesScreen(world: world)));
-          }),
-          ListTile(leading: const Icon(Icons.system_update_alt_rounded), title: const Text('Download latest update'), subtitle: const Text('Open the latest APK release'), onTap: () {
-            Navigator.pop(sheetContext);
-            openVaultRelease(context);
-          }),
-        ]),
+      builder: (sheetContext) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.58,
+        minChildSize: 0.35,
+        maxChildSize: 0.92,
+        builder: (_, controller) => SafeArea(
+          child: ListView(
+            controller: controller,
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
+              const ListTile(title: Text('Vault menu', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20))),
+              ListTile(leading: const Icon(Icons.add_box_rounded), title: const Text('Add new box'), onTap: () {
+                Navigator.pop(sheetContext);
+                showBoxEditor(context, world);
+              }),
+              ListTile(leading: const Icon(Icons.dashboard_customize_rounded), title: const Text('Manage boxes'), subtitle: Text('${world.bodies.length} active · ${world.archivedBodies.length} archived'), onTap: () {
+                Navigator.pop(sheetContext);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => ManageBoxesScreen(world: world)));
+              }),
+              ListTile(leading: const Icon(Icons.swap_horiz_rounded), title: const Text('Transfer between boxes'), onTap: () {
+                Navigator.pop(sheetContext);
+                _transfer();
+              }),
+              ListTile(leading: const Icon(Icons.warning_amber_rounded), title: const Text('Alerts'), subtitle: Text(world.hasLowBalances ? 'Low-balance boxes need attention' : 'No active box warnings'), onTap: () {
+                Navigator.pop(sheetContext);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => AlertsScreen(world: world)));
+              }),
+              ListTile(leading: const Icon(Icons.settings_rounded), title: const Text('Preferences'), subtitle: const Text('Sound, haptics and motion'), onTap: () {
+                Navigator.pop(sheetContext);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => PreferencesScreen(world: world)));
+              }),
+              ListTile(leading: const Icon(Icons.system_update_alt_rounded), title: const Text('Download latest update'), subtitle: const Text('Open the latest APK release'), onTap: () {
+                Navigator.pop(sheetContext);
+                openVaultRelease(context);
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1075,9 +1096,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Column(
           children: [
             const SizedBox(height: 10),
-            AnimatedBuilder(
-              animation: world,
-              builder: (_, __) => Padding(
+            ValueListenableBuilder<int>(
+              valueListenable: world.dataVersion,
+              builder: (_, __, ___) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
