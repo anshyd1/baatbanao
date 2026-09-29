@@ -414,10 +414,10 @@ class World extends ChangeNotifier {
 
   String? archiveBox(int n) {
     final i = bodies.indexWhere((b) => b.acc.n == n);
-    if (i < 0) return 'Box nahi mila';
+    if (i < 0) return 'Account box not found';
     final body = bodies[i];
-    if (body.acc.locked) return 'Locked Khata archive nahi hota';
-    if (body.acc.balance.abs() > 0.01) return 'Pehle is box ka balance transfer karke zero karo';
+    if (body.acc.locked) return 'Locked ledger account cannot be archived';
+    if (body.acc.balance.abs() > 0.01) return 'Transfer remaining balance to zero before archiving';
     archivedBodies.add(bodies.removeAt(i));
     relayout();
     soundCue(VaultSound.success);
@@ -427,7 +427,7 @@ class World extends ChangeNotifier {
 
   String? restoreBox(int n) {
     final i = archivedBodies.indexWhere((b) => b.acc.n == n);
-    if (i < 0) return 'Archived box nahi mila';
+    if (i < 0) return 'Archived account not found';
     bodies.add(archivedBodies.removeAt(i));
     relayout();
     soundCue(VaultSound.success);
@@ -438,11 +438,11 @@ class World extends ChangeNotifier {
   String? deleteBox(int n) {
     final activeIndex = bodies.indexWhere((b) => b.acc.n == n);
     final archivedIndex = archivedBodies.indexWhere((b) => b.acc.n == n);
-    if (activeIndex < 0 && archivedIndex < 0) return 'Box nahi mila';
+    if (activeIndex < 0 && archivedIndex < 0) return 'Account box not found';
     final body = activeIndex >= 0 ? bodies[activeIndex] : archivedBodies[archivedIndex];
-    if (body.acc.locked) return 'Locked Khata delete nahi hota';
-    if (body.acc.balance.abs() > 0.01) return 'Non-zero box delete nahi ho sakta';
-    if (body.acc.historicallyUsed || txns.any((t) => t.accN == n)) return 'History hai — box ko Archive karo';
+    if (body.acc.locked) return 'Locked ledger account cannot be deleted';
+    if (body.acc.balance.abs() > 0.01) return 'Transfer remaining balance to zero before deleting';
+    if (body.acc.historicallyUsed || txns.any((t) => t.accN == n)) return 'Account has ledger history — use Archive instead';
     if (activeIndex >= 0) {
       bodies.removeAt(activeIndex);
       relayout();
@@ -1889,66 +1889,76 @@ Future<bool> showBoxActions(BuildContext context, World world, Account account) 
   final archived = world.archivedBodies.any((b) => b.acc.n == account.n);
   final action = await showModalBottomSheet<_BoxAction>(
     context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
     showDragHandle: true,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(34))),
-    builder: (sheetContext) => SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        ListTile(
-          leading: _MiniCube(account: account, size: 46),
-          title: Text('Box ${account.n} · ${account.name}', style: const TextStyle(fontWeight: FontWeight.w800)),
-          subtitle: Text('${inr(account.balance)} · ${archived ? 'Archived' : 'Active cube'}'),
+    builder: (sheetContext) => ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(sheetContext).size.height * 0.85),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(
+              leading: _MiniCube(account: account, size: 48),
+              title: Text('Box ${account.n} · ${account.name}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+              subtitle: Text('${inr(account.balance)} · ${archived ? 'Archived account' : 'Active vault cube'}', style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
+            const Divider(height: 1),
+            if (!account.locked && !archived)
+              ListTile(
+                leading: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF2E8B57)),
+                title: const Text('Add Money / Deposit', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Record incoming credit with this box selected'),
+                onTap: () => Navigator.pop(sheetContext, _BoxAction.add),
+              ),
+            if (!account.locked && !archived)
+              ListTile(
+                leading: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFC83232)),
+                title: const Text('Spend / Debit Money', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Record outgoing expense with this box selected'),
+                onTap: () => Navigator.pop(sheetContext, _BoxAction.spend),
+              ),
+            if (!account.locked)
+              ListTile(
+                leading: const Icon(Icons.tune_rounded, color: Color(0xFF2563EB)),
+                title: const Text('Edit Box Settings', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Configure title, target goal & low-balance alerts'),
+                onTap: () => Navigator.pop(sheetContext, _BoxAction.edit),
+              ),
+            if (!account.locked && !archived)
+              ListTile(
+                leading: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF7C3AED)),
+                title: const Text('Transfer Balance', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Move funds directly to another active account'),
+                onTap: () => Navigator.pop(sheetContext, _BoxAction.transfer),
+              ),
+            if (!account.locked)
+              ListTile(
+                leading: Icon(archived ? Icons.unarchive_rounded : Icons.inventory_2_outlined, color: const Color(0xFFD97706)),
+                title: Text(archived ? 'Restore to Active Tray' : 'Archive Box', style: const TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text(archived ? 'Bring this cube back to your active vault tray' : 'Safely park a zero-balance account'),
+                onTap: () => Navigator.pop(sheetContext, archived ? _BoxAction.restore : _BoxAction.archive),
+              ),
+            if (!account.locked)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFC83232)),
+                title: const Text('Delete Permanently', style: TextStyle(color: Color(0xFFC83232), fontWeight: FontWeight.w700)),
+                subtitle: const Text('Permitted only for empty accounts with zero transaction history'),
+                onTap: () => Navigator.pop(sheetContext, _BoxAction.delete),
+              ),
+            if (account.locked)
+              const ListTile(
+                leading: Icon(Icons.lock_rounded, color: Color(0xFF6B7280)),
+                title: Text('Locked Ledger Account', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text('Balance is synchronized with Khata and managed from the Khata tab.'),
+              ),
+            const SizedBox(height: 12),
+          ]),
         ),
-        const Divider(height: 1),
-        if (!account.locked && !archived)
-          ListTile(
-            leading: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF2E8B57)),
-            title: const Text('Add money'),
-            subtitle: const Text('Open + Aaya with this cube selected'),
-            onTap: () => Navigator.pop(sheetContext, _BoxAction.add),
-          ),
-        if (!account.locked && !archived)
-          ListTile(
-            leading: const Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFC83232)),
-            title: const Text('Spend money'),
-            subtitle: const Text('Open − Kharch with this cube selected'),
-            onTap: () => Navigator.pop(sheetContext, _BoxAction.spend),
-          ),
-        if (!account.locked)
-          ListTile(
-            leading: const Icon(Icons.edit_rounded),
-            title: const Text('Edit box'),
-            subtitle: const Text('Name, type, goal and low-balance alert'),
-            onTap: () => Navigator.pop(sheetContext, _BoxAction.edit),
-          ),
-        if (!account.locked && !archived)
-          ListTile(
-            leading: const Icon(Icons.swap_horiz_rounded),
-            title: const Text('Transfer from this box'),
-            subtitle: const Text('Move money to another active cube'),
-            onTap: () => Navigator.pop(sheetContext, _BoxAction.transfer),
-          ),
-        if (!account.locked)
-          ListTile(
-            leading: Icon(archived ? Icons.unarchive_rounded : Icons.archive_rounded),
-            title: Text(archived ? 'Restore to tray' : 'Archive box'),
-            subtitle: Text(archived ? 'Bring this cube back to Vault' : 'Only a zero-balance box can be archived'),
-            onTap: () => Navigator.pop(sheetContext, archived ? _BoxAction.restore : _BoxAction.archive),
-          ),
-        if (!account.locked)
-          ListTile(
-            leading: const Icon(Icons.delete_outline_rounded, color: Color(0xFFC83232)),
-            title: const Text('Delete permanently', style: TextStyle(color: Color(0xFFC83232))),
-            subtitle: const Text('Only an empty box with no history can be deleted'),
-            onTap: () => Navigator.pop(sheetContext, _BoxAction.delete),
-          ),
-        if (account.locked)
-          const ListTile(
-            leading: Icon(Icons.lock_rounded),
-            title: Text('Locked Khata box'),
-            subtitle: Text('Iska balance Khata se derived hai; yahan edit, archive ya delete nahi hoga.'),
-          ),
-        const SizedBox(height: 8),
-      ]),
+      ),
     ),
   );
   if (action == null || !context.mounted) return false;
@@ -1966,12 +1976,88 @@ Future<bool> showBoxActions(BuildContext context, World world, Account account) 
     return false;
   }
 
+  // Active balance guardrail: If user attempts to delete or archive a non-zero account, offer immediate transfer
+  if ((action == _BoxAction.archive || action == _BoxAction.delete) && account.balance.abs() > 0.01) {
+    final wantsTransfer = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(children: [
+          Icon(Icons.account_balance_wallet_outlined, color: Color(0xFF2563EB)),
+          SizedBox(width: 10),
+          Expanded(child: Text('Active Balance Detected', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+        ]),
+        content: Text(
+          'Box ${account.n} · ${account.name} has an active balance of ${inr(account.balance)}.\n\nTo ${action == _BoxAction.archive ? "archive" : "delete"} this account, its funds must first be transferred to another active box.\n\nWould you like to transfer the balance now?',
+          style: const TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+            label: const Text('Transfer Balance Now'),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+          ),
+        ],
+      ),
+    );
+    if (wantsTransfer == true && context.mounted) {
+      await showTransferSheet(context, world, preselectFrom: account.n);
+    }
+    return false;
+  }
+
+  // History guardrail: If user attempts to delete an account with recorded transactions, advise archive
+  if (action == _BoxAction.delete && (account.historicallyUsed || world.txns.any((t) => t.accN == account.n))) {
+    final wantsArchive = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(children: [
+          Icon(Icons.history_edu_rounded, color: Color(0xFFD97706)),
+          SizedBox(width: 10),
+          Expanded(child: Text('Transaction History Exists', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+        ]),
+        content: Text(
+          'Box ${account.n} has recorded transactions. Deleting it would compromise historical audit logs.\n\nArchive is the recommended way to remove this box from the active tray while keeping all transaction records intact.',
+          style: const TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogCtx, false), child: const Text('Cancel')),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFD97706),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            icon: const Icon(Icons.archive_rounded, size: 18),
+            label: const Text('Archive Box Instead'),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+          ),
+        ],
+      ),
+    );
+    if (wantsArchive == true && context.mounted) {
+      final err = world.archiveBox(account.n);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(err ?? 'Box archived safely'),
+        backgroundColor: err == null ? const Color(0xFF1E242E) : const Color(0xFFE14646),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return err == null;
+    }
+    return false;
+  }
+
   if (action == _BoxAction.delete) {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Delete Box ${account.n}?'),
-        content: const Text('Ye sirf tab delete hoga jab balance zero aur transaction history bilkul na ho. Purane box ke liye Archive safer hai.'),
+        content: const Text('Are you sure you want to permanently delete this empty box? This action cannot be undone.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
           FilledButton.tonal(
@@ -1997,7 +2083,7 @@ Future<bool> showBoxActions(BuildContext context, World world, Account account) 
   if (!context.mounted) return false;
   final removed = error == null && (action == _BoxAction.archive || action == _BoxAction.delete);
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-    content: Text(error ?? (action == _BoxAction.archive ? 'Box archived safely' : action == _BoxAction.restore ? 'Box tray me wapas aa gaya' : 'Box deleted')),
+    content: Text(error ?? (action == _BoxAction.archive ? 'Box archived successfully' : action == _BoxAction.restore ? 'Box restored to active tray' : 'Box deleted')),
     backgroundColor: error == null ? const Color(0xFF1E242E) : const Color(0xFFE14646),
     behavior: SnackBarBehavior.floating,
   ));
@@ -2037,29 +2123,35 @@ class _ManageBoxesScreenState extends State<ManageBoxesScreen> {
           final active = world.bodies.map((b) => b.acc).toList();
           final archived = world.archivedBodies.map((b) => b.acc).toList();
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
             children: [
               const _SectionLabel('ACTIVE CUBES'),
               if (active.isEmpty)
                 _EmptyBoxesCard(onAdd: _add, archived: false)
               else
                 for (final account in active) _BoxManageTile(account: account, archived: false, onTap: () => _open(account), onMenu: () => showBoxActions(context, world, account)),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Row(children: [
-                const Expanded(child: _SectionLabel('ARCHIVED')),
+                const Expanded(child: _SectionLabel('ARCHIVED CUBES')),
                 if (archived.isNotEmpty) Text('${archived.length}', style: const TextStyle(color: Color(0xFF687384), fontWeight: FontWeight.w800)),
               ]),
               if (archived.isEmpty)
-                const Padding(padding: EdgeInsets.only(top: 4), child: Text('Zero-balance purane cubes yahan safe rehte hain.', style: TextStyle(color: Color(0xFF687384))))
+                const Padding(padding: EdgeInsets.only(top: 4, left: 4), child: Text('Archived zero-balance accounts will be stored safely here.', style: TextStyle(color: Color(0xFF687384), fontSize: 13)))
               else
                 for (final account in archived) _BoxManageTile(account: account, archived: true, onTap: () => _open(account), onMenu: () => showBoxActions(context, world, account)),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               const _SafetyNote(),
             ],
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: _add, icon: const Icon(Icons.add_rounded), label: const Text('Add box')),
+      floatingActionButton: FloatingActionButton.extended(
+        elevation: 4,
+        onPressed: _add,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add box', style: TextStyle(fontWeight: FontWeight.w800)),
+      ),
     );
   }
 }
@@ -2085,22 +2177,79 @@ class _BoxManageTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final faded = archived ? 0.62 : 1.0;
+    final pct = account.goal <= 0 ? 0.0 : (account.balance / account.goal).clamp(0.0, 1.0).toDouble();
     return Opacity(
       opacity: faded,
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 10),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: const BorderSide(color: Color(0xFFD9DFE8))),
-        child: ListTile(
-          contentPadding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
-          leading: _MiniCube(account: account, size: 58),
-          title: Text('Box ${account.n} · ${account.name}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text('${inr(account.balance)}  ·  goal ${inr(account.goal)}${account.isLow ? '  ·  Low balance' : ''}${archived ? '  ·  Archived' : ''}', style: TextStyle(color: account.isLow ? const Color(0xFFC83232) : const Color(0xFF687384), fontWeight: FontWeight.w600)),
-          ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFD9DFE8)),
+          boxShadow: const [BoxShadow(color: Color(0x0C0F2038), blurRadius: 8, offset: Offset(0, 3))],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
           onTap: onTap,
-          trailing: IconButton(tooltip: 'Box actions', onPressed: onMenu, icon: const Icon(Icons.more_vert_rounded)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+            child: Row(
+              children: [
+                _MiniCube(account: account, size: 54),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Box ${account.n} · ${account.name}',
+                              style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800, color: Color(0xFF14181E)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (archived)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(color: const Color(0xFFEFF2F6), borderRadius: BorderRadius.circular(6)),
+                              child: const Text('Archived', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF687384))),
+                            ),
+                          if (account.isLow)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(color: const Color(0xFFFDE8E8), borderRadius: BorderRadius.circular(6)),
+                              child: const Text('Low Balance', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFDC2626))),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '${inr(account.balance)} of ${inr(account.goal)} target',
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF687384), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: pct,
+                          minHeight: 5,
+                          backgroundColor: const Color(0xFFEFF2F7),
+                          valueColor: AlwaysStoppedAnimation<Color>(account.color),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Box actions',
+                  icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF4B5563)),
+                  onPressed: onMenu,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -2148,10 +2297,10 @@ class _EmptyBoxesCard extends StatelessWidget {
           child: Column(children: [
             Icon(archived ? Icons.inventory_2_outlined : Icons.view_in_ar_outlined, size: 36, color: const Color(0xFF718096)),
             const SizedBox(height: 8),
-            Text(archived ? 'No archived boxes' : 'Tray me abhi koi cube nahi', style: const TextStyle(fontWeight: FontWeight.w800)),
+            Text(archived ? 'No archived boxes' : 'No active boxes in tray', style: const TextStyle(fontWeight: FontWeight.w800)),
             if (!archived) ...[
               const SizedBox(height: 4),
-              const Text('Ek naya rounded liquid cube banao.', style: TextStyle(color: Color(0xFF687384))),
+              const Text('Add a new rounded liquid cube to get started.', style: TextStyle(color: Color(0xFF687384))),
               const SizedBox(height: 12),
               OutlinedButton.icon(onPressed: onAdd, icon: const Icon(Icons.add_rounded), label: const Text('Add box')),
             ],
@@ -2165,12 +2314,21 @@ class _SafetyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: const Color(0xFFEAF1FF), borderRadius: BorderRadius.circular(16)),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
         child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(Icons.shield_outlined, color: Color(0xFF2F5FAE)),
-          SizedBox(width: 10),
-          Expanded(child: Text('Safety: balance ya history wale box ko delete nahi kar sakte. Use pehle zero karke Archive karo; existing cube aur Khata data safe rahega.', style: TextStyle(color: Color(0xFF294875), height: 1.35))),
+          Icon(Icons.shield_outlined, color: Color(0xFF2563EB), size: 22),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Security Guardrail: Boxes with active balances or historical transactions are protected against accidental deletion. To retire an account, transfer its balance to zero, then choose Archive to safely preserve audit records.',
+              style: TextStyle(color: Color(0xFF1E40AF), height: 1.4, fontSize: 12.5, fontWeight: FontWeight.w500),
+            ),
+          ),
         ]),
       );
 }
@@ -2246,11 +2404,11 @@ class _BoxEditorSheetState extends State<BoxEditorSheet> {
       padding: EdgeInsets.fromLTRB(20, 4, 20, 18 + bottom),
       child: SingleChildScrollView(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(editing ? 'Edit box' : 'Add new box', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+          Text(editing ? 'Edit Box' : 'Add New Box', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(editing ? 'Cube ${widget.account!.n} ki identity aur alerts update karo.' : 'Ek naya rounded liquid cube tray me add hoga.', style: const TextStyle(color: Color(0xFF687384))),
+          Text(editing ? 'Update title, target goal & alerts for Box ${widget.account!.n}.' : 'Create a dynamic liquid account cube in your vault.', style: const TextStyle(color: Color(0xFF687384))),
           const SizedBox(height: 16),
-          TextField(controller: name, enabled: !locked, textInputAction: TextInputAction.next, decoration: const InputDecoration(labelText: 'Box name', hintText: 'e.g. Travel, Ghar, Savings', prefixIcon: Icon(Icons.label_outline_rounded), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))))),
+          TextField(controller: name, enabled: !locked, textInputAction: TextInputAction.next, decoration: const InputDecoration(labelText: 'Box name', hintText: 'e.g. Travel, Office, Emergency', prefixIcon: Icon(Icons.label_outline_rounded), border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))))),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: type,
@@ -2299,7 +2457,7 @@ class _BoxEditorSheetState extends State<BoxEditorSheet> {
           ]),
           if (locked) ...[
             const SizedBox(height: 14),
-            const Text('Locked Khata box ko direct edit nahi kar sakte. Khata tab se uski entries manage hoti hain.', style: TextStyle(color: Color(0xFFC83232), fontWeight: FontWeight.w600)),
+            const Text('Locked ledger accounts are synchronized with the Khata tab and cannot be edited directly here.', style: TextStyle(color: Color(0xFFC83232), fontWeight: FontWeight.w600)),
           ],
           const SizedBox(height: 18),
           SizedBox(width: double.infinity, height: 56, child: FilledButton.icon(onPressed: locked || saving ? null : _save, icon: Icon(editing ? Icons.check_rounded : Icons.add_rounded), label: Text(editing ? 'Save changes' : 'Create cube'))),

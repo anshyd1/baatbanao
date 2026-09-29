@@ -66,14 +66,14 @@ class _KhataScreenState extends State<KhataScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showEntrySheet(context, store, null),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Udhaar likho'),
+        label: const Text('Add Credit Entry'),
       ),
       body: Column(
         children: [
           _Summary(store: store, lockedN: lockedN),
           Expanded(
             child: list.isEmpty
-                ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('Abhi koi udhaar nahi.\n"+ Udhaar likho" se shuru karo — pending paisa Vault ke Locked Box me dikhega.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF5A6473)))))
+                ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('No active credit records.\nTap "+ Add Credit Entry" to record receivables. Pending amounts reflect in your Locked Vault box.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF5A6473)))))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(12, 4, 12, 96),
                     itemCount: list.length,
@@ -119,7 +119,7 @@ class _KhataScreenState extends State<KhataScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.pie_chart_rounded, color: Color(0xFF3478F6)),
-              title: const Text('Thoda aaya (partial)'),
+              title: const Text('Partial Payment Received'),
               onTap: () {
                 Navigator.pop(ctx);
                 _partial(context, e);
@@ -171,12 +171,12 @@ class _KhataScreenState extends State<KhataScreen> {
     final v = await showDialog<double>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('${e.name} — kitna aaya?'),
+        title: Text('Payment from ${e.name} — Amount?'),
         content: TextField(
           controller: c,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(prefixText: '₹ ', helperText: 'Baaki: ${inr(e.outstanding)}'),
+          decoration: InputDecoration(prefixText: '₹ ', helperText: 'Remaining: ${inr(e.outstanding)}'),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
@@ -198,9 +198,9 @@ class _KhataScreenState extends State<KhataScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Column(children: [
-              Text('${inr(amt)} aaya — kaunse box me?', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text('${inr(amt)} received — deposit to which box?', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
-              Text('${e.name} · Locked Box se thaw hoke is box me pour hoga', style: const TextStyle(color: Color(0xFF5A6473), fontSize: 12)),
+              Text('${e.name} · Funds will unlock from ledger and pour into this account', style: const TextStyle(color: Color(0xFF5A6473), fontSize: 12)),
             ]),
           ),
           Flexible(
