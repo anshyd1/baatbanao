@@ -535,10 +535,10 @@
       </a>
     </section>
 
-    <!-- Today's New Advanced Features (v0.4.2) -->
+    <!-- Today's New Advanced Features (v0.4.4) -->
     <section class="glass-card">
       <div class="card-head">
-        <h2>v0.4.2 Advanced Feature Set</h2>
+        <h2>v0.4.4 Advanced Feature Set</h2>
         <span class="card-badge">Engine Upgrades</span>
       </div>
       <p class="card-sub">Engineered with Flutter 3.47.5 for high-framerate fluidity and sensory tactile feedback.</p>
@@ -613,7 +613,7 @@
   </main>
 
   <script>
-    // Dynamically poll latest release while preserving static v0.4.2 defaults
+    // Dynamically poll latest release while preserving static v0.4.4 defaults
     (function(){
       fetch('https://api.github.com/repos/anshyd1/baatbanao/releases/latest', {headers:{Accept:'application/vnd.github+json'}})
         .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
@@ -623,12 +623,12 @@
           if(files['app-arm64-v8a-release.apk']) document.getElementById('arm64').href = files['app-arm64-v8a-release.apk'];
           if(files['app-armeabi-v7a-release.apk']) document.getElementById('armv7').href = files['app-armeabi-v7a-release.apk'];
           if(files['app-x86_64-release.apk']) document.getElementById('x64').href = files['app-x86_64-release.apk'];
-          var v = release.tag_name ? release.tag_name.replace(/^vault-/, '') : 'v0.4.2';
+          var v = release.tag_name ? release.tag_name.replace(/^vault-/, '') : 'v0.4.4';
           document.getElementById('version-pill').textContent = 'Vault ' + v + ' · Production Release (Latest)';
           document.getElementById('status-toast').textContent = '✓ Live release links verified with GitHub CDN';
         })
         .catch(function(){
-          document.getElementById('status-toast').textContent = '✓ Serving verified v0.4.2 direct download mirrors';
+          document.getElementById('status-toast').textContent = '✓ Serving verified v0.4.4 direct download mirrors';
         });
     })();
   </script>
