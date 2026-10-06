@@ -640,6 +640,10 @@
 
       const name = entry.name || 'Customer';
       const amount = entry.amount ? Number(entry.amount) : '';
+      if(amount!=='' && !bbValidMoney(amount)){
+        if(typeof window.showToast==='function')window.showToast('Valid amount (max 2 decimals) daalein');
+        return;
+      }
       const phone = entry.phone ? String(entry.phone).replace(/\D/g, '') : '';
 
       const newKhataItem = {

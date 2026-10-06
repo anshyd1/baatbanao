@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BaatBanao Vault v0.4.4 — Next-Gen Liquid Finance & Ledger App</title>
-  <meta name="description" content="Download the latest BaatBanao Vault v0.4.4 Android APK or launch the Web App. Visual liquid accounts, tactile sound effects, dynamic cube zoom, and zero-knowledge local privacy.">
+  <meta name="description" content="Download BaatBanao Vault for Android or launch the Web App. Visual account balances and on-device ledger storage. Pinned v0.4.4 links remain available if the latest release check fails.">
   <link rel="canonical" href="https://www.baatbanao.shop/download">
   <meta name="theme-color" content="#0B132B">
   <link rel="icon" href="assets/favicon-32.png">
@@ -468,7 +468,7 @@
     <section class="hero">
       <div class="status-badge">
         <span class="status-dot"></span>
-        <span id="version-pill">Vault v0.4.4 · Production Release (Latest)</span>
+        <span id="version-pill">Vault v0.4.4 · Pinned stable download</span>
       </div>
 
       <div class="cube-stage" aria-hidden="true">
@@ -480,7 +480,7 @@
 
       <h1>Every Rupee, In Its Place.</h1>
       <p class="hero-lead">
-        Next-generation visual multi-account balance tracker. Experience tactile sound physics, liquid account cubes, and zero-knowledge on-device privacy.
+        Next-generation visual multi-account balance tracker. Experience tactile sound physics, liquid account cubes, and on-device ledger storage.
       </p>
     </section>
 
@@ -519,7 +519,8 @@
         </a>
       </div>
 
-      <div id="status-toast" role="status"></div>
+      <div id="status-toast" role="status">Pinned v0.4.4 download links are available.</div>
+      <p><a href="https://github.com/anshyd1/baatbanao/releases" target="_blank" rel="noopener" style="color:var(--cyan)">View all releases and release notes →</a></p>
     </section>
 
     <!-- Web App Section -->
@@ -600,12 +601,12 @@
       </div>
       <table class="specs-table">
         <tbody>
-          <tr><td>App Version</td><td>v0.4.4 (Production Release)</td></tr>
-          <tr><td>Engine Framework</td><td>Flutter 3.47.5 / Dart 3.7 (120Hz Hardware Accelerated)</td></tr>
-          <tr><td>Operating System</td><td>Android 8.0 (Oreo / API 26) or higher</td></tr>
-          <tr><td>Target Platform</td><td>Android 14 / Android 15 Ready</td></tr>
-          <tr><td>Data Security</td><td>Encrypted On-Device Local SQLite</td></tr>
-          <tr><td>Internet Permissions</td><td>Zero Remote Telemetry / Standalone Offline Capable</td></tr>
+          <tr><td>App Version</td><td id="release-version">v0.4.4 (pinned stable release)</td></tr>
+          <tr><td>Engine Framework</td><td>Flutter / Dart · Android and Web</td></tr>
+          <tr><td>Operating System</td><td>Android APK; device compatibility must be checked during installation</td></tr>
+          <tr><td>Target Platform</td><td>ARM64, ARMv7, x86_64; Web alternative available</td></tr>
+          <tr><td>Data Security</td><td>On-device JSON/preferences; protect your device and keep backups</td></tr>
+          <tr><td>Internet Permissions</td><td>Initial Web load and release checks need internet; ledger data is stored locally</td></tr>
         </tbody>
       </table>
     </section>
@@ -616,25 +617,6 @@
     </footer>
   </main>
 
-  <script>
-    // Dynamically poll latest release while preserving static v0.4.4 defaults
-    (function(){
-      fetch('https://api.github.com/repos/anshyd1/baatbanao/releases/latest', {headers:{Accept:'application/vnd.github+json'}})
-        .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
-        .then(function(release){
-          var files = {};
-          (release.assets || []).forEach(function(a){ files[a.name] = a.browser_download_url; });
-          if(files['app-arm64-v8a-release.apk']) document.getElementById('arm64').href = files['app-arm64-v8a-release.apk'];
-          if(files['app-armeabi-v7a-release.apk']) document.getElementById('armv7').href = files['app-armeabi-v7a-release.apk'];
-          if(files['app-x86_64-release.apk']) document.getElementById('x64').href = files['app-x86_64-release.apk'];
-          var v = release.tag_name ? release.tag_name.replace(/^vault-/, '') : 'v0.4.4';
-          document.getElementById('version-pill').textContent = 'Vault ' + v + ' · Production Release (Latest)';
-          document.getElementById('status-toast').textContent = '✓ Live release links verified with GitHub CDN';
-        })
-        .catch(function(){
-          document.getElementById('status-toast').textContent = '✓ Serving verified v0.4.4 direct download mirrors';
-        });
-    })();
-  </script>
+  <script src="/download-release.js" defer></script>
 </body>
 </html>

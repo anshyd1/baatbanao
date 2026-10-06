@@ -30,7 +30,7 @@ check('Cross-tab consent removal disables loaded tag',()=>{const a=analytics('ht
 check('Copy selector does not match copyright text',()=>{const a=analytics('https://www.baatbanao.shop/guides',accepted);let first='';a.docEvents.click({target:{closest:s=>{if(!first)first=s;return null;}}});assert.equal(first,'button.cp, button.copy, [data-bb-copy]');});
 function worker(offline=false){
  const handlers={},puts=[],deleted=[],matches=[];const cache={addAll:async()=>{},put:async(...args)=>puts.push(args),match:async p=>{matches.push(p);return new Response('payment shell');}};
- const s={URL,Response,console,fetch:async()=>{if(offline)throw Error('offline');return new Response('network');},caches:{open:async()=>cache,keys:async()=>['baatbanao-v1.1.0','baatbanao-v1.1.1-seo-privacy','baatbanao-v1.1.2-reliability-consent','flutter-app-cache','other-cache'],delete:async k=>deleted.push(k),match:async()=>new Response('fallback')},self:{location:{origin:'https://www.baatbanao.shop'},addEventListener:(n,f)=>handlers[n]=f,skipWaiting:async()=>{},clients:{claim:async()=>{},matchAll:async()=>[]}}};
+ const s={URL,Response,console,fetch:async()=>{if(offline)throw Error('offline');return new Response('network');},caches:{open:async()=>cache,keys:async()=>['baatbanao-v1.1.0','baatbanao-v1.1.1-seo-privacy','baatbanao-v1.1.2-reliability-consent','baatbanao-v1.1.3-financial-validation','flutter-app-cache','other-cache'],delete:async k=>deleted.push(k),match:async()=>new Response('fallback')},self:{location:{origin:'https://www.baatbanao.shop'},addEventListener:(n,f)=>handlers[n]=f,skipWaiting:async()=>{},clients:{claim:async()=>{},matchAll:async()=>[]}}};
  vm.runInNewContext(fs.readFileSync(path.join(R,'service-worker.js'),'utf8'),s);return {handlers,puts,deleted,matches};
 }
 (async()=>{
@@ -40,7 +40,7 @@ function worker(offline=false){
   if(path.startsWith('/pay')&&offline)check('Offline payment still uses payment-only shell',()=>assert.deepEqual(w.matches,['./pay.html']));
  }
  const w=worker();let promise;w.handlers.activate({waitUntil:p=>promise=p});await promise;
- check('SW clears only old BaatBanao caches; keeps Flutter and other apps',()=>assert.deepEqual(w.deleted,['baatbanao-v1.1.0','baatbanao-v1.1.1-seo-privacy']));
+ check('SW clears only old BaatBanao caches; keeps Flutter and other apps',()=>assert.deepEqual(w.deleted,['baatbanao-v1.1.0','baatbanao-v1.1.1-seo-privacy','baatbanao-v1.1.2-reliability-consent']));
  check('SW never resets localStorage',()=>assert(!fs.readFileSync(path.join(R,'service-worker.js'),'utf8').includes('localStorage')));
  fs.writeFileSync(path.join(__dirname,'results/runtime-tests.json'),JSON.stringify(results,null,2));console.log('TOTAL',results.length,'PASSED',results.filter(x=>x.passed).length);if(results.some(x=>!x.passed))process.exitCode=1;
 })();

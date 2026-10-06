@@ -3,7 +3,7 @@
    v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.1.2-reliability-consent';
+const CACHE_VERSION = 'baatbanao-v1.1.3-financial-validation';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   './pay.js',
   './style.css',
   './app.js',
+  './money.js',
   './vendor/qrcode.js',
   './blog.css',
   './voice-ocr.js',

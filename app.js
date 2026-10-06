@@ -31,11 +31,7 @@ let state = {
 };
 
 
-// If legacy dummy sample 'Ramesh bhai' is still in localStorage, clear it for a clean fresh slate
-if (Array.isArray(state.khata) && state.khata.length === 1 && state.khata[0].name === 'Ramesh bhai' && state.khata[0].amount === 2500) {
-  state.khata = [];
-  persist();
-}
+// Never infer that a saved ledger record is demo data from its name or amount.
 
 function persist(){
   saveStore(STORE_KEYS.khata, state.khata);
@@ -48,7 +44,8 @@ function uid(){ return 'id-' + Math.random().toString(36).slice(2,10) + Date.now
 function fmtMoney(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
 function hasValidAmount(v){
   if(v === undefined || v === null || String(v).trim() === '') return false;
-  return Number(String(v).replace(/,/g, '')) > 0;
+  const amount=Number(String(v).replace(/,/g, ''));
+  return Number.isFinite(amount) && amount > 0;
 }
 function amountOrPayment(v, language){
   if(hasValidAmount(v)) return fmtMoney(Number(String(v).replace(/,/g, '')));
@@ -87,7 +84,7 @@ function isOverdue(k){
 function outstandingAmount(k){
   const amount = hasValidAmount(k && k.amount) ? Number(String(k.amount).replace(/,/g,'')) : 0;
   const paid = hasValidAmount(k && k.paidAmount) ? Number(String(k.paidAmount).replace(/,/g,'')) : 0;
-  return Math.max(amount - paid, 0);
+  return bbRoundMoney(Math.max(amount - paid, 0));
 }
 function statusText(k){
   if(!k) return 'Pending';
@@ -1101,7 +1098,7 @@ function handleGenerate(){
   const s = state.vasooliForm || {};
   const amountRaw = String(s.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
-  if(amountRaw && (!amount || amount <= 0)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
+  if(amountRaw && !bbValidMoney(amount)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
 
   // Naam aur amount dono optional hain: user generic reminder bhi bana sake.
   // Phone India/local aur international dono support karta hai.
@@ -1535,6 +1532,7 @@ function handleTemplateGenerate(){
   const cat = BB_TEMPLATE_CATEGORIES.find(c=>c.id===f.category) || BB_TEMPLATE_CATEGORIES[0];
   const amountRaw = String(f.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g,'')) : '';
+  if(amountRaw && !bbValidMoney(amount)){showToast('Valid amount (max 2 decimals) daalein, ya blank chhod dein');return;}
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
   const data = {name:f.name || '', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:''};
@@ -1874,12 +1872,12 @@ function saveKhataForm(){
   const f = state.khataForm || defaultKhataForm();
   const amountRaw = String(f.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
-  if(amountRaw && (!amount || amount <= 0)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
+  if(amountRaw && !bbValidMoney(amount)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do'); return; }
   const paidRaw = String(f.paidAmount || '').trim();
   const paidAmount = paidRaw ? Number(paidRaw.replace(/,/g,'')) : 0;
-  if(paidRaw && (Number.isNaN(paidAmount) || paidAmount < 0)){ showToast('Paid amount sahi daalo, ya blank chhod do'); return; }
+  if(paidRaw && !bbValidMoney(paidAmount,true)){ showToast('Paid amount sahi daalo, ya blank chhod do'); return; }
   let computedStatus = f.status || 'pending';
   if(amount && paidAmount >= amount) computedStatus = 'paid';
   else if(paidAmount > 0) computedStatus = 'partial';
@@ -2654,9 +2652,9 @@ function ensureKhataTransactions(k){
   if(hasValidAmount(k.paidAmount)) k.transactions.push({id:uid(),type:'received',amount:Number(k.paidAmount),date:todayISO(),note:'Payment received',mode:'Other',createdAt:k.updatedAt||Date.now()});
   persist(); return k.transactions;
 }
-function ledgerBalance(k){return ensureKhataTransactions(k).reduce((sum,t)=>sum+(t.type==='gave'?1:-1)*(Number(t.amount)||0),0);}
+function ledgerBalance(k){return bbRoundMoney(ensureKhataTransactions(k).reduce((sum,t)=>sum+(t.type==='gave'?1:-1)*(Number(t.amount)||0),0));}
 function syncKhataFromLedger(k){
-  const tx=ensureKhataTransactions(k),gave=tx.filter(t=>t.type==='gave').reduce((s,t)=>s+Number(t.amount||0),0),received=tx.filter(t=>t.type==='received').reduce((s,t)=>s+Number(t.amount||0),0);
+  const tx=ensureKhataTransactions(k),gave=bbRoundMoney(tx.filter(t=>t.type==='gave').reduce((s,t)=>s+Number(t.amount||0),0)),received=bbRoundMoney(tx.filter(t=>t.type==='received').reduce((s,t)=>s+Number(t.amount||0),0));
   k.amount=gave;k.paidAmount=Math.min(received,gave);k.status=gave>0&&received>=gave?'paid':received>0?'partial':'pending';k.updatedAt=Date.now();persist();
 }
 function openCustomerLedger(id){state.routeParams={id};navigate('customer-ledger',{id});}
@@ -2675,7 +2673,7 @@ function openLedgerTransaction(id,type){
   el.innerHTML=`<div class="bb-sheet-backdrop" onclick="this.parentElement.remove()"></div><div class="bb-sheet ledger-entry-sheet"><div class="bb-sheet-handle"></div><h3>${type==='gave'?'Aapne diye':'Aapko mile'}</h3><label>Amount ₹<input id="ledger-amount" type="number" inputmode="decimal" min="0.01" step="0.01" autofocus></label><label>Date<input id="ledger-date" type="date" value="${todayISO()}"></label><label>Payment mode<select id="ledger-mode"><option>Cash</option><option>UPI</option><option>Bank</option><option>Card</option><option>Other</option></select></label><label>Note<input id="ledger-note" type="text" placeholder="Maal, payment, advance..."></label><button class="ledger-save ${type}" onclick="saveLedgerTransaction('${id}','${type}')">Save Transaction</button></div>`;document.body.appendChild(el);setTimeout(()=>document.getElementById('ledger-amount')?.focus(),100);
 }
 function saveLedgerTransaction(id,type){
-  const k=state.khata.find(x=>x.id===id),amount=Number(document.getElementById('ledger-amount')?.value),date=document.getElementById('ledger-date')?.value,note=document.getElementById('ledger-note')?.value.trim(),mode=document.getElementById('ledger-mode')?.value;if(!k||!amount||amount<=0){showToast('Valid amount daalein');return;}
+  const k=state.khata.find(x=>x.id===id),amount=Number(document.getElementById('ledger-amount')?.value),date=document.getElementById('ledger-date')?.value,note=document.getElementById('ledger-note')?.value.trim(),mode=document.getElementById('ledger-mode')?.value;if(!k||!bbValidMoney(amount)||!['gave','received'].includes(type)){showToast('Valid amount daalein');return;}
   ensureKhataTransactions(k).push({id:uid(),type,amount,date:date||todayISO(),note:note||(type==='gave'?'Credit diya':'Payment mila'),mode:mode||'Other',createdAt:Date.now()});syncKhataFromLedger(k);document.getElementById('ledger-tx-sheet')?.remove();bbTrack('ledger_transaction_add',{type,mode:mode||'Other'});renderApp();showToast('Transaction save ho gaya ✅');
 }
 function deleteLedgerTransaction(kid,tid){if(!confirm('Ye transaction delete karein?'))return;const k=state.khata.find(x=>x.id===kid);if(!k)return;k.transactions=ensureKhataTransactions(k).filter(t=>t.id!==tid);syncKhataFromLedger(k);bbTrack('ledger_transaction_delete',{});renderApp();showToast('Transaction delete hua');}
