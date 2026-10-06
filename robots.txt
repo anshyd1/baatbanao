@@ -9,6 +9,13 @@ Allow: /
 # Do not disallow /pay: that prefix also blocks /payment-reminder-* guides.
 Disallow: /api/
 
+# Internal working documents and dev tooling — defence in depth. These are
+# also excluded from the deployment via .vercelignore, so they 404 anyway.
+Disallow: /*.md$
+Disallow: /tools/
+Disallow: /seo/
+Disallow: /vault/
+
 # ------------------------------------------------------------------------------
 # Explicit AI Crawlers & LLM Agents (Permitted & Optimized for Search Ingestion)
 # ------------------------------------------------------------------------------

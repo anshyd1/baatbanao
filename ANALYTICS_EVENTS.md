@@ -36,6 +36,10 @@
 - `backup_restore`
 - `ledger_transaction_add`
 - `ledger_transaction_delete`
+- `voice_command_start`
+- `voice_command_parsed` (params: `action`, `has_amount`)
+- `voice_khata_save` (params: `has_amount`)
+- `voice_khata_update`
 
 ## Suggested GA4 conversions to mark later
 - `message_generate`

@@ -1,5 +1,5 @@
 /* ===========================================================
-   BaatBanao Voice & OCR Assistant Module (v1.1.0)
+   BaatBanao Voice & OCR Assistant Module (v2.0.0)
    100% Client-Side, Zero-Cost, Fast & Privacy-Safe
    Features:
    1. Voice-to-Khata & WhatsApp (Hindi & Hinglish Natural Speech)
@@ -7,10 +7,78 @@
    3. Camera OCR + Gallery File Upload + Preprocessing (Tesseract.js)
    4. One-tap Sample Bills for instant testing
    5. Instant 3-Tone WhatsApp Generator + One-tap Save to Khata
+
+   v2.0.0 hardening (see baatbanao-OCR-MIC-AUDIT.md):
+   - Tesseract is SELF-HOSTED from /vendor/tesseract (CSP-safe, works
+     offline after first use). No third-party CDN, no SRI risk.
+   - Worker is created once, reused, and always terminated.
+   - Preprocessing upgraded: grayscale + autocontrast + upscale +
+     unsharp. Measured amount accuracy 1/4 -> 3/4 on the shipped bills.
+   - Amount safety: line-item cross-check, decimal fix, phone-is-not-
+     -amount fix, outlier guard before a WhatsApp reminder goes out.
+   - Mic: secure-context + permission pre-check, Hinglish error map,
+     hi-IN -> en-IN fallback retry, no stuck "listening" sheet.
+   - Every khata write goes through window.addKhataEntry / window.state
+     and offers undo.
    =========================================================== */
 
 (function(window){
   'use strict';
+
+  // --- Tunables ---
+  const OCR = {
+    engine:   '/vendor/tesseract/tesseract.min.js',
+    worker:   '/vendor/tesseract/worker.min.js',
+    core:     '/vendor/tesseract',                  // dir with tesseract-core-*.wasm.js
+    langPath: '/vendor/tesseract/tessdata',         // dir with eng.traineddata.gz
+    lang:     'eng',
+    timeoutMs: 45000,
+    minLongEdge: 1600,      // OCR needs pixels; never downscale below this
+    maxLongEdge: 2600
+  };
+  const SPEECH = { primary: 'hi-IN', fallback: 'en-IN' };
+  // Dev-only helpers (the Sample Bills test chips) stay hidden in production:
+  // append ?bbdebug=1 to the URL, or run localStorage.setItem('bbDebug','1').
+  let DEBUG = false;
+  try {
+    DEBUG = /(\?|&)bbdebug=1\b/.test(window.location.search) ||
+            window.localStorage.getItem('bbDebug') === '1';
+  } catch (e) {}
+  const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+  const SUSPICIOUS_AMOUNT = 100000;   // > ₹1,00,000 from one parchi => suspect
+
+  // --- Small helpers ---
+
+  function toast(msg){
+    if (typeof window.showToast === 'function') window.showToast(msg);
+    else if (typeof window.alert === 'function') window.alert(msg);
+  }
+
+  // Web Speech API error codes -> something the user can actually act on
+  function micErrorMessage(code){
+    switch (code) {
+      case 'not-allowed':
+      case 'permission-denied':
+        return '🎙️ Mic permission nahi mili. Browser ke 🔒 icon se microphone allow karein, phir dobara tap karein.';
+      case 'service-not-allowed':
+        return '🎙️ Browser ki speech service block hai. Chrome/Edge use karein ya settings me speech recognition on karein.';
+      case 'no-speech':
+        return '🎙️ Kuch sunayi nahi diya. Thoda zor se bolein — dobara try kar raha hoon.';
+      case 'audio-capture':
+        return '🎙️ Mic device nahi mila. Mic/headset check karein, ya koi doosra app mic use to nahi kar raha.';
+      case 'network':
+        return '🎙️ Voice ke liye internet chahiye (speech Google server pe process hoti hai). Connection check karein.';
+      case 'aborted':
+        return '🎙️ Voice band ho gayi. Dobara tap karke bolein.';
+      case 'language-not-supported':
+        return '🎙️ Ye browser Hindi/Hinglish speech support nahi karta. Neeche type karke bhi likh sakte hain.';
+      default:
+        return '🎙️ Mic me dikkat aayi (' + code + '). Dobara tap karein, ya neeche type karke likhein.';
+    }
+  }
+
+  // Escape a string for safe use inside a RegExp
+  function rxEsc(s){ return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
   // --- NLP & Extraction Helpers ---
 
@@ -18,24 +86,43 @@
     return String(t || '').trim().replace(/[\.,\?!।]/g, ' ');
   }
 
-  function extractAmountFromText(text){
-    const clean = cleanSpokenText(text).toLowerCase();
+  /* "1,450" / "1.450" / "1450.00" / "1 450"  ->  1450
+     OCR reads a thousands comma as a dot often enough to matter: we measured
+     "GRAND TOTAL ... Rs. 1,450" coming back as "1.460" and "Rs 6.500" for
+     8,500. Rule: a separator followed by exactly 3 digits is a thousands
+     separator, not a decimal. Never treat a 3-decimal currency string as 1.46. */
+  function normaliseNumber(raw){
+    let s = String(raw == null ? '' : raw).trim().replace(/\s+/g, '');
+    if (!s) return null;
+    if (/[.,]\d{3}$/.test(s)) s = s.replace(/[.,](\d{3})$/, '$1');   // 1.460 / 6.500
+    const n = parseFloat(s.replace(/,/g, ''));
+    return isFinite(n) ? n : null;
+  }
+
+  /* `exclude` = a substring that must never be read as money (a 10-digit
+     phone number the caller already picked out of the same sentence). */
+  function extractAmountFromText(text, exclude){
+    let src = String(text || '');
+    if (exclude) src = src.split(exclude).join(' ');
+    const clean = cleanSpokenText(src).toLowerCase();
 
     // 1. Multipliers like "2.5 hazar", "5k", "1 lakh", "2 hazar", "500", etc.
-    const multiplierMatch = clean.match(/(\d+(?:\.\d+)?)\s*(lakh|लाख|hazaar|hazar|sau|सौ|हजार|k\b)/i);
+    const multiplierMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*(lakh|लाख|hazaar|hazar|sau|सौ|हजार|k\b)/i);
     if (multiplierMatch) {
-      const val = parseFloat(multiplierMatch[1]);
+      const val = normaliseNumber(multiplierMatch[1]);
       const unit = multiplierMatch[2].toLowerCase();
-      if (unit === 'lakh' || unit === 'लाख') return Math.round(val * 100000);
-      if (unit === 'hazaar' || unit === 'hazar' || unit === 'k' || unit === 'हजार') return Math.round(val * 1000);
-      if (unit === 'sau' || unit === 'सौ') return Math.round(val * 100);
+      if (val != null) {
+        if (unit === 'lakh' || unit === 'लाख') return Math.round(val * 100000);
+        if (unit === 'hazaar' || unit === 'hazar' || unit === 'k' || unit === 'हजार') return Math.round(val * 1000);
+        if (unit === 'sau' || unit === 'सौ') return Math.round(val * 100);
+      }
     }
 
-    // 2. Direct plain digits like "200", "1200", "₹500"
-    const digitMatch = clean.match(/(?:₹|rs\.?|inr)?\s*(\d+[\d,]*)/i);
+    // 2. Direct plain digits like "200", "1200", "₹500", "1,450.00"
+    const digitMatch = src.match(/(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:[.,]\d{1,3})?)/i);
     if (digitMatch) {
-      const parsed = parseInt(digitMatch[1].replace(/,/g, ''), 10);
-      if (parsed > 0) return parsed;
+      const parsed = normaliseNumber(digitMatch[1]);
+      if (parsed != null && parsed > 0) return Math.round(parsed);
     }
 
     // 3. Spoken number words
@@ -47,7 +134,7 @@
       'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'डेढ़': 1.5, 'ढाई': 2.5
     };
 
-    const wordMult = clean.match(/(ek|do|teen|char|panch|paanch|chhe|che|saat|aath|nau|das|dedh|dhai|एक|दो|तीन|चार|पांच|डेढ़|ढाई)\s*(hazaar|hazar|sau|सौ|हजार)/i);
+    const wordMult = src.match(/(ek|do|teen|char|panch|paanch|chhe|che|saat|aath|nau|das|dedh|dhai|एक|दो|तीन|चार|पांच|डेढ़|ढाई)\s*(hazaar|hazar|sau|सौ|हजार)/i);
     if (wordMult) {
       const val = numWords[wordMult[1].toLowerCase()] || 1;
       const unit = wordMult[2];
@@ -104,7 +191,13 @@
       type = 'dena';
     }
 
-    const amount = extractAmountFromText(raw);
+    // Declared here (not at the bottom) because `amount` needs it — `let` is
+    // in the temporal dead zone until its declaration is evaluated.
+    let phone = phoneOnlyMatch ? phoneOnlyMatch[1] : '';
+
+    // A 10-digit mobile must never double as the amount.
+    // ("Ravi 9918000099" used to become a ₹99,18,00,099 reminder.)
+    const amount = extractAmountFromText(raw, phone);
 
     let name = '';
     const relMatch = raw.match(/^([A-Za-z\u0900-\u097F\s]+?)\s*(se|ko|par|ka|से|को|पर|का)\s+/i);
@@ -139,8 +232,6 @@
       }
     }
 
-    let phone = phoneOnlyMatch ? phoneOnlyMatch[1] : '';
-
     return {
       action: 'ADD_TRANSACTION',
       name: name || 'Customer',
@@ -153,20 +244,100 @@
     };
   }
 
+  /* ------------------------------------------------------------
+     Image enhancement: grayscale -> autocontrast (1% clip) -> unsharp.
+     Biggest single accuracy lever: on the shipped sample bills it moved
+     amount extraction from 1/4 to 3/4.
+     ------------------------------------------------------------ */
+  function enhanceContrast(ctx, w, h) {
+    let imgData;
+    try { imgData = ctx.getImageData(0, 0, w, h); }
+    catch (e) { return; }                       // tainted canvas — skip, OCR still runs
+
+    const d = imgData.data;
+    const n = w * h;
+    const gray = new Uint8ClampedArray(n);
+    const hist = new Uint32Array(256);
+
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      const g = (0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2]) | 0;
+      gray[i] = g;
+      hist[g]++;
+    }
+
+    // autocontrast: ignore the darkest/lightest 1% (shadows, paper glare)
+    const clip = Math.max(1, Math.floor(n * 0.01));
+    let lo = 0, hi = 255, acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc > clip) { lo = v; break; } }
+    acc = 0;
+    for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc > clip) { hi = v; break; } }
+    const span = Math.max(1, hi - lo);
+    const lut = new Uint8ClampedArray(256);
+    for (let v = 0; v < 256; v++) {
+      const t = Math.round(((v - lo) / span) * 255);
+      lut[v] = t < 0 ? 0 : (t > 255 ? 255 : t);
+    }
+    for (let i = 0; i < n; i++) gray[i] = lut[gray[i]];
+
+    // unsharp mask: out = in + amount * (in - blur(in))
+    const blur = boxBlur(gray, w, h);
+    const amount = 0.8, threshold = 4;
+    for (let i = 0; i < n; i++) {
+      const diff = gray[i] - blur[i];
+      let v = gray[i];
+      if (diff > threshold || diff < -threshold) v = gray[i] + amount * diff;
+      gray[i] = v < 0 ? 0 : (v > 255 ? 255 : v);
+    }
+
+    for (let i = 0, p = 0; i < n; i++, p += 4) {
+      const g = gray[i];
+      d[p] = g; d[p + 1] = g; d[p + 2] = g; d[p + 3] = 255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  // Separable 3-tap box blur (two passes) — cheap enough for a one-off scan
+  function boxBlur(src, w, h) {
+    const tmp = new Uint8ClampedArray(src.length);
+    const out = new Uint8ClampedArray(src.length);
+    for (let y = 0; y < h; y++) {
+      const row = y * w;
+      for (let x = 0; x < w; x++) {
+        tmp[row + x] = (src[row + (x > 0 ? x - 1 : 0)] + src[row + x] + src[row + (x < w - 1 ? x + 1 : w - 1)]) / 3;
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        out[y * w + x] = (tmp[(y > 0 ? y - 1 : 0) * w + x] + tmp[y * w + x] + tmp[(y < h - 1 ? y + 1 : h - 1) * w + x]) / 3;
+      }
+    }
+    return out;
+  }
+
   // --- Voice & OCR Assistant Controller ---
 
   const VoiceAssistant = {
     recognition: null,
     isListening: false,
     activeEntry: null,
+    micSupported: false,
+    secureOk: false,
+    langIndex: 0,
+    _holdUi: false,
+    lastThumbUrl: '',
+    _ocrCancel: null,
 
     init() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      this.secureOk = (window.isSecureContext === true);
+      this.micSupported = !!SpeechRecognition;
+
       if (SpeechRecognition) {
         this.recognition = new SpeechRecognition();
         this.recognition.continuous = false;
         this.recognition.interimResults = true;
-        this.recognition.lang = 'hi-IN';
+        this.recognition.maxAlternatives = 3;
+        this.recognition.lang = SPEECH.primary;
 
         this.recognition.onstart = () => {
           this.isListening = true;
@@ -194,29 +365,88 @@
         this.recognition.onerror = (e) => {
           this.isListening = false;
           console.warn('Speech error:', e.error);
-          this.updateTranscriptUI(`⚠️ Mic Error (${e.error}). Dobara tap karein.`);
-          setTimeout(() => this.hideListeningUI(), 2500);
+
+          // Nothing heard? Try once more in the other language before giving up.
+          if ((e.error === 'no-speech' || e.error === 'aborted') && this.langIndex === 0) {
+            this.langIndex = 1;
+            this.recognition.lang = SPEECH.fallback;
+            this.updateTranscriptUI(micErrorMessage(e.error));
+            this._holdUi = true;
+            setTimeout(() => {
+              this._holdUi = false;
+              try { this.recognition.start(); } catch (_) { this.hideListeningUI(); }
+            }, 900);
+            return;
+          }
+
+          this._holdUi = true;                       // keep the sheet up so it can be read
+          this.updateTranscriptUI(micErrorMessage(e.error));
+          setTimeout(() => { this._holdUi = false; this.hideListeningUI(); }, 3400);
         };
 
         this.recognition.onend = () => {
           this.isListening = false;
+          // Back to the primary language for the next utterance.
+          this.langIndex = 0;
+          if (this.recognition) this.recognition.lang = SPEECH.primary;
+          // Never leave a dead "Sun raha hoon..." sheet on screen.
+          setTimeout(() => {
+            if (!this._holdUi && !this.isListening) this.hideListeningUI();
+          }, 700);
         };
       }
+
       this.injectUI();
+      this.bindGlobalKeys();
+    },
+
+    bindGlobalKeys() {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          const modal = document.getElementById('bb-assistant-modal');
+          if (modal && modal.style.display === 'flex') {
+            if (this.isListening) this.stopVoice();
+            this.closeModal();
+          }
+        }
+      });
     },
 
     startVoice() {
       if (typeof bbTrack === 'function') bbTrack('voice_command_start', {});
-      if (!this.recognition) {
-        (typeof window.showToast === 'function' ? window.showToast : alert)('🎙️ Is browser me voice support nahi hai — Chrome/Edge use karo. Neeche type karke bhi likh sakte ho.');
+
+      if (!this.micSupported) {
+        toast('🎙️ Is browser me voice support nahi hai (Firefox/Safari purane version). Chrome ya Edge use karein — neeche type karke bhi likh sakte hain.');
         return;
       }
+      if (!this.secureOk) {
+        toast('🎙️ Mic sirf HTTPS (ya localhost) pe chalta hai. Site ko https:// se open karein.');
+        return;
+      }
+
+      // Ask about the permission state first so a hard "denied" gets a real
+      // explanation instead of a silent failure.
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' }).then((st) => {
+          if (st.state === 'denied') {
+            toast('🎙️ Mic permission block hai. Browser ke 🔒 icon se microphone allow karein, phir dobara tap karein.');
+            return;
+          }
+          this._startRecognition();
+        }).catch(() => this._startRecognition());
+        return;
+      }
+      this._startRecognition();
+    },
+
+    _startRecognition() {
+      this._holdUi = false;
       try {
         this.recognition.start();
       } catch (err) {
         try {
           this.recognition.stop();
-          setTimeout(() => this.recognition.start(), 300);
+          setTimeout(() => { try { this.recognition.start(); } catch (e) {} }, 300);
         } catch (e) {}
       }
     },
@@ -237,11 +467,11 @@
 
       if (window.state && Array.isArray(window.state.khata)) {
         if (parsed.phone && !parsed.name) {
-          const match = window.state.khata.find(k => k.phone && k.phone.includes(parsed.phone));
+          const match = this.findKhataByPhone(parsed.phone);
           if (match) parsed.name = match.name;
         }
         if (parsed.name && !parsed.phone) {
-          const match = window.state.khata.find(k => (k.name || '').toLowerCase() === parsed.name.toLowerCase());
+          const match = this.findKhataByName(parsed.name);
           if (match && match.phone) parsed.phone = match.phone;
         }
       }
@@ -256,29 +486,67 @@
       }
     },
 
+    /* Safer name matching than a bare `includes()`.
+       "Ram" must NOT silently settle "Ramesh" ki entry. */
+    findKhataByName(name) {
+      const list = (window.state && Array.isArray(window.state.khata)) ? window.state.khata : [];
+      const q = String(name || '').trim().toLowerCase();
+      if (!q) return null;
+      return list.find(k => String(k.name || '').trim().toLowerCase() === q)          // exact
+        || list.find(k => String(k.name || '').trim().toLowerCase().indexOf(q + ' ') === 0)  // "ram" -> "ram kumar"
+        || list.find(k => new RegExp('(^|[\\s.])' + rxEsc(q) + '([\\s.]|$)').test(String(k.name || '').toLowerCase()))
+        || null;
+    },
+
+    findKhataByPhone(phone) {
+      const list = (window.state && Array.isArray(window.state.khata)) ? window.state.khata : [];
+      const digits = String(phone || '').replace(/\D/g, '');
+      if (digits.length < 10) return null;
+      return list.find(k => String(k.phone || '').replace(/\D/g, '').indexOf(digits) >= 0) || null;
+    },
+
     handleClearHisaab(name) {
-      if (!window.state || !Array.isArray(window.state.khata)) return;
-      const target = window.state.khata.find(k => (k.name || '').toLowerCase().includes(name.toLowerCase()));
+      if (!window.state || !Array.isArray(window.state.khata)) {
+        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        return;
+      }
+      const target = this.findKhataByName(name);
       if (target) {
+        // Destructive + voice input is imperfect => confirm, then offer undo.
+        const amt = target.amount ? '₹' + Number(target.amount).toLocaleString('en-IN') : 'pura hisaab';
+        if (!window.confirm(`${target.name} ka hisaab (${amt}) "paid" mark karein?`)) {
+          this.updateTranscriptUI('Cancel kar diya — kuch change nahi hua.');
+          return;
+        }
+        const before = { status: target.status, paidAmount: target.paidAmount, updatedAt: target.updatedAt };
         target.status = 'paid';
         target.paidAmount = target.amount;
         target.updatedAt = Date.now();
         if (typeof window.persist === 'function') window.persist();
-        if (typeof window.showToast === 'function') {
-          window.showToast(`✅ ${target.name} ka hisaab clear kar diya gaya!`);
+        toast(`✅ ${target.name} ka hisaab clear kar diya gaya!`);
+        if (typeof window.bbShowUndo === 'function') {
+          window.bbShowUndo('Hisaab clear hua', () => {
+            Object.assign(target, before);
+            if (typeof window.persist === 'function') window.persist();
+            if (typeof window.renderApp === 'function') window.renderApp();
+          });
         }
+        if (typeof window.renderApp === 'function') window.renderApp();
         if (window.state.route === 'khata' && typeof window.navigate === 'function') {
           window.navigate('khata');
         }
         this.hideListeningUI();
       } else {
-        this.updateTranscriptUI(`"${name}" khata me nahi mila. Check karein.`);
+        this.updateTranscriptUI(`"${name}" khata me nahi mila. Naam dobara bolein ya khata me check karein.`);
       }
     },
 
     handleQuickReminder(name) {
-      if (!window.state || !Array.isArray(window.state.khata)) return;
-      const target = window.state.khata.find(k => (k.name || '').toLowerCase().includes(name.toLowerCase()));
+      if (!window.state || !Array.isArray(window.state.khata)) {
+        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        return;
+      }
+      const target = this.findKhataByName(name);
       if (target) {
         this.activeEntry = {
           name: target.name,
@@ -291,7 +559,7 @@
         };
         this.showResultModal(this.activeEntry);
       } else {
-        this.updateTranscriptUI(`"${name}" khata me nahi mila.`);
+        this.updateTranscriptUI(`"${name}" khata me nahi mila. Naam dobara bolein.`);
       }
     },
 
@@ -328,18 +596,20 @@
       container.innerHTML = `
         <!-- Floating FAB Assistant (Compact, Clean, No overlap) -->
         <div id="bb-fab-assistant" class="bb-fab-group">
-          <button class="bb-fab-btn bb-fab-camera" onclick="bbVoiceAssistant.openOcrPicker()" title="Scan Bill / Parchi / Photo">
+          <button class="bb-fab-btn bb-fab-camera" onclick="bbVoiceAssistant.openOcrPicker()"
+                  title="Scan Bill / Parchi / Photo" aria-label="Bill ya parchi scan karein">
             <span>📷</span>
           </button>
-          <button class="bb-fab-btn bb-fab-mic" onclick="bbVoiceAssistant.startVoice()" title="Bolkar Hisaab Likhein">
+          <button class="bb-fab-btn bb-fab-mic" id="bb-fab-mic" onclick="bbVoiceAssistant.startVoice()"
+                  title="Bolkar Hisaab Likhein" aria-label="Bolkar hisaab likhein">
             <span class="bb-fab-icon">🎙️</span>
             <span class="bb-fab-label">Bolkar Likhein</span>
           </button>
         </div>
 
         <!-- Hidden Inputs for Camera and File Upload -->
-        <input type="file" id="bb-ocr-camera-input" accept="image/*" capture="environment" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
-        <input type="file" id="bb-ocr-gallery-input" accept="image/*" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
+        <input type="file" id="bb-ocr-camera-input" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
+        <input type="file" id="bb-ocr-gallery-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
 
         <!-- Assistant Modal Sheet -->
         <div id="bb-assistant-modal" class="bb-assist-backdrop" style="display:none;">
@@ -373,7 +643,7 @@
               </div>
 
               <!-- Instant Sample Bills Section for Demo / Testing -->
-              <div class="bb-samples-box">
+              <div class="bb-samples-box" id="bb-samples-box">
                 <div class="bb-samples-title">🧪 Sample Bills (1-Tap Instant Test):</div>
                 <div class="bb-samples-pills">
                   <button class="bb-sample-chip" onclick="bbVoiceAssistant.testWithSample('assets/sample-bills/sample-bill-1-kirana.jpg')">
@@ -413,10 +683,15 @@
                 <div class="bb-progress-bar-wrap">
                   <div id="bb-ocr-progress-bar" class="bb-progress-bar"></div>
                 </div>
-                <small id="bb-ocr-progress-sub">Tesseract OCR load ho raha hai (Fast Mode)</small>
-                <button class="bb-sheet-btn secondary" style="margin-top:18px;" onclick="bbVoiceAssistant.skipOcrToManual()">
-                  Skip / Manual Entry Karein ✍️
-                </button>
+                <small id="bb-ocr-progress-sub">Pehli baar ~2 MB OCR engine download hoga — uske baad offline chalega</small>
+                <div class="bb-sheet-actions" style="margin-top:18px;">
+                  <button class="bb-sheet-btn secondary" onclick="bbVoiceAssistant.cancelOcr()">
+                    Cancel ✕
+                  </button>
+                  <button class="bb-sheet-btn secondary" onclick="bbVoiceAssistant.skipOcrToManual()">
+                    Manual Entry ✍️
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -425,6 +700,9 @@
               <div id="bb-thumb-preview-wrap" style="display:none;margin-bottom:12px;text-align:center;">
                 <img id="bb-scanned-thumb" src="" alt="Scanned Bill" style="max-height:90px;border-radius:12px;border:1.5px solid #F0DFCF;box-shadow:0 4px 10px rgba(0,0,0,0.06);" />
               </div>
+
+              <!-- Shown only when the parsed amount looks wrong -->
+              <div id="bb-amount-warning" class="bb-warn-box" style="display:none;"></div>
 
               <div class="bb-result-tag-row">
                 <span id="bb-type-pill" class="bb-pill lena" onclick="bbVoiceAssistant.toggleType()">🟢 Lena Hai (Tap to change)</span>
@@ -473,6 +751,20 @@
 
       document.body.appendChild(container);
       this.injectStyles();
+
+      // Do not advertise a mic that cannot work (Firefox, older Safari).
+      if (!this.micSupported) {
+        const micFab = document.getElementById('bb-fab-mic');
+        if (micFab) micFab.style.display = 'none';
+      }
+
+      // The Sample Bills chips are a test harness. A shopkeeper must never
+      // see "🧪 Sample Bills (1-Tap Instant Test)". Enable with ?bbdebug=1
+      // or localStorage.setItem('bbDebug','1').
+      if (!DEBUG) {
+        const samples = document.getElementById('bb-samples-box');
+        if (samples) samples.remove();
+      }
     },
 
     showListeningUI() {
@@ -512,6 +804,10 @@
       this.stopVoice();
       const modal = document.getElementById('bb-assistant-modal');
       if (modal) modal.style.display = 'none';
+      if (this.lastThumbUrl) {
+        URL.revokeObjectURL(this.lastThumbUrl);
+        this.lastThumbUrl = '';
+      }
     },
 
     showResultModal(entry) {
@@ -553,7 +849,24 @@
       const datePill = document.getElementById('bb-date-pill');
       datePill.textContent = entry.dueText ? `📅 ${entry.dueText}` : '📅 Aaj';
 
+      this.renderAmountWarning(entry);
       this.renderMessageCards(entry);
+    },
+
+    /* A wrong amount is the one OCR mistake that actually costs money.
+       Show it in the user's face instead of trusting the parse. */
+    renderAmountWarning(entry) {
+      const box = document.getElementById('bb-amount-warning');
+      if (!box) return;
+      const sus = entry && entry._amountSuspect;
+      if (!sus) { box.style.display = 'none'; box.innerHTML = ''; return; }
+
+      const shown = '₹' + Number(sus.value).toLocaleString('en-IN');
+      const hint = sus.hint ? '₹' + Number(sus.hint).toLocaleString('en-IN') : null;
+      box.style.display = 'block';
+      box.innerHTML = hint
+        ? `⚠️ <b>Amount pakka nahi hai.</b> Parchi se ${shown} pada, par bill ke baaki numbers ka jod sirf ${hint} banta hai. Amount zaroor check karein — WhatsApp bhejne se pehle.`
+        : `⚠️ <b>Amount bahut bada lag raha hai.</b> Parchi se ${shown} pada. Amount zaroor check karein — WhatsApp bhejne se pehle.`;
     },
 
     toggleType() {
@@ -629,7 +942,7 @@
           else if (typeof window.showToast === 'function') window.showToast('Message copied ✅');
         });
       } else {
-        if (typeof window.showToast === 'function') window.showToast('Copied ✅'); else console.log('Copied: ' + text);
+        if (typeof window.showToast === 'function') window.showToast('Copied ✅');
       }
     },
 
@@ -646,35 +959,87 @@
       }
       const phone = entry.phone ? String(entry.phone).replace(/\D/g, '') : '';
 
+      // Shape matches app.js saveOutputToKhata(). Note: khata rows do NOT carry a
+      // top-level `type` (that lives on k.transactions[]), so lena/dena is stored
+      // as `direction` for future use instead of a field nothing reads.
       const newKhataItem = {
         id: 'k-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
         name: name,
         phone: phone,
         amount: amount,
         paidAmount: 0,
-        type: entry.type === 'dena' ? 'received' : 'gave',
+        direction: entry.type === 'dena' ? 'dena' : 'lena',
         dueDate: entry.dueDate || '',
         relation: 'General',
         status: 'pending',
+        reminderCount: 0,
+        lastReminderAt: null,
         language: 'Hinglish',
         tone: 'Friendly',
-        note: entry._manual ? 'Added manually' : entry._isOcr ? 'Added via Camera/File OCR' : 'Added via Voice Command',
-        createdAt: Date.now(),
+        // `note` is NOT an internal field: app.js feeds it straight into the
+        // UPI `tn` parameter, so the customer would literally read
+        // "Added via Camera/File OCR" on their GPay/PhonePe payment screen.
+        // Provenance lives in `source` (merchant-only) instead.
+        note: '',
+        source: entry._manual ? 'manual' : entry._isOcr ? 'ocr' : 'voice',        createdAt: Date.now(),
         updatedAt: Date.now()
       };
 
-      if (window.state && Array.isArray(window.state.khata)) {
-        window.state.khata.unshift(newKhataItem);
-        if (typeof window.persist === 'function') window.persist();
-        if (typeof window.showToast === 'function') {
-          window.showToast(`📒 ${name} (${amount ? '₹' + amount : 'entry'}) Khata me add ho gaya!`);
+      // --- Duplicate guard: same insan, naya entry? ---
+      const existing = this.findKhataByName(name);
+      if (existing && amount) {
+        const merge = window.confirm(
+          `${existing.name} ki entry pehle se hai (₹${existing.amount || 0}).\n\n` +
+          `OK = usi entry me ₹${Number(amount).toLocaleString('en-IN')} aur add kar dein\n` +
+          `Cancel = naya alag entry banayein`
+        );
+        if (merge) {
+          const before = Number(existing.amount) || 0;
+          existing.amount = before + Number(amount);
+          existing.updatedAt = Date.now();
+          if (typeof window.persist === 'function') window.persist();
+          if (typeof window.renderApp === 'function') window.renderApp();
+          toast(`📒 ${existing.name} ki entry update ho gayi (₹${before.toLocaleString('en-IN')} → ₹${Number(existing.amount).toLocaleString('en-IN')})`);
+          if (typeof window.bbShowUndo === 'function') {
+            window.bbShowUndo('Entry update hui', () => {
+              existing.amount = before;
+              existing.updatedAt = Date.now();
+              if (typeof window.persist === 'function') window.persist();
+              if (typeof window.renderApp === 'function') window.renderApp();
+            });
+          }
+          if (typeof bbTrack === 'function') bbTrack('voice_khata_update', {});
+          this.closeModal();
+          return;
         }
-        if (typeof bbTrack === 'function') bbTrack('voice_khata_save', { has_amount: !!amount });
+      }
 
-        this.closeModal();
-        if (window.state.route === 'khata' && typeof window.navigate === 'function') {
-          window.navigate('khata');
-        }
+      // --- Save ---
+      if (typeof window.addKhataEntry === 'function') {
+        window.addKhataEntry(newKhataItem);
+      } else if (window.state && Array.isArray(window.state.khata)) {
+        window.state.khata.unshift(newKhataItem);           // fallback
+        if (typeof window.persist === 'function') window.persist();
+      } else {
+        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        return;
+      }
+
+      toast(`📒 ${name} (${amount ? '₹' + Number(amount).toLocaleString('en-IN') : 'entry'}) Khata me add ho gaya!`);
+      if (typeof bbTrack === 'function') bbTrack('voice_khata_save', { has_amount: !!amount });
+
+      if (typeof window.bbShowUndo === 'function') {
+        window.bbShowUndo('Khata entry add hui', () => {
+          if (!window.state || !Array.isArray(window.state.khata)) return;
+          window.state.khata = window.state.khata.filter(k => k.id !== newKhataItem.id);
+          if (typeof window.persist === 'function') window.persist();
+          if (typeof window.renderApp === 'function') window.renderApp();
+        });
+      }
+
+      this.closeModal();
+      if (window.state && window.state.route === 'khata' && typeof window.navigate === 'function') {
+        window.navigate('khata');
       }
     },
 
@@ -683,6 +1048,10 @@
       const entry = this.activeEntry;
       if (!entry) return;
 
+      if (!window.state) {
+        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        return;
+      }
       if (window.state) {
         window.state.vasooliForm = {
           name: entry.name || '',
@@ -761,57 +1130,78 @@
       const file = input.files && input.files[0];
       if (!file) return;
 
+      // Guard the two failure modes we cannot recover from: HEIC (canvas
+      // cannot decode it) and very large files (OOM on low-end Android).
+      const okType = /^image\/(jpeg|jpg|png|webp|bmp)$/i.test(file.type || '');
+      const okExt  = /\.(jpe?g|png|webp|bmp)$/i.test(file.name || '');
+      if (!okType && !okExt) {
+        toast('📷 Ye photo format support nahi hai (HEIC/PDF nahi). JPG, PNG ya WEBP bhejein — iPhone me Settings → Camera → "Most Compatible" chunein.');
+        input.value = '';
+        return;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        toast('📷 Photo bahut badi hai (15 MB limit). Camera se dobara khechein ya screenshot use karein.');
+        input.value = '';
+        return;
+      }
+
+      if (this.lastThumbUrl) URL.revokeObjectURL(this.lastThumbUrl);   // no leak on repeat scans
       const thumbUrl = URL.createObjectURL(file);
+      this.lastThumbUrl = thumbUrl;
       this.runOcrOnImage(file, thumbUrl);
     },
 
-    // Fast image downscaler and preprocessor for mobile
+    /* Preprocessing for OCR.
+       The old version hard-downscaled to 1200px and did a crude two-way
+       contrast stretch. Measured on the shipped sample bills that produced
+       1/4 correct amounts; this pipeline produces 3/4. OCR needs pixels —
+       we upscale small bills instead of shrinking them. */
     preprocessImage(fileOrUrl) {
-      return new Promise((resolve) => {
+      const toSrc = (f) => new Promise((res, rej) => {
+        if (typeof f === 'string') return res(f);
+        const r = new FileReader();
+        r.onload = (e) => res(e.target.result);
+        r.onerror = () => rej(new Error('IMAGE_READ_FAILED'));
+        r.readAsDataURL(f);
+      });
+
+      const load = (src) => new Promise((res, rej) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          let maxDim = 1200;
-          let width = img.width;
-          let height = img.height;
-          if (width > height && width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
+        if (typeof src === 'string') img.crossOrigin = 'anonymous';
+        img.onload = () => res(img);
+        img.onerror = () => rej(new Error('IMAGE_DECODE_FAILED'));
+        img.src = src;
+      });
+
+      return toSrc(fileOrUrl)
+        .then(load)
+        .then((img) => new Promise((resolve, reject) => {
+          const w0 = img.naturalWidth || img.width;
+          const h0 = img.naturalHeight || img.height;
+          if (!w0 || !h0) return reject(new Error('IMAGE_DECODE_FAILED'));
+
+          const long = Math.max(w0, h0);
+          let scale = 1;
+          if (long < OCR.minLongEdge) scale = OCR.minLongEdge / long;
+          else if (long > OCR.maxLongEdge) scale = OCR.maxLongEdge / long;
+          const width  = Math.max(1, Math.round(w0 * scale));
+          const height = Math.max(1, Math.round(h0 * scale));
+
           const canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Enhance contrast
-          try {
-            const imgData = ctx.getImageData(0, 0, width, height);
-            const d = imgData.data;
-            for (let i = 0; i < d.length; i += 4) {
-              const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
-              const enhanced = gray < 125 ? gray * 0.75 : Math.min(255, gray * 1.15);
-              d[i] = d[i+1] = d[i+2] = enhanced;
-            }
-            ctx.putImageData(imgData, 0, 0);
-          } catch(e) {}
+          enhanceContrast(ctx, width, height);
 
-          canvas.toBlob((blob) => resolve(blob || fileOrUrl), 'image/jpeg', 0.88);
-        };
-        img.onerror = () => resolve(fileOrUrl);
-
-        if (typeof fileOrUrl === 'string') {
-          img.src = fileOrUrl;
-        } else {
-          const reader = new FileReader();
-          reader.onload = (e) => { img.src = e.target.result; };
-          reader.onerror = () => resolve(fileOrUrl);
-          reader.readAsDataURL(fileOrUrl);
-        }
-      });
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('IMAGE_ENCODE_FAILED'));
+          }, 'image/jpeg', 0.92);
+        }));
     },
 
     async runOcrOnImage(fileOrBlob, thumbUrl) {
@@ -829,49 +1219,55 @@
       stageOcr.style.display = 'block';
       modal.style.display = 'flex';
       statusText.textContent = 'Image optimize ho rahi hai...';
-      progressBar.style.width = '15%';
-      progressSub.textContent = 'Resizing & contrast enhancement';
+      progressBar.style.width = '10%';
+      progressSub.textContent = 'Resize + contrast enhance';
+
+      let worker = null;
+      let cancelled = false;
+      this._ocrCancel = () => { cancelled = true; };
 
       try {
-        // 1. Optimize image resolution for fast processing on mobile
+        // 1. Optimize the image (upscale small bills, grayscale + unsharp)
         const optimizedBlob = await this.preprocessImage(fileOrBlob);
-        if (this._ocrRunId !== runId) return;
+        if (cancelled || this._ocrRunId !== runId) return;
 
-        // 2. Load Tesseract.js (v5)
-        if (!window.Tesseract && !navigator.onLine) {
-          throw new Error('OFFLINE_OCR');
-        }
-        if (!window.Tesseract) {
-          statusText.textContent = 'OCR Engine load ho raha hai...';
-          progressBar.style.width = '30%';
-          progressSub.textContent = 'Downloading lightweight model...';
-          await this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
-        }
-
+        // 2. Load the engine FROM OUR OWN ORIGIN. The old code fetched
+        //    tesseract.min.js from a third-party CDN, which the site's CSP
+        //    blocks (script-src/connect-src/worker-src), so OCR never ran.
+        statusText.textContent = 'OCR engine load ho raha hai...';
+        progressBar.style.width = '25%';
+        progressSub.textContent = 'Pehli baar ~2 MB — uske baad bina internet chalega';
+        await this.loadEngine();
+        if (cancelled || this._ocrRunId !== runId) return;
         if (this._ocrRunId !== runId) return;
         statusText.textContent = 'Parchi scan ho rahi hai...';
-        progressBar.style.width = '50%';
-        progressSub.textContent = 'Detecting numbers & customer name...';
+        progressBar.style.width = '45%';
+        progressSub.textContent = 'Naam aur amount dhoondh rahe hain';
 
-        // 3. Fast English & Digits recognition
-        const result = await window.Tesseract.recognize(optimizedBlob, 'eng', {
-          workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
-          corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
-          langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int',
-          logger: m => {
+        // 3. Recognize — worker created once, always terminated.
+        worker = await window.Tesseract.createWorker(OCR.lang, 1, {
+          workerPath: OCR.worker,
+          corePath:   OCR.core,
+          langPath:   OCR.langPath,
+          workerBlobURL: false,        // required: a blob: worker is blocked by worker-src 'self'
+          logger: (m) => {
             if (this._ocrRunId !== runId) return;
-            if (m.status === 'recognizing text') {
-              const p = Math.round((m.progress || 0) * 100);
-              progressBar.style.width = (50 + Math.round(p * 0.45)) + '%';
+            if (m && m.status === 'recognizing text') {              const p = Math.round((m.progress || 0) * 100);
+              progressBar.style.width = (45 + Math.round(p * 0.5)) + '%';
               statusText.textContent = `Text Scan: ${p}%`;
             }
           }
         });
+        if (cancelled) return;
 
+        const timeout = new Promise((_, rej) =>
+          setTimeout(() => rej(new Error('OCR_TIMEOUT')), OCR.timeoutMs));
+        const result = await Promise.race([worker.recognize(optimizedBlob), timeout]);
         if (this._ocrRunId !== runId) return;
-        const text = result && result.data ? result.data.text : '';
-        if (!String(text).trim()) throw new Error('OCR_EMPTY');
-
+        if (!String((result && result.data && result.data.text) || '').trim()) {
+          throw new Error('OCR_EMPTY');
+        }
+        const text = (result && result.data && result.data.text) || '';
         progressBar.style.width = '100%';
         statusText.textContent = 'Scan Complete! ✅';
 
@@ -887,19 +1283,51 @@
         this.activeEntry = parsed;
 
         setTimeout(() => {
-          if (this._ocrRunId === runId) this.showResultModal(parsed);
-        }, 400);
+          if (this._ocrRunId === runId && !cancelled) this.showResultModal(parsed);
+        }, 350);
 
       } catch (err) {
-        if (this._ocrRunId !== runId) return;
+        if (cancelled || this._ocrRunId !== runId) return;
         console.warn('OCR unavailable; switching to manual entry.');
-        const offline = (err && err.message === 'OFFLINE_OCR') || !navigator.onLine;
-        const msg = offline
-          ? '📶 Bill scan ke liye pehli baar internet chahiye. Abhi manual entry kar lijiye.'
-          : 'OCR scan me dikkat aayi. Kripya manual entry karein.';
-        if (typeof window.showToast === 'function') window.showToast(msg); else alert(msg);
-        this.skipOcrToManual();
+        let msg;
+        if (err && err.message === 'OCR_TIMEOUT') {
+          msg = '⏳ Scan me bahut time lag raha hai. Chhoti/seedhi photo se dobara try karein.';
+        } else if (err && err.message === 'OCR_EMPTY') {
+          msg = '📷 Parchi se koi text nahi mila. Achhi roshni me, seedha photo khechein.';
+        } else if (err && err.message === 'OFFLINE_OCR') {
+          msg = '📶 Pehli baar OCR engine download karne ke liye internet chahiye. Abhi manual entry kar lijiye.';
+        } else if (err && /IMAGE_(READ|DECODE|ENCODE)_FAILED|ENGINE_LOAD_FAILED/.test(err.message)) {
+          msg = '📷 Photo padh nahi paaye. Dusri photo ya screenshot se try karein.';
+        } else if (!navigator.onLine) {
+          msg = '📶 Internet nahi hai. Pehli baar scan ke liye internet chahiye — abhi manual entry kar lijiye.';
+        } else {
+          msg = 'OCR scan me dikkat aayi. Kripya manual entry karein.';
+        }
+        toast(msg);        this.skipOcrToManual();
+      } finally {
+        this._ocrCancel = null;
+        if (worker) { try { await worker.terminate(); } catch (e) {} }
       }
+    },
+
+    // Self-hosted, same-origin engine (CSP-safe, cacheable, offline-capable)
+    async loadEngine() {
+      if (window.Tesseract) return;
+      if (!navigator.onLine) throw new Error('OFFLINE_OCR');
+      await this.loadScript(OCR.engine);
+      if (!window.Tesseract) throw new Error('ENGINE_LOAD_FAILED');
+      // Tell the service worker to keep the engine so the next scan is offline.
+      try {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CACHE_OCR' });
+        }
+      } catch (e) {}
+    },
+
+    cancelOcr() {
+      if (typeof this._ocrCancel === 'function') this._ocrCancel();
+      this.closeModal();
+      toast('Scan cancel kar diya.');
     },
 
     loadScript(src) {
@@ -919,8 +1347,13 @@
 
       // 1. Mobile number (10-digit, Indian) — bhi allow "+91 98765 43210" / "98765-43210"
       const phoneSrc = text.replace(/(\+?91[\s-]?)?(\d{5})[\s-](\d{5})/g, (m, c, a, b) => `${a}${b}`);
-      const customerPhoneLine = phoneSrc.split('\n').find(line => /\b(customer|client|buyer|party)\b.*\b(phone|mobile|mob|contact)\b/i.test(line)) || '';
-      const phoneMatch = customerPhoneLine.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
+      // Prefer a number sitting on a customer/party line, but DO fall back to
+      // any Indian mobile on the bill. (The customer-line-only rule dropped
+      // phone detection to 0/4 on our own sample bills — "Mob 9876543210",
+      // "Mobile: 9918223344" and "Phone: 9876543210" all sit on their own line.)
+      const customerPhoneLine = phoneSrc.split('\n').find(line => /\b(customer|client|buyer|party|naam|name|tenant|owner)\b.*\b(phone|mobile|mob|contact|number|no)\b/i.test(line)) || '';
+      const phoneMatch = customerPhoneLine.match(/(?:^|\D)([6-9]\d{9})(?!\d)/)
+                      || phoneSrc.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
       if (phoneMatch) phone = phoneMatch[1];
 
       // 2. Date (dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy, "12 Sep 2026")
@@ -938,15 +1371,18 @@
                     .replace(/\b\d{1,3}(?:\.\d+)?\s*%/g, ' ');                       // 18%
         if (phone) l = l.split(phone).join(' ');
         const out = [];
-        const re = /(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:\.\d{1,2})?)(?:\s*\/-)?/gi;
+        const re = /(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:[.,]\d{1,3})?)(?:\s*\/-)?/gi;
         let m;
         while ((m = re.exec(l))) {
           const rawNum = m[1].replace(/,/g, '');
-          const val = Math.round(parseFloat(rawNum));
+          // normaliseNumber() fixes the two mis-reads we measured on the shipped
+          // bills: "1.460" (comma read as dot) and "6.500" -> 1460 / 6500,
+          // instead of the old 1 / 6.
+          const val = Math.round(normaliseNumber(rawNum));
           if (!isFinite(val) || val < 1) continue;
           const hasCurrency = /₹|rs|inr|rupees/i.test(m[0]) || /\/-\s*$/.test(m[0]);
-          if (!hasCurrency && val >= 1990 && val <= 2099 && rawNum.length === 4) continue; // saal
-          if (rawNum.replace(/\..*$/, '').length >= 8) continue;                          // account / ref numbers
+          if (!hasCurrency && val >= 1990 && val <= 2099 && rawNum.replace(/[.,]/g, '').length === 4) continue; // saal
+          if (rawNum.replace(/[.,].*$/, '').length >= 8) continue;                        // account / ref numbers
           out.push(val);
         }
         return out;
@@ -982,6 +1418,32 @@
         if (pool.length) { amount = Math.max(...pool); warn.push('amount'); }
       }
 
+      /* ---- Amount sanity check -------------------------------------
+         One mis-read digit must never turn into a wrong WhatsApp reminder.
+         Real example measured on the shipped freelance bill: "Total Due
+         Amount Rs 4,500" came back from OCR as "84500" ("Rs" read as "8"),
+         i.e. an 18x error. We compare the chosen amount against every
+         other number on the bill; if it dwarfs them we keep it but flag
+         it loudly so the user must verify before sending. */
+      let suspect = null;
+      if (amount) {
+        const allNums = [];
+        rawLines.forEach(line => numbersIn(line).forEach(v => allNums.push(v)));
+        const others = allNums.filter(v => v !== amount);
+        const sumOthers = others.reduce((a, b) => a + b, 0);
+        const bestLine = best.idx >= 0 ? (rawLines[best.idx] || '') : '';
+        const hasCurrencyOnLine = /₹|\brs\.?|\binr\b|\/-/i.test(bestLine);
+
+        // If OCR actually saw "Rs"/"₹" right next to the number, trust it —
+        // that is the highest-confidence signal a printed bill gives us.
+        if (!hasCurrencyOnLine && sumOthers > 0 && amount > 3 * sumOthers) {
+          suspect = { value: amount, hint: sumOthers, reason: 'outlier' };
+        } else if (amount >= SUSPICIOUS_AMOUNT && !hasCurrencyOnLine) {
+          suspect = { value: amount, hint: 0, reason: 'too-large' };
+        }
+        if (suspect) warn.push('amount');
+      }
+
       // 4. Naam: keyword ke saath (same line ya next line), warna pehli "insaan jaisi" line
       const nameKey = /(?:customer\s*name|tenant\s*name|client\s*name|party\s*name|bill(?:ed)?\s*to|sold\s*to|ship\s*to|received\s*from|customer|client|party|naam|name|shri|smt|m\/s|tenant|owner|mr\.?|mrs\.?|ms\.?)\s*[:\-–]?\s*(.*)$/i;
       const clip = (v) => v.replace(/^\s*\([^)]*\)\s*[:\-–]?\s*/, '').replace(/\b(date|dt|mob|mobile|phone|ph|no|inv|invoice|bill|amount|amt|total|due|gst|address|add)\b.*$/i, '')
@@ -1014,7 +1476,8 @@
         dueText: date_str ? `Date: ${date_str}` : 'Parchi Hisaab',
         raw: text.slice(0, 100),
         _warn: warn,
-        _confidence: (amount && best.score >= 3 ? 1 : 0) + (name && !warn.includes('name') ? 1 : 0)
+        _amountSuspect: suspect,
+        _confidence: (amount && best.score >= 3 && !suspect ? 1 : 0) + (name && !warn.includes('name') ? 1 : 0)
       };
     },
 
@@ -1374,6 +1837,19 @@
           background: #FFF5DF;
           color: #5A302B;
           border: 1px solid #F0DFCF;
+        }
+
+        /* Amount sanity warning */
+        .bb-warn-box {
+          background: #FFF4E5;
+          border: 1.5px solid #F0A868;
+          color: #7A3B00;
+          border-radius: 14px;
+          padding: 11px 13px;
+          font-size: 12.5px;
+          font-weight: 700;
+          line-height: 1.45;
+          margin-bottom: 12px;
         }
 
         @media (max-width: 400px) {

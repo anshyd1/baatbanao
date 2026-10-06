@@ -37,10 +37,43 @@ This file lists the external APIs, integrations, deployment connections, and sen
   - uses `vercel.json` rewrites for clean article URLs
   - serves `404.html`
 
-### 5) GoDaddy DNS
+### 5) OCR engine (Tesseract.js) — SELF-HOSTED
+- Version: `tesseract.js` 5.1.1 + `tesseract.js-core` 5.1.1
+- Files live in `vendor/tesseract/` and are served from our own origin
+- Why self-hosted: the site CSP (`vercel.json`) blocks `cdn.jsdelivr.net` in
+  `script-src`, `connect-src` and `worker-src`, so the previous CDN load was
+  blocked in production and OCR never ran
+- Assets: `tesseract.min.js`, `worker.min.js`,
+  `tesseract-core-simd-lstm.wasm.js`, `tesseract-core-lstm.wasm.js`,
+  `tessdata/eng.traineddata.gz` (tessdata_fast, ~1.98 MB)
+- Worker is created with `workerBlobURL: false` (a `blob:` worker is blocked
+  by `worker-src 'self'`)
+- Cached by the service worker after first use (`CACHE_OCR` message) so later
+  scans work offline
+- Privacy: images never leave the device; no data is uploaded
+
+### 6) Browser speech recognition (Web Speech API)
+- Used by `voice-ocr.js` for the 🎙️ "bolkar likhein" feature
+- Audio is processed by the browser vendor's speech service — **Google** on
+  Chrome/Edge/Android, **Apple** on Safari/iOS. This is a third-party
+  processor and must stay disclosed in `privacy.html`
+- Not available in Firefox (the mic FAB hides itself there)
+- Requires HTTPS (`isSecureContext`) and the microphone permission
+
+### 7) GoDaddy DNS
 - Purpose: domain and DNS management for `baatbanao.shop`
 - Current usage: manual DNS verification/changes
 - No GoDaddy API is configured in this workspace right now
+
+### Browser/site permissions or browser APIs used by the app
+- **Microphone** — only while the voice assistant is active (see #6)
+- **Camera** — via `<input type="file" capture="environment">`; the photo is
+  handled as a local file, `getUserMedia` is not used
+- Clipboard copy support
+- PWA install prompt handling
+- Service worker/offline cache
+- Local storage for client-side state/features
+- Web Share support where available
 
 ## Permissions involved
 
@@ -55,13 +88,6 @@ This file lists the external APIs, integrations, deployment connections, and sen
 
 ### Hosting side
 - Vercel project deploy access is effectively connected through the GitHub workflow
-
-### Browser/site permissions or browser APIs used by the app
-- Clipboard copy support
-- PWA install prompt handling
-- Service worker/offline cache
-- Local storage for client-side state/features
-- Web Share support where available
 
 ## Sensitive items that should be rotated
 1. Old GitHub PAT
@@ -92,6 +118,10 @@ This file lists the external APIs, integrations, deployment connections, and sen
 - `install_prompt_open`
 - `install_prompt_result`
 - `pwa_installed`
+- `voice_command_start`
+- `voice_command_parsed`
+- `voice_khata_save`
+- `voice_khata_update`
 
 ## Related docs
 - `ANALYTICS_EVENTS.md`

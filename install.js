@@ -1,4 +1,5 @@
 /* ===========================================================
+const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
    BaatBanao — Install + Update Manager v1.0.8
    NUCLEAR TOAST FIX:
    - No queue — max 1 toast at a time (new replaces old)
@@ -43,7 +44,7 @@
           msg.includes('Installing BaatBanao') ||
           msg.includes('install ho raha')
         )) {
-          console.log('[BB] Blocked ghost toast:', msg);
+          if (BB_DEBUG) console.log('[BB] Blocked ghost toast:', msg);
           return;
         }
         // Show through native, but ensure only 1 at a time
@@ -63,7 +64,7 @@
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./service-worker.js')
         .then(reg => {
-          console.log('[BB] SW v' + APP_VERSION);
+          if (BB_DEBUG) console.log('[BB] SW v' + APP_VERSION);
           reg.update().catch(()=>{});
           if (reg.waiting) promptSwUpdate(reg.waiting);
           // Installed PWA memory me rehta hai; wapas khulne par bhi naya version check karo
@@ -84,7 +85,7 @@
 
       navigator.serviceWorker.addEventListener('message', (e) => {
         if (e.data && e.data.type === 'SW_UPDATED') {
-          console.log('[BB] SW updated to', e.data.version);
+          if (BB_DEBUG) console.log('[BB] SW updated to', e.data.version);
         }
       });
     });

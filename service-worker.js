@@ -3,7 +3,7 @@
    v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.1.3-financial-validation';
+const CACHE_VERSION = 'baatbanao-v2.0.1-ocr-finance';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -43,6 +43,18 @@ const CORE_ASSETS = [
   './assets/mascot-paid.webp',
   './assets/vasooli-hero-banner.webp',
   './favicon.ico'
+];
+
+/* OCR engine — ~10 MB. Deliberately NOT in CORE_ASSETS: it is only fetched
+   the first time someone actually scans a bill, then cached by the
+   CACHE_OCR message so OCR keeps working offline afterwards. */
+const OCR_CACHE = 'baatbanao-ocr-v1';
+const OCR_ASSETS = [
+  './vendor/tesseract/tesseract.min.js',
+  './vendor/tesseract/worker.min.js',
+  './vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
+  './vendor/tesseract/tesseract-core-lstm.wasm.js',
+  './vendor/tesseract/tessdata/eng.traineddata.gz'
 ];
 
 self.addEventListener('install', (event) => {
@@ -128,6 +140,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // OCR engine: cache-first + background refresh.
+  // Once downloaded these never change, and a shop may have no signal.
+  if (url.pathname.indexOf('/vendor/tesseract/') === 0) {
+    event.respondWith(
+      caches.open(OCR_CACHE).then(async (cache) => {
+        const cached = await cache.match(req);
+        if (cached) {
+          fetch(req).then((res) => {
+            if (res && res.status === 200) cache.put(req, res.clone());
+          }).catch(() => {});
+          return cached;
+        }
+        const res = await fetch(req);
+        if (res && res.status === 200) cache.put(req, res.clone());
+        return res;
+      })
+    );
+    return;
+  }
+
   // Images/fonts etc: cache-first + background refresh
   event.respondWith(
     caches.match(req, { ignoreSearch: true }).then((cached) => {
@@ -153,5 +185,12 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  // voice-ocr.js calls this after the engine has loaded once, so the next
+  // scan works with no network at all.
+  if (event.data && event.data.type === 'CACHE_OCR') {
+    event.waitUntil(
+      caches.open(OCR_CACHE).then((cache) => cache.addAll(OCR_ASSETS)).catch(() => {})
+    );
   }
 });

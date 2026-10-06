@@ -4,3 +4,20 @@
 vault/
 .github/
 seo/__pycache__/
+
+# Internal working documents — they describe repo access, tokens and growth
+# plans. Nothing here belongs on the public site. (kept: llms.txt, robots.txt)
+*.md
+HANDOFF_VAULT.md
+INTEGRATIONS_AND_PERMISSIONS.md
+MANUAL_PRO_SETUP.md
+ADSENSE_READINESS.md
+SEO_CONTENT_PLAN.md
+TRAFFIC_GROWTH_RESEARCH_REPORT.md
+ANALYTICS_EVENTS.md
+README.md
+
+# Dev tooling (Python SEO scripts + node helpers). `api/` is NOT listed here:
+# those are Vercel serverless functions used for Pro activation.
+tools/
+seo/

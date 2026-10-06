@@ -3102,3 +3102,27 @@ document.addEventListener('keydown', (e) => {
     if (upiModal) upiModal.remove();
   }
 });
+
+
+/* ===========================================================
+   STANDALONE-MODULE BRIDGE  (voice-ocr.js, future widgets)
+   -----------------------------------------------------------
+   `state` is declared with `let` at the top level of this classic
+   script, so it lives in the global *lexical* environment and is
+   NOT a property of `window`. A separate classic script (voice-ocr.js)
+   therefore sees `window.state === undefined` and silently no-ops on
+   every khata read/write. These explicit assignments fix that.
+   Same reference, so mutations (unshift/splice) propagate both ways.
+   =========================================================== */
+window.state = state;
+window.persist = persist;
+window.navigate = navigate;
+window.showToast = showToast;
+window.renderApp = renderApp;
+window.openWhatsAppWithText = openWhatsAppWithText;
+window.addKhataEntry = function (item) {
+  state.khata.unshift(item);
+  persist();
+  try { renderApp(); } catch (e) { /* view may not be mounted yet */ }
+  return item;
+};

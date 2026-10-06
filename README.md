@@ -21,11 +21,45 @@ BaatBanao is a lightweight PWA for generating polite, funny, and professional Wh
 
 ## Project files
 - `index.html` — main app shell
-- `app.js` — SPA logic
+- `app.js` — SPA logic (exposes `window.state` etc. for standalone modules)
 - `style.css` — UI styling
 - `service-worker.js` — offline cache
 - `manifest.json` — PWA manifest
 - `*.html` — SEO landing pages
+- `voice-ocr.js` — 🎙️ voice assistant + 📷 bill/parchi OCR scanner
+- `vendor/tesseract/` — self-hosted OCR engine (see below)
+
+## Voice + OCR (voice-ocr.js)
+
+Two client-side features, no backend and no API cost:
+
+- **🎙️ Bolkar likhein** — Web Speech API (`hi-IN`, falls back to `en-IN`).
+  Chrome/Edge/Chrome-Android and Safari 14.5+ only; the mic button hides
+  itself where unsupported (Firefox). Audio is processed by the browser
+  vendor's speech service, which is disclosed in `privacy.html`.
+- **📷 Bill / parchi scanner** — Tesseract.js running in a Web Worker.
+
+The OCR engine is **self-hosted in `vendor/tesseract/`**, not loaded from a
+CDN: the site CSP (`vercel.json`) blocks third-party script/connect/worker
+sources, and a CDN load was blocked in production. It is served from our own
+origin, works offline after the first scan (the service worker caches it),
+and needs no SRI pinning.
+
+Re-fetch/upgrade the engine with:
+
+```bash
+bash tools/update-tesseract.sh
+```
+
+Then bump `CACHE_VERSION` in `service-worker.js` and the `?v=` query on
+`voice-ocr.js` in `index.html`.
+
+Accuracy note: preprocessing (grayscale → autocontrast → upscale → unsharp)
+matters far more than the model. Measured on the four shipped sample bills,
+amount extraction went from **1/4 to 3/4** with the better pipeline, and the
+10.9 MB "standard" language model gave **no** accuracy gain over the 1.98 MB
+`tessdata_fast` one. Parsed amounts that look implausible are flagged in the
+UI so a bad OCR digit can never silently become a wrong WhatsApp reminder.
 
 ## Local run
 Because this is a static app, you can serve it with any local static server. Example:
