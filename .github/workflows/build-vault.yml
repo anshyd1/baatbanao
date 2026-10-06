@@ -53,6 +53,11 @@ jobs:
           # app shell is not a content page: keep it out of the search index; fix the iOS title
           sed -i 's#<meta charset="UTF-8">#<meta charset="UTF-8">\n  <meta name="robots" content="noindex">#; s#content="paanikhata_icecubes"#content="BaatBanao Vault"#' web/index.html
 
+      - name: Keep a visible loading and recovery state in future Vault builds
+        run: |
+          cp ../../app-load-status.js web/load-status.js
+          sed -i 's#<body>#<body>\n  <script src="load-status.js"></script><noscript>JavaScript is required to use Vault.</noscript>#' web/index.html
+
       - name: Build web bundle (served from www.baatbanao.shop/app/)
         run: |
           flutter build web --release --base-href /app/

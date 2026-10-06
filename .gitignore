@@ -26,3 +26,7 @@ ADMIN_*.html
 # Never commit Google service-account keys
 *-service-account*.json
 myautomation-*.json
+
+# Generated browser/runtime regression evidence
+tests/reliability/results/
+__pycache__/

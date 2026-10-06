@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   var OLD_KEY = 'bb_cookie_notice_seen_v1';
-  var CONSENT_KEY = 'bb_cookie_consent_v2';
+  var CONSENT_KEY = 'bb_analytics_consent_v3';
   var ID = 'bb-cookie-banner';
 
   function getConsent(){
@@ -13,16 +13,10 @@
   function seen(){
     var c = getConsent();
     if(c === 'accepted' || c === 'rejected') return true;
-    if(hasOldSeen()){
-      // migrate old OK to accepted to avoid re-prompting existing users
-      try { localStorage.setItem(CONSENT_KEY, 'accepted'); } catch(e){}
-      return true;
-    }
     return false;
   }
   function markSeen(val){
     try {
-      localStorage.setItem(OLD_KEY, '1');
       localStorage.setItem(CONSENT_KEY, val);
     } catch(e){}
     try {
@@ -34,11 +28,11 @@
     var el = document.getElementById(ID);
     if(el) el.remove();
   }
-  function showBanner(){
+  function showBanner(force){
     // Compact, non-blocking consent chip (shown after a short delay so first CTA stays free).
-    if(seen() || document.getElementById(ID)) return;
+    if((!force && seen()) || document.getElementById(ID)) return;
     setTimeout(function tryShow(){
-      if(seen() || document.getElementById(ID)) return;
+      if((!force && seen()) || document.getElementById(ID)) return;
       if(document.getElementById('bb-update-banner')){ setTimeout(tryShow, 5000); return; }
       var inApp = !!document.querySelector('.bottom-nav');
       var el = document.createElement('div');
@@ -46,9 +40,9 @@
       el.setAttribute('role', 'dialog');
       el.setAttribute('aria-label', 'Cookie consent');
       el.style.cssText = 'position:fixed;left:10px;right:10px;bottom:' + (inApp ? '86px' : '12px') + ';z-index:100050;max-width:460px;margin:0 auto;background:#2b2420;color:#fff;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;font:600 12.5px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25)';
-      el.innerHTML = '<span style="flex:1">Hum analytics cookies se app behtar banate hain. <a href="/privacy" style="color:#ffc7bd">Privacy</a></span>' +
-        '<button type="button" data-v="rejected" style="border:0;background:transparent;color:#d9cfc8;font:700 12.5px inherit;padding:8px 6px;cursor:pointer">Nahi</button>' +
-        '<button type="button" data-v="accepted" style="border:0;background:#FF6B57;color:#fff;font:800 12.5px inherit;padding:8px 14px;border-radius:10px;cursor:pointer">OK</button>';
+      el.innerHTML = '<span style="flex:1">Analytics sirf aapki permission se load hogi. Reject karne par bhi app chalegi. <a href="/privacy" style="color:#ffc7bd">Privacy</a></span>' +
+        '<button type="button" data-v="rejected" style="border:0;background:transparent;color:#d9cfc8;font:700 12.5px inherit;padding:8px 6px;cursor:pointer">Reject</button>' +
+        '<button type="button" data-v="accepted" style="border:0;background:#FF6B57;color:#fff;font:800 12.5px inherit;padding:8px 14px;border-radius:10px;cursor:pointer">Allow</button>';
       el.addEventListener('click', function(e){
         var b = e.target.closest('button[data-v]');
         if(!b) return;
@@ -56,12 +50,12 @@
         closeBanner();
       });
       document.body.appendChild(el);
-    }, 4000);
+    }, force ? 0 : 4000);
   }
 
   // expose for debug / QA
-  try { window.BBConsent = { get: getConsent, hasOldSeen: hasOldSeen }; } catch(e){}
+  try { window.BBConsent = { get: getConsent, hasOldSeen: hasOldSeen, open: function(){ closeBanner(); showBanner(true); } }; } catch(e){}
 
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showBanner);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){showBanner(false);});
   else showBanner();
 })();

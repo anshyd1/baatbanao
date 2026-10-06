@@ -92,6 +92,14 @@ def cta_box(rel="", lang="", tone=""):
 def rel_links(items):
     return '<div class="rels">' + "".join(f'<a href="/{s}">{t}</a>' for s,t in items) + "</div>"
 
+def extra_html(slug):
+    path = os.path.join(os.path.dirname(__file__), 'extra_templates.json')
+    with open(path, encoding='utf-8') as f:
+        items = json.load(f).get(slug, [])
+    if not items:
+        return ''
+    return '<h2>Aur situations ke liye reminders</h2><p>Brackets wale fields apne verified details se replace karein. Payment status check karke hi bhejein; public shaming ya unagreed late fees ka use na karein.</p>' + ''.join('<h3>' + html.escape(title) + '</h3>' + M(text) for title, text in items)
+
 def build(p):
     faq_html = ""
     if p.get("faq"):
@@ -106,6 +114,7 @@ def build(p):
 <h1>{p['h1']}</h1>
 <p class="sub">{p['sub']}</p>
 {p['body']}
+{extra_html(p['slug'])}
 {cta_box(p.get('rel',''), p.get('lang',''), p.get('tone',''))}
 {faq_html}
 <h2>Related pages</h2>
@@ -642,7 +651,7 @@ def main():
         urls.append(slug)
         print(f"  wrote {slug}.html ({len(htmlout)} bytes)")
     # sitemap
-    urls.append("pay")
+    # Payment URLs are private utility pages, not sitemap content.
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for u in urls:

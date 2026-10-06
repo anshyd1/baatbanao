@@ -1,0 +1,23 @@
+{
+  "tuition-fees-reminder-message": [
+    ["Due date se pehle", "Namaste {parent name}, {student} ki {month} tuition fees ₹{amount}, {date} ko due hai. Yeh advance reminder hai; payment ho chuki ho toh receipt share kar dijiye. Dhanyavaad."],
+    ["Part payment ke baad", "Namaste ji, {student} ki fees mein ₹{paid} receive hue, thank you. {month} ka remaining ₹{balance} hai. Kya {date} tak clear ho payega? Kisi arrangement ki zaroorat ho toh privately bata dijiye."],
+    ["Agreed installment", "Hello {parent name}, hamare agreed installment plan ke mutabik agla ₹{amount} payment {date} ko due hai. Kya yeh date abhi bhi convenient hai? Change chahiye toh pehle discuss kar lete hain."],
+    ["Payment status verify karna", "Namaste ji, hamare record mein {student} ki {month} fees ₹{amount} pending dikh rahi hai. Agar payment kar di hai toh date aur reference share kar dijiye; verify karke record update kar denge. Dobara pay karne ki zaroorat nahi."],
+    ["Revised date confirm karna", "Hello {parent name}, fees payment ke liye aapne {revised date} batayi thi. ₹{balance} ke remaining balance ka ek reminder hai. Koi dikkat ho toh bata dijiye, milkar realistic date confirm kar lete hain."]
+  ],
+  "dost-se-paise-wapas-message": [
+    ["Part payment ke baad", "Bhai, ₹{paid} mil gaye, thanks. Ab ₹{balance} baaki hai. Iske liye kaunsi date comfortable rahegi? Ek date confirm kar de toh main apna hisaab plan kar loon."],
+    ["Shared trip ka split", "Hey, trip ka split settle kar raha hoon. Tere share mein ₹{amount} aa rahe hain; breakdown bhej diya hai. Koi calculation galat lage toh bata, warna {date} tak transfer kar dena."],
+    ["Dost ki financial difficulty", "Bhai, samajh raha hoon ki abhi budget tight hai. ₹{balance} ek saath mushkil ho toh chhote installments discuss kar lete hain. Tu jo realistically kar sakta hai, amount aur date bata de."],
+    ["Already paid ho sakta hai", "Ek baar confirm karna tha—₹{amount} wala transfer ho gaya kya? Mere record mein pending hai. Ho gaya ho toh date/reference bhej de, main check kar loon. Duplicate payment mat karna."]
+  ],
+  "payment-reminder-customer-whatsapp": [
+    ["Partial payment ka balance", "Namaste {customer}, invoice {invoice no} ke liye ₹{paid} receive hue, dhanyavaad. Remaining balance ₹{balance} hai, due date {date}. Kripya expected payment date confirm kar dein."],
+    ["Invoice detail par query", "Hello {customer}, invoice {invoice no} ka ₹{balance} pending hai. Agar item, quantity ya tax detail par koi query hai toh share karein; pehle resolve kar lete hain. Details correct hon toh payment date confirm kar dein."],
+    ["Accounts team se coordination", "Hello {customer}, invoice {invoice no} ka ₹{balance} payment follow up kar raha hoon. Kya accounts team ko invoice ya koi supporting document dobara chahiye? Sahi contact aur expected processing date bata dein, dhanyavaad."]
+  ],
+  "paise-mangne-ke-message": [
+    ["Hisaab mein mismatch ho toh", "Namaste {name}, mere record mein ₹{balance} pending hai, lekin ho sakta hai koi payment update miss hua ho. Apna payment reference ya calculation share kar dein; pehle dono ka hisaab match kar lete hain, phir balance ki date decide karenge."]
+  ]
+}

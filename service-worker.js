@@ -3,7 +3,7 @@
    v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.1.1-seo-privacy';
+const CACHE_VERSION = 'baatbanao-v1.1.2-reliability-consent';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -86,6 +86,13 @@ self.addEventListener('fetch', (event) => {
         });
       })
     );
+    return;
+  }
+
+  // Never retain recipient fields in a Cache Storage request key.
+  const privateQuery = ['pa','pn','am','tn','upi','name','phone','amount','note'].some(key => url.searchParams.has(key));
+  if (privateQuery) {
+    event.respondWith(fetch(req, { cache:'no-store' }).catch(() => caches.match('./index.html')));
     return;
   }
 

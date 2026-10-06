@@ -1119,15 +1119,7 @@ function handleGenerate(){
   };
   state.vasooliForm = formData; window._lastFormSnapshot = formData;
 
-  bbTrack('message_generate', {
-    relation: formData.relation || 'General',
-    language: formData.language || 'Hinglish',
-    tone: formData.tone || 'Friendly',
-    has_amount: hasValidAmount(formData.amount),
-    has_phone: !!formData.phone,
-    has_name: !!(s.name && s.name.trim()),
-    source_route: state.route || 'vasooli'
-  });
+
 
   const limitCheck = bbCanGenerate();
   if (!limitCheck.allowed){
@@ -1185,6 +1177,15 @@ function handleGenerate(){
       ${cardThemePicker()}
       ${messages.map((m,i) => outputCard(m, i, formData)).join('')}
     `;
+    bbTrack('message_generate', {
+      relation: formData.relation || 'General',
+      language: formData.language || 'Hinglish',
+      tone: formData.tone || 'Friendly',
+      has_amount: hasValidAmount(formData.amount),
+      has_phone: !!formData.phone,
+      has_name: !!(s.name && s.name.trim()),
+      source_route: state.route || 'vasooli'
+    });
     setTimeout(()=> outputDiv.scrollIntoView({ behavior:'smooth', block:'start' }), 50);
   }, 500);
 }
@@ -1401,15 +1402,16 @@ function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
     : appendUpiPaymentLine(textValue || '', paymentData || {});
   const text = encodeURIComponent(finalText);
   const phone = normalizeWhatsAppPhone(phoneRaw);
+
+  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
+
+  triggerWhatsAppDirect(text, phone);
   bbTrack('whatsapp_open', {
     route: state.route || 'unknown',
     has_phone: !!phone,
     has_upi: finalText.includes('upi://pay'),
     has_amount: hasValidAmount(paymentData && paymentData.amount)
   });
-  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
-  
-  triggerWhatsAppDirect(text, phone);
 }
 
 function whatsappOutput(taId){
@@ -1536,6 +1538,11 @@ function handleTemplateGenerate(){
   const phone = normalizeWhatsAppPhone(f.phone);
   if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
   const data = {name:f.name || '', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:''};
+
+  state.vasooliForm = data;
+  const messages = generateMessages(data);
+  const out = document.getElementById('template-output');
+  out.innerHTML = `<div class="section-title">${cat.emoji} ${cat.title}</div>${cardThemePicker()}${messages.map((m,i)=>outputCard(m,i,data)).join('')}`;
   bbTrack('template_generate', {
     category: cat.id,
     relation: cat.relation,
@@ -1543,10 +1550,6 @@ function handleTemplateGenerate(){
     has_amount: hasValidAmount(amount),
     has_phone: !!phone
   });
-  state.vasooliForm = data;
-  const messages = generateMessages(data);
-  const out = document.getElementById('template-output');
-  out.innerHTML = `<div class="section-title">${cat.emoji} ${cat.title}</div>${cardThemePicker()}${messages.map((m,i)=>outputCard(m,i,data)).join('')}`;
   setTimeout(()=>out.scrollIntoView({behavior:'smooth', block:'start'}), 50);
 }
 function viewBulkReminders(){

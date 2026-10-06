@@ -508,19 +508,21 @@
     },
 
     closeModal() {
+      this._ocrRunId = (this._ocrRunId || 0) + 1;
       this.stopVoice();
       const modal = document.getElementById('bb-assistant-modal');
       if (modal) modal.style.display = 'none';
     },
 
     showResultModal(entry) {
+      this.activeEntry = entry;
       this.resetModalStages();
       const modal = document.getElementById('bb-assistant-modal');
       const head = document.getElementById('bb-assist-head-title');
       const stageResult = document.getElementById('bb-stage-result');
 
-      head.textContent = entry._isOcr ? (entry._confidence >= 2 ? '📷 Parchi Scan Result' : '📷 Scan hua — ek baar check karo') : '🎙️ Entry Samjhi Gayi!';
-      if (entry._isOcr && entry._confidence < 2 && typeof window.showToast === 'function') window.showToast('Naam/amount ek baar verify kar lo — parchi ka print halka tha.');
+      head.textContent = entry._manual ? '✍️ Manual Entry — scan complete nahi hua' : entry._lowConfidence ? '📷 Scan unclear — details bharo' : entry._isOcr ? (entry._confidence >= 2 ? '📷 Scan result — details verify karo' : '📷 Scan hua — ek baar check karo') : '🎙️ Entry Samjhi Gayi!';
+      if (entry._isOcr && entry._confidence < 2 && typeof window.showToast === 'function') window.showToast('Scan ki details verify karke hi save karein.');
       stageResult.style.display = 'block';
       modal.style.display = 'flex';
 
@@ -652,7 +654,7 @@
         status: 'pending',
         language: 'Hinglish',
         tone: 'Friendly',
-        note: entry._isOcr ? 'Added via Camera/File OCR' : 'Added via Voice Command',
+        note: entry._manual ? 'Added manually' : entry._isOcr ? 'Added via Camera/File OCR' : 'Added via Voice Command',
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
@@ -729,12 +731,14 @@
     },
 
     skipOcrToManual() {
+      this._ocrRunId = (this._ocrRunId || 0) + 1;
       this.showResultModal({
         name: '',
         amount: '',
         phone: '',
         type: 'lena',
-        _isOcr: true
+        _manual: true,
+        _isOcr: false
       });
     },
 
@@ -807,6 +811,8 @@
     },
 
     async runOcrOnImage(fileOrBlob, thumbUrl) {
+      const runId = (this._ocrRunId || 0) + 1;
+      this._ocrRunId = runId;
       this.resetModalStages();
       const modal = document.getElementById('bb-assistant-modal');
       const head = document.getElementById('bb-assist-head-title');
@@ -825,6 +831,7 @@
       try {
         // 1. Optimize image resolution for fast processing on mobile
         const optimizedBlob = await this.preprocessImage(fileOrBlob);
+        if (this._ocrRunId !== runId) return;
 
         // 2. Load Tesseract.js (v5)
         if (!window.Tesseract && !navigator.onLine) {
@@ -834,16 +841,21 @@
           statusText.textContent = 'OCR Engine load ho raha hai...';
           progressBar.style.width = '30%';
           progressSub.textContent = 'Downloading lightweight model...';
-          await this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+          await this.loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
         }
 
+        if (this._ocrRunId !== runId) return;
         statusText.textContent = 'Parchi scan ho rahi hai...';
         progressBar.style.width = '50%';
         progressSub.textContent = 'Detecting numbers & customer name...';
 
         // 3. Fast English & Digits recognition
         const result = await window.Tesseract.recognize(optimizedBlob, 'eng', {
+          workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',
+          corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1',
+          langPath: 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int',
           logger: m => {
+            if (this._ocrRunId !== runId) return;
             if (m.status === 'recognizing text') {
               const p = Math.round((m.progress || 0) * 100);
               progressBar.style.width = (50 + Math.round(p * 0.45)) + '%';
@@ -852,24 +864,31 @@
           }
         });
 
+        if (this._ocrRunId !== runId) return;
         const text = result && result.data ? result.data.text : '';
-        console.log('OCR Output Text:\n', text);
+        if (!String(text).trim()) throw new Error('OCR_EMPTY');
 
         progressBar.style.width = '100%';
         statusText.textContent = 'Scan Complete! ✅';
 
         // 4. Extract data
         const parsed = this.parseOcrText(text);
+        if (Number(result.data.confidence || 0) < 75) {
+          // Financial records must not be prefilled from an uncertain scan.
+          parsed.name = ''; parsed.amount = ''; parsed.phone = '';
+          parsed._confidence = 0; parsed._lowConfidence = true;
+        }
         parsed._isOcr = true;
         parsed._thumbSrc = thumbUrl || '';
         this.activeEntry = parsed;
 
         setTimeout(() => {
-          this.showResultModal(parsed);
+          if (this._ocrRunId === runId) this.showResultModal(parsed);
         }, 400);
 
       } catch (err) {
-        console.error('OCR Error:', err);
+        if (this._ocrRunId !== runId) return;
+        console.warn('OCR unavailable; switching to manual entry.');
         const offline = (err && err.message === 'OFFLINE_OCR') || !navigator.onLine;
         const msg = offline
           ? '📶 Bill scan ke liye pehli baar internet chahiye. Abhi manual entry kar lijiye.'
@@ -896,7 +915,8 @@
 
       // 1. Mobile number (10-digit, Indian) — bhi allow "+91 98765 43210" / "98765-43210"
       const phoneSrc = text.replace(/(\+?91[\s-]?)?(\d{5})[\s-](\d{5})/g, (m, c, a, b) => `${a}${b}`);
-      const phoneMatch = phoneSrc.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
+      const customerPhoneLine = phoneSrc.split('\n').find(line => /\b(customer|client|buyer|party)\b.*\b(phone|mobile|mob|contact)\b/i.test(line)) || '';
+      const phoneMatch = customerPhoneLine.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
       if (phoneMatch) phone = phoneMatch[1];
 
       // 2. Date (dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy, "12 Sep 2026")
@@ -952,9 +972,9 @@
 
       // Fallback: sabse bada plausible number (₹/Rs wale ko preference)
       if (!amount) {
-        const withCur = [], plain = [];
-        rawLines.forEach(line => numbersIn(line).forEach(v => (/₹|rs\.?|inr|\/-/i.test(line) ? withCur : plain).push(v)));
-        const pool = (withCur.length ? withCur : plain).filter(v => v >= 10 && v <= 5000000);
+        const withCur = [];
+        rawLines.forEach(line => { if (/₹|\brs\.?|\binr\b|\/-/i.test(line)) numbersIn(line).forEach(v => withCur.push(v)); });
+        const pool = withCur.filter(v => v >= 10 && v <= 5000000);
         if (pool.length) { amount = Math.max(...pool); warn.push('amount'); }
       }
 
