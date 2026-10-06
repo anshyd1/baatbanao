@@ -57,7 +57,11 @@ async def browser_tests():
   check('Explicit choice is shown again for legacy users',await page.locator('#bb-cookie-banner').count()==1)
   await page.locator('[data-v="accepted"]').click();await page.wait_for_timeout(2200)
   check('Allow stores explicit v3 consent',await page.evaluate("localStorage.getItem('bb_analytics_consent_v3')")=='accepted')
-  check('Allow starts one real Google tag',len(site.tags)==1)
+  # Count our initialization, not every auxiliary request Google's SDK may make.
+  main_tag_requests = lambda: sum(urlsplit(url).path == '/gtag/js' for url in site.tags)
+  tag_elements = await page.locator('script[src^="https://www.googletagmanager.com/gtag/js?"]').count()
+  config_calls = await page.evaluate("dataLayer.filter(x=>x[0]==='config' && x[1]==='G-VG7Y7ND2PW').length")
+  check('Allow initializes exactly one real Google tag',tag_elements==1 and config_calls==1 and main_tag_requests()>=1,str(site.tags))
   await page.evaluate("""()=>{BBAnalytics.track('message_generate',{name:'AUDIT_PRIVATE_NAME',phone:'AUDIT_PRIVATE_PHONE',message:'AUDIT_PRIVATE_TEXT',amount:998877,has_amount:true});const a=document.createElement('a');a.href='https://wa.me/0000000000?text=AUDIT_PRIVATE_MESSAGE';a.textContent='AUDIT_PRIVATE_LINK';a.addEventListener('click',e=>e.preventDefault());document.body.append(a);a.click();const f=document.createElement('form');f.id='AUDIT_PRIVATE_FORM';f.innerHTML='<input name="AUDIT_PRIVATE_FIELD" value="AUDIT_PRIVATE_FORM_VALUE">';f.addEventListener('submit',e=>e.preventDefault());document.body.append(f);f.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));location.hash='#templates?name=AUDIT_PRIVATE_ROUTE';} """)
   await page.wait_for_timeout(6500)
   check('Real gtag emits intercepted collection requests',bool(site.collect))
@@ -73,8 +77,9 @@ async def browser_tests():
   check('No JS errors on consented generator page',not errors,str(errors))
   (OUT/'intercepted-ga-requests.json').write_text(json.dumps(site.collect,indent=2))
   await page.evaluate("localStorage.setItem('bb_khata',JSON.stringify([{id:'audit-local',name:'AUDIT_LOCAL',amount:1}]));BBConsent.open();")
+  before_reject_tag_requests = main_tag_requests()
   await page.locator('[data-v="rejected"]').click();await page.wait_for_timeout(1700)
-  check('Reject reloads with no new Google tag',len(site.tags)==1)
+  check('Reject reloads with no new Google tag',main_tag_requests()==before_reject_tag_requests and await page.locator('script[src^="https://www.googletagmanager.com/gtag/js?"]').count()==0,str(site.tags))
   check('Reject preserves saved ledger',await page.evaluate("JSON.parse(localStorage.getItem('bb_khata'))[0].id")=='audit-local')
   await ctx.close()
   # Actual application validation and event timing; no external WhatsApp opening.
