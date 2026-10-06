@@ -5,7 +5,8 @@
 
 User-agent: *
 Allow: /
-Disallow: /pay
+# Payment pages use noindex; allow crawling so Google can read that directive.
+# Do not disallow /pay: that prefix also blocks /payment-reminder-* guides.
 Disallow: /api/
 
 # ------------------------------------------------------------------------------

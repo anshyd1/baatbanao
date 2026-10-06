@@ -55,25 +55,25 @@ th{background:#f7f3ef}
 <header class="hd"><span class="lg">🪙 BaatBanao</span><a class="cta" href="https://www.baatbanao.shop/#vasooli">Free Tool →</a></header>
 <main>
 <h1>Privacy Policy</h1>
-<p class="sub">Last updated: 28 September 2026. Short + seedha, bina legal jargon ke.</p>
+<p class="sub">Last updated: 6 October 2026. Short + seedha, bina legal jargon ke.</p>
 <h2>Kya hum collect karte hain</h2>
 <ul>
-<li><b>Khata data (naam, amount, phone, message)</b> browser storage (localStorage) me save hota hai; BaatBanao ke database par upload nahi hota. Jab aap WhatsApp/UPI action use karte hain, selected details destination app ko ja sakti hain. QR banane ke liye encoded UPI payment details third-party QR service ko bheji ja sakti hain.</li>
-<li><b>Analytics</b> — page views / basic clicks ka anonymous count (Google Analytics / GA4) collect ho sakta hai. Naam, phone, ya reminder content analytics me nahi jaata.</li>
+<li><b>Khata data (naam, amount, phone, message)</b> browser storage (localStorage) me save hota hai; BaatBanao ke database par upload nahi hota. Jab aap WhatsApp/UPI action use karte hain, selected details destination app ko ja sakti hain. QR aapke browser ki local library se banta hai; QR banane ke liye UPI details kisi QR service ko nahi bheji jaati. Shared payment link ke URL me recipient details ho sakti hain; link sirf intended recipient se share karein.</li>
+<li><b>Analytics</b> — Google Analytics / GA4 se page views, page URLs aur basic interaction/device statistics collect ho sakte hain. Standalone payment pages par GA load nahi ki jaati. Analytics ko anonymous samajhkar personal details URL ya campaign tags me na daalein.</li>
 <li><b>Cookies</b> — analytics aur ads (AdSense) ke liye cookies use ho sakti hain. Aap browser me cookies block kar sakte hain.</li>
 </ul>
 <h2>Kya hum NAHI karte</h2>
 <ul>
 <li>Aapka data sell nahi karte</li>
 <li>Khata database hum sell nahi karte. Hosting, analytics, ads, QR, WhatsApp aur UPI providers apni policies ke mutabik technical/payment data process kar sakte hain.</li>
-<li>Aapke message/phone/amount kisi server pe save nahi karte</li>
+<li>Khata records ko hum apne application database me upload nahi karte. Shared payment URL ke parameters hosting/CDN request logs me aa sakte hain; payment pages par analytics load nahi ki jaati.</li>
 <li>Children (18-) ka data intentionally collect nahi karte</li>
 </ul>
 <h2>Third-party services</h2>
 <ul>
-<li><b>Google Analytics 4</b> — anonymous page-view / click counts. Consent Mode v2 ke saath: jab tak aap cookie notice par "OK" nahi dabate, analytics storage denied rehti hai. Naam, phone ya message content kabhi analytics me nahi jaata.</li>
+<li><b>Google Analytics 4</b> — page-view aur interaction statistics. Analytics cookies consent settings ke hisaab se use hoti hain. Consent denied hone par bhi configured Consent Mode cookieless requests bhej sakta hai. Standalone payment pages par GA load nahi ki jaati. Browser identifiers aur technical usage data Google ki policy ke mutabik process ho sakta hai.</li>
 <li><b>Google AdSense (advertising)</b> — content/guide pages par ads dikh sakte hain. Google aur uske certified vendors cookies ya device identifiers (jaise advertising ID) use kar sakte hain taaki aapki is site aur doosri sites ki visits ke aadhar par ads dikhaye ja sakein. Aap personalised ads yahan band kar sakte hain: <a href="https://www.google.com/settings/ads" rel="noopener" target="_blank">Google Ads Settings</a>, aur third-party vendor cookies yahan opt-out kar sakte hain: <a href="https://www.aboutads.info/choices" rel="noopener" target="_blank">aboutads.info</a>. Google ka data use: <a href="https://policies.google.com/technologies/partner-sites" rel="noopener" target="_blank">How Google uses information from partner sites</a>. EEA/UK users ko ads se pehle alag consent choice dikhegi.</li>
-<li><b>Vercel</b> — website hosting aur CDN. Sirf website files serve hoti hain; aapka khata data server par nahi jaata. Server logs me standard technical data (IP, user-agent) short time ke liye reh sakta hai.</li>
+<li><b>Vercel</b> — website hosting aur CDN. Website files serve hoti hain. Hosting request logs me IP, user-agent aur requested URL (payment link ke query parameters samet) aa sakte hain. In logs ki handling hosting provider ki settings aur policy par depend karti hai.</li>
 <li><b>WhatsApp / UPI apps</b> — jab aap "WhatsApp par bhejo" ya "Open UPI app" dabate hain, wo message/payment details seedha us app ko jaati hain (WhatsApp, GPay, PhonePe, Paytm etc.) — unki apni privacy policies lagti hain.</li>
 <li><b>QR codes</b> — UPI QR aapke phone/browser me hi banta hai (local library); UPI details kisi QR server ko nahi bheji jaati.</li>
 <li><b>Bill/Parchi scan (OCR)</b> — photo aapke browser me hi process hoti hai (Tesseract.js). Library file ek public CDN se download hoti hai, lekin aapki photo upload nahi hoti.</li>
@@ -83,7 +83,7 @@ th{background:#f7f3ef}
 <h2>Data retention aur delete</h2>
 <p>Khata, history, bills aur settings sirf aapke device par hain — jab tak aap delete nahi karte, wahin rehte hain. App me <b>Settings → Clear all app data</b> se ek tap me sab delete ho jaata hai. Backup file (JSON) aap khud download karte hain; hum uski copy nahi rakhte.</p>
 <h2>Aapke rights</h2>
-<p>Aap kisi bhi waqt apne phone me site clear karke saara data delete kar sakte hain (browser storage clear karo). Koi account nahi hai, kisi server pe kuch nahi hai.</p>
+<p>Aap kisi bhi waqt apne phone me site clear karke saara data delete kar sakte hain (browser storage clear karo). Khata use karne ke liye account zaroori nahi hai. Device data delete karna hosting-provider logs ko automatically delete nahi karta.</p>
 <p>Sawaal? <a href="/contact">Contact page</a> se likho.</p>
 </main>
 

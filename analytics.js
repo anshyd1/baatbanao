@@ -3,6 +3,21 @@
 
   var config = window.BAATBANAO_ANALYTICS || {};
   var GA_ID = String(config.ga4MeasurementId || '').trim();
+  // Never load the production tag on payment pages, local development or previews.
+  // Payment URLs can contain recipient details. Keep this guard even though the
+  // payment templates intentionally do not include this script.
+  var paymentPath = /^\/pay(?:\.html|\/index\.html)?\/?$/.test(location.pathname) ||
+    /^#pay(?:\?|$)/.test(location.hash);
+  var productionHost = location.protocol === 'https:' && location.hostname === 'www.baatbanao.shop';
+  if (paymentPath || !productionHost) {
+    window.BBAnalytics = {
+      status: function(){ return { measurementId: null, gtagLoaded: false, enabled: false,
+        reason: paymentPath ? 'payment-page' : 'non-production-host' }; },
+      pageview: function(){}, track: function(){}, _load: function(){}
+    };
+    return;
+  }
+
   var CONSENT_KEY = 'bb_cookie_consent_v2';
   var OLD_KEY = 'bb_cookie_notice_seen_v1';
   var pageviewBound = false;
@@ -83,7 +98,7 @@
     clickBound = true;
 
     document.addEventListener('click', function(e){
-      var copyBtn = e.target.closest('.cp, .copy');
+      var copyBtn = e.target.closest('button.cp, button.copy, [data-bb-copy]');
       if(copyBtn){
         track('article_copy_click', { page_path: location.pathname });
       }

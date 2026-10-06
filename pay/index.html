@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>UPI Payment</title>
 <meta name="description" content="Pay securely using any UPI app." />
+<link rel="canonical" href="https://www.baatbanao.shop/pay" />
+<meta name="robots" content="noindex, follow" />
+<meta name="referrer" content="no-referrer" />
 <meta name="theme-color" content="#FFF9E8" />
 <meta property="og:title" content="UPI Payment" />
 <meta property="og:description" content="Pay securely using any UPI app." />
 <meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.baatbanao.shop/pay" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content="UPI Payment" />
 <meta name="twitter:description" content="Pay securely using any UPI app." />
@@ -22,69 +26,9 @@
   <div class="brand">UPI Payment</div>
   <div class="sub">Pay securely using any UPI app.</div>
   <div class="bad">Loading payment...</div>
+  <noscript>JavaScript is needed to display this payment link. Check the payee and amount before paying.</noscript>
 </div>
 <script src="/vendor/qrcode.js"></script>
-<script>
-(function(){
-  function qs(){ return new URLSearchParams(location.search); }
-  function clean(v){ return String(v||'').trim(); }
-  function validUpi(v){ return /^[a-z0-9._-]{2,}@[a-z0-9._-]{2,}$/i.test(clean(v)); }
-  function esc(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  function money(v){ var n=Number(v); return n>0 ? '₹' + n.toLocaleString('en-IN') : 'Amount payer can enter'; }
-  var p = qs();
-  var pa = clean(p.get('pa') || p.get('u')).toLowerCase();
-  var pn = clean(p.get('pn') || p.get('n')) || 'UPI User';
-  var am = clean(p.get('am') || p.get('a'));
-  var tn = clean(p.get('tn') || p.get('t')) || 'Payment request';
-  if(!validUpi(pa)){
-    document.getElementById('app').innerHTML = '<div class="brand">UPI Payment</div><div class="sub">Pay securely using any UPI app.</div><div class="bad">Invalid UPI payment link.</div>';
-    return;
-  }
-  var params = new URLSearchParams();
-  params.set('pa', pa); params.set('pn', pn); if(Number(am)>0) params.set('am', String(Number(am))); params.set('cu','INR'); if(tn) params.set('tn', tn.slice(0,70));
-  var upi = 'upi://pay?' + params.toString();
-  function renderQr(){try{var b=document.getElementById('qrbox');if(!b||!window.qrcode)return;var q=qrcode(0,'M');q.addData(upi);q.make();b.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});}catch(e){}}
-  document.getElementById('app').innerHTML = `
-    <div class="brand">UPI Payment</div>
-    <div class="sub">Pay securely using any UPI app.</div>
-    <div class="qr" id="qrbox" role="img" aria-label="UPI QR"></div>
-    <div class="name">${esc(pn)}</div>
-    <div class="upi">${esc(pa)}</div>
-    <div class="amount">${esc(money(am))}</div>
-    <div class="btns">
-      <a class="btn primary" id="openUpi" href="${upi}">Open UPI App</a>
-      <button class="btn secondary" id="copyBtn">Copy UPI Link</button>
-      <button class="btn secondary" id="shareQr" style="grid-column:1/-1;">Share QR Image</button>
-    </div>
-    <div class="hint">If the UPI app does not open automatically, tap “Open UPI App” or scan the QR using any UPI app.</div>
-    <div class="viral-box" style="margin-top:18px;background:linear-gradient(135deg,#FFF9E8,#FFEAD6);border:1.5px solid #F0DFCF;border-radius:20px;padding:16px;box-shadow:0 6px 16px rgba(90,48,30,.06);">
-      <div style="font-weight:900;font-size:14.5px;color:#9A6810;">💸 Kisi aur se bhi paise wapas lene hain?</div>
-      <div style="font-size:12.5px;color:#75615C;margin:5px 0 12px;line-height:1.4;">Bina awkward hue funny WhatsApp reminder & UPI link generate karo 100% Free!</div>
-      <a href="../" style="display:inline-block;background:linear-gradient(135deg,#FF725F,#E8594B);color:#fff;font-weight:800;font-size:13px;padding:10px 18px;border-radius:14px;text-decoration:none;box-shadow:0 6px 14px rgba(255,114,95,.3);">Apna Free Reminder Banao 🚀</a>
-    </div>
-    <div class="small">Secure UPI payment · Powered by BaatBanao</div>`;
-  renderQr();
-  document.getElementById('copyBtn').onclick = function(){
-    if(navigator.clipboard) navigator.clipboard.writeText(upi).then(function(){ alert('UPI link copied'); });
-    else alert(upi);
-  };
-  document.getElementById('shareQr').onclick = async function(){
-    try{
-      var res = await fetch(qr.replace('size=280x280','size=800x800'));
-      var blob = await res.blob();
-      var file = new File([blob], 'upi-qr.png', {type: blob.type || 'image/png'});
-      var text = pn + '\n' + money(am) + '\nUPI: ' + pa;
-      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({title:'UPI Payment', text:text, files:[file]});
-      } else if(navigator.share){
-        await navigator.share({title:'UPI Payment', text:text, url:qr});
-      } else {
-        window.open(qr, '_blank');
-      }
-    }catch(e){ window.open(qr, '_blank'); }
-  };
-  setTimeout(function(){ location.href = upi; }, 700);
-})();
-</script>
+<script defer src="/pay.js"></script>
 </body>
 </html>

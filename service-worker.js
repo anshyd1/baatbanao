@@ -3,12 +3,13 @@
    v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v1.1.0';
+const CACHE_VERSION = 'baatbanao-v1.1.1-seo-privacy';
 const CORE_ASSETS = [
   './',
   './index.html',
   './pay.html',
   './pay/index.html',
+  './pay.js',
   './style.css',
   './app.js',
   './vendor/qrcode.js',
@@ -54,7 +55,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k.startsWith('baatbanao-') && k !== CACHE_VERSION).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
     .then(() => {
       return self.clients.matchAll({ type: 'window' }).then(clients => {
@@ -69,6 +70,24 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  // Never persist payment URLs (including their recipient query parameters).
+  // Offline fallback is a cached parameter-free shell; pay.js reads the current
+  // browser URL locally. Do not fall back to the analytics-enabled homepage.
+  const isPayment = /^\/pay(?:\.html|\/index\.html)?\/?$/.test(url.pathname);
+  if (isPayment) {
+    event.respondWith(
+      fetch(req, { cache: 'no-store' }).catch(async () => {
+        const cache = await caches.open(CACHE_VERSION);
+        const shell = await cache.match('./pay.html');
+        return shell || new Response('Payment page unavailable offline. Reconnect and open the link again.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Robots-Tag': 'noindex', 'Referrer-Policy': 'no-referrer' }
+        });
+      })
+    );
+    return;
+  }
 
   const isHTML = req.mode === 'navigate' ||
                  req.destination === 'document' ||
