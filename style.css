@@ -1354,12 +1354,10 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
   outline:2px solid var(--coral); outline-offset:2px; border-radius:10px;
 }
 
-/* Route change = soft fade + 4px rise (native app feel) */
-#content{ view-transition-name: bb-content; }
-::view-transition-old(bb-content){ animation: bbViewOut .16s ease-in both; }
-::view-transition-new(bb-content){ animation: bbViewIn .22s var(--ease) both; }
-@keyframes bbViewOut{ to{ opacity:0; transform:translateY(-4px); } }
-@keyframes bbViewIn{ from{ opacity:0; transform:translateY(8px); } }
+/* Route change = soft fade + rise (native app feel)
+   CSS-class approach — render sync rehta hai, sirf dikhne me animation. */
+.bb-route-in{ animation: bbViewIn .22s var(--ease) both; }
+@keyframes bbViewIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
 
 /* Drawer links: thode bade aur aaram se tap hone wale */
 .drawer-link{ padding-top:12px; padding-bottom:12px; }
@@ -1389,3 +1387,66 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
   .quick-add-box input{ flex:1 1 100%; }
   .quick-add-box .qa-icon-btn, .quick-add-box .ghost-btn{ flex:1 1 0; }
 }
+
+/* ===========================================================
+   Output cards — Professional action hierarchy
+   1 primary CTA (full width) + equal icon shortcuts.
+   Pehle: 2 competing big buttons + 3 cramped text buttons.
+   =========================================================== */
+.bb-act-primary{
+  width:100%; padding:14px 16px; border-radius:16px; border:none; cursor:pointer;
+  background:linear-gradient(135deg,#25D366 0%,#128C7E 100%); color:#fff;
+  font-family:inherit; font-weight:800; font-size:15px; letter-spacing:.2px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 8px 20px rgba(37,211,102,.32);
+  transition:transform .14s var(--ease), box-shadow .2s var(--ease), filter .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.bb-act-primary:hover{ filter:brightness(1.04); }
+.bb-act-primary:active{ transform:scale(.98); }
+.bb-act-primary svg{ width:17px; height:17px; }
+
+.bb-act-icons{ display:flex; gap:8px; }
+.bb-icon-action{
+  flex:1 1 0; min-width:0; min-height:52px; padding:8px 4px 7px; border-radius:14px; cursor:pointer;
+  background:var(--card-cream); border:1px solid var(--border-soft); color:var(--text-main);
+  font-family:inherit; font-weight:800; font-size:10.5px; letter-spacing:.1px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  transition:transform .12s var(--ease), background .15s var(--ease), border-color .15s var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+.bb-icon-action .bb-ia-emoji{ font-size:16px; line-height:1.1; }
+.bb-icon-action:active{ transform:scale(.96); background:#FFF4EA; border-color:#FFD4C4; }
+.bb-icon-action:focus-visible{ outline:2px solid var(--coral); outline-offset:2px; }
+
+/* "More" sheet — per-card rare actions (Image, UPI QR) */
+.bb-more-backdrop{
+  position:fixed; inset:0; z-index:1200; background:rgba(38,24,24,.42);
+  display:flex; align-items:flex-end; justify-content:center;
+  animation:bbFadeIn .16s ease-out both;
+}
+.bb-more-sheet{
+  width:100%; max-width:520px; background:var(--card-cream);
+  border-radius:22px 22px 0 0; padding:10px 14px calc(16px + env(safe-area-inset-bottom,10px));
+  box-shadow:0 -12px 40px rgba(65,35,25,.24);
+  animation:bbSheetUp .22s var(--ease) both;
+}
+.bb-more-handle{ width:44px; height:5px; border-radius:99px; background:#E9D8C8; margin:4px auto 10px; }
+.bb-more-row{
+  width:100%; display:flex; align-items:center; gap:12px; padding:13px 12px;
+  border-radius:16px; border:1px solid var(--border-soft); background:#fff;
+  font-family:inherit; text-align:left; cursor:pointer; margin-bottom:8px;
+  transition:transform .12s var(--ease), background .15s var(--ease);
+}
+.bb-more-row:active{ transform:scale(.98); background:#FFF4EA; }
+.bb-more-ic{ font-size:20px; width:26px; text-align:center; }
+.bb-more-txt{ display:flex; flex-direction:column; min-width:0; }
+.bb-more-txt b{ font-size:13.5px; font-weight:800; color:var(--text-main); }
+.bb-more-txt small{ font-size:11.5px; color:var(--text-secondary); font-weight:600; }
+.bb-more-cancel{
+  width:100%; padding:13px; border-radius:16px; border:none; background:transparent;
+  color:var(--text-secondary); font-family:inherit; font-weight:800; font-size:13.5px; cursor:pointer;
+}
+@keyframes bbFadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes bbSheetUp{ from{ transform:translateY(24px); opacity:.6 } to{ transform:none; opacity:1 } }
+@media (prefers-reduced-motion: reduce){ .bb-more-backdrop, .bb-more-sheet{ animation:none !important; } }

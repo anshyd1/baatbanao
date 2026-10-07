@@ -543,7 +543,7 @@ function getHashRoute(){
   return (raw.split('?')[0] || 'home');
 }
 function bbCloseOverlays(){
-  document.querySelectorAll('.bb-sheet-wrap, #bb-invoice-preview, #bb-upi-modal, #slip-modal-overlay, #hisaab-sheet, #hisaab-settle-sheet').forEach(e => e.remove());
+  document.querySelectorAll('.bb-sheet-wrap, #bb-invoice-preview, #bb-upi-modal, #bb-card-more, #slip-modal-overlay, #hisaab-sheet, #hisaab-settle-sheet').forEach(e => e.remove());
 }
 /* --- Scroll memory: wapas aane pe wahi jagah, nayi route pe top --- */
 const _bbScrollMem = {};
@@ -1078,9 +1078,56 @@ function showUpiQrForKhata(id){
   if(!k) return;
   showUpiQr(k);
 }
+/* Per-card "More" sheet — rare actions (Image share, UPI QR) yahan rehte hain
+   taki card pe sirf ek clear primary CTA aur 2-3 icon shortcuts dikhein. */
+function openCardMore(taId){
+  closeCardMore();
+  const snap = BB_CARD_SNAP[taId] || {};
+  const wrap = document.createElement('div');
+  wrap.id = 'bb-card-more';
+  wrap.className = 'bb-more-backdrop';
+
+  const sheet = document.createElement('div');
+  sheet.className = 'bb-more-sheet';
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-label', 'More actions');
+
+  const handle = document.createElement('div');
+  handle.className = 'bb-more-handle';
+  handle.setAttribute('aria-hidden', 'true');
+  sheet.appendChild(handle);
+
+  const mkRow = (icon, title, sub, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bb-more-row';
+    b.innerHTML = `<span class="bb-more-ic">${icon}</span><span class="bb-more-txt"><b>${title}</b><small>${sub}</small></span>`;
+    b.addEventListener('click', () => { closeCardMore(); try { fn(); } catch(e){} });
+    return b;
+  };
+
+  sheet.appendChild(mkRow('🖼️', 'Share as image', 'Post it in a WhatsApp status or group', () => shareCardImage(taId)));
+  sheet.appendChild(mkRow('📲', 'Show UPI QR', 'Let them scan and pay instantly', () => showUpiQr(snap)));
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'bb-more-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.addEventListener('click', closeCardMore);
+  sheet.appendChild(cancel);
+
+  wrap.appendChild(sheet);
+  wrap.addEventListener('click', (e) => { if(e.target === wrap) closeCardMore(); });
+  document.body.appendChild(wrap);
+}
+function closeCardMore(){
+  const el = document.getElementById('bb-card-more');
+  if(el) el.remove();
+}
+
 function upiOutputButton(formSnapshot){
   const payload = JSON.stringify(formSnapshot || {}).replace(/'/g, '&#39;');
-  return `<button class="ghost-btn" onclick='showUpiQr(${payload})'>📲 UPI QR</button>`;
+  return `<button class="bb-icon-action" onclick='showUpiQr(${payload})' aria-label="Show UPI QR code"><span class="bb-ia-emoji">📲</span><span>UPI QR</span></button>`;
 }
 
 async function pickPhoneContact(target='vasooli'){
@@ -1266,8 +1313,10 @@ function rcardHead(formSnapshot, label){
       <div class="rc-dialogue"${t.dialogue?'':' style="display:none"'}>${escapeHtml(t.dialogue||'')}</div>`;
 }
 
+const BB_CARD_SNAP = {};   // More-sheet ke liye per-card form snapshot
 function outputCard(m, idx, formSnapshot){
   const taId = 'out-text-' + idx;
+  BB_CARD_SNAP[taId] = formSnapshot || {};
   const payload = encodeURIComponent(JSON.stringify(formSnapshot || {}));
   const t = bbTheme();
   const watermark = isBBPro() ? '' : '<div class="rc-foot">⚡ www.baatbanao.shop · Rishta Safe Vasooli 💸</div>';
@@ -1285,19 +1334,21 @@ function outputCard(m, idx, formSnapshot){
           <button class="tone-pill" onclick="improveOutput('${taId}','savage','${payload}')">🔥 Savage</button>
         </div>
 
-        <div class="main-btn-grid">
-          <button class="action-btn-main btn-wa-direct" onclick="whatsappOutput('${taId}')">
-            ${ICONS.whatsapp} <span>Direct WhatsApp</span>
-          </button>
-          <button class="action-btn-main btn-card-share" onclick="shareCardImage('${taId}')">
-            📸 <span>Photo Card Share</span>
-          </button>
-        </div>
+        <!-- Professional action hierarchy: 1 primary CTA + compact icon shortcuts -->
+        <button class="bb-act-primary" onclick="whatsappOutput('${taId}')" aria-label="Send this message on WhatsApp">
+          ${ICONS.whatsapp} <span>Send on WhatsApp</span>
+        </button>
 
-        <div class="sub-btn-row">
-          <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
-          ${upiOutputButton(formSnapshot)}
-          <button class="ghost-btn save" onclick="saveOutputToKhataSafe('${taId}')">${ICONS.save} Save</button>
+        <div class="bb-act-icons">
+          <button class="bb-icon-action" onclick="copyOutput('${taId}')" aria-label="Copy message">
+            <span class="bb-ia-emoji">📋</span><span>Copy</span>
+          </button>
+          <button class="bb-icon-action" onclick="saveOutputToKhataSafe('${taId}')" aria-label="Save to Credit Ledger">
+            <span class="bb-ia-emoji">📒</span><span>Save</span>
+          </button>
+          <button class="bb-icon-action" onclick="openCardMore('${taId}')" aria-label="More options">
+            <span class="bb-ia-emoji">⋯</span><span>More</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1500,16 +1551,18 @@ function genericOutputCard(m, idx, prefix){
       ${watermark}
 
       <div class="card-action-box">
-        <div class="main-btn-grid">
-          <button class="action-btn-main btn-wa-direct" onclick="whatsappGeneric('${taId}')">
-            ${ICONS.whatsapp} <span>Direct WhatsApp</span>
+        <!-- Professional action hierarchy: 1 primary CTA + compact icon shortcuts -->
+        <button class="bb-act-primary" onclick="whatsappGeneric('${taId}')" aria-label="Send this message on WhatsApp">
+          ${ICONS.whatsapp} <span>Send on WhatsApp</span>
+        </button>
+
+        <div class="bb-act-icons">
+          <button class="bb-icon-action" onclick="copyOutput('${taId}')" aria-label="Copy message">
+            <span class="bb-ia-emoji">📋</span><span>Copy</span>
           </button>
-          <button class="action-btn-main btn-card-share" onclick="shareCardImage('${taId}')">
-            📸 <span>Photo Card Share</span>
+          <button class="bb-icon-action" onclick="shareCardImage('${taId}')" aria-label="Share as image">
+            <span class="bb-ia-emoji">🖼️</span><span>Image</span>
           </button>
-        </div>
-        <div class="sub-btn-row">
-          <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
         </div>
       </div>
     </div>
@@ -2751,12 +2804,16 @@ function renderApp(){
     });
   };
 
-  // Native-app jaisa soft page transition — sirf route badalne pe (typing pe nahi)
+  // Render hamesha SYNCHRONOUS — pehle View Transitions API use ki thi, par woh
+  // paint ko async kar deta hai, jisse navigate() ke turant baad DOM access karne
+  // wale flows (jaise generate/save ke steps) toot jaate the. Ab paint sync hota
+  // hai aur soft transition CSS class se aata hai (dikhne me same, logic safe).
+  paint();
   const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(routeChanged && document.startViewTransition && !reduced){
-    try { document.startViewTransition(paint); } catch(e){ paint(); }
-  } else {
-    paint();
+  if(routeChanged && !reduced && contentEl && contentEl.classList){
+    contentEl.classList.remove('bb-route-in');
+    void contentEl.offsetWidth;   // reflow — animation restart ke liye
+    contentEl.classList.add('bb-route-in');
   }
 }
 
@@ -3151,6 +3208,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' || e.key === 'Esc') {
     if (typeof closeHisaabSlip === 'function') closeHisaabSlip();
     if (typeof closeUpiQr === 'function') closeUpiQr();
+    if (typeof closeCardMore === 'function') closeCardMore();
     const upiModal = document.getElementById('bb-upi-modal');
     if (upiModal) upiModal.remove();
   }
