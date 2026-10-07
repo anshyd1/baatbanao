@@ -1383,8 +1383,9 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
 }
 .qa-icon-btn:active{ transform:scale(.95); }
 @media(max-width:420px){
-  .quick-add-box{ flex-wrap:wrap; }
+  /* Purana rule isko column bana raha tha — isliye mic/camera/Add alag-alag
+     lines me stack ho rahe the. Ab: input full-width, teen buttons ek row me. */
+  .quick-add-box{ flex-direction:row; flex-wrap:wrap; }
   .quick-add-box input{ flex:1 1 100%; }
-  /* mic + camera + Add ek hi row me */
   .quick-add-box .qa-icon-btn, .quick-add-box .ghost-btn{ flex:1 1 0; }
 }
