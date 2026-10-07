@@ -90,6 +90,19 @@
   function localISODate(d){
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
+  /* Greetings / assistant wake-words / filler that must never become a
+     customer name ("hello hello" used to open a Khata entry called "hello").
+     "ek" is deliberately NOT here — it is also the number word for 1. */
+  const GREETING_WORDS = /^(?:hello+|hlo+|hi+|hey+|namaste|namaskar|namaskaram|pranam|adaab|salaam+|salam|assalam|arre|arrey|are|sun[oa]?|oye|oey|bhai(?:ya)?|bro|dost|yaar|yar|ji|sah[ae]b|sir|madam|ok(?:ay)?|kripya|please|zara|thoda|google|alexa|siri|assistant)[\s,.!]+/i;
+  function stripGreetings(raw){
+    let s = String(raw || '').trim();
+    let prev;
+    do { prev = s; s = s.replace(GREETING_WORDS, '').trim(); } while (s !== prev && s);
+    return s;
+  }
+  function looksLikeFillerName(name){
+    return /^(?:hello+|hlo+|hi+|hey+|namaste|namaskar|pranam|adaab|arre|arrey|sun[oa]?|oye|oey|bhai(?:ya)?|bro|dost|yaar|yar|ji|sah[ae]b|ok(?:ay)?|google|alexa|siri|assistant|customer)$/i.test(String(name || '').trim());
+  }
 
   /* "1,450" / "1.450" / "1450.00" / "1 450"  ->  1450
      OCR reads a thousands comma as a dot often enough to matter: we measured
@@ -200,13 +213,16 @@
   }
 
   function parseVoiceTranscript(rawText){
-    const raw = String(rawText || '').trim();
+    // Greetings and assistant wake-words are removed first, so "hello hello"
+    // can never become a customer name.
+    const raw = stripGreetings(rawText);
     const clean = raw.toLowerCase().replace(/[\.,\?!।]/g, ' ');
 
     // 1. Action: Clear Hisaab / Settled
     const clearMatch = raw.match(/^([A-Za-z\u0900-\u097F\s]+?)\s*(ka|ke|का|के)?\s*(hisaab|hisab|account|हिसाब)?\s*(clear|paid|chuka|khatam|settle|क्लियर|खत्म)\s*(kar\s*do|karo|कर दो|करो)?/i);
     if (clearMatch && /(clear|paid|chuka|khatam|settle|क्लियर)/i.test(raw)) {
-      const name = clearMatch[1].replace(/^(arre|bhai|sun|oey|hey|hello|namaste)\s+/i, '').trim();
+      const name = stripGreetings(clearMatch[1]);
+      if (!name) return { action: 'NO_MATCH', name: '', raw: raw };
       return { action: 'CLEAR_HISAAB', name: name, raw: raw };
     }
 
@@ -253,14 +269,14 @@
     let name = '';
     const relMatch = raw.match(/^([A-Za-z\u0900-\u097F\s]+?)\s*(se|ko|par|ka|से|को|पर|का)\s+/i);
     if (relMatch) {
-      name = relMatch[1].trim();
-      name = name.replace(/^(arre|bhai|sun|oey|hey|hello|namaste)\s+/i, '').trim();
+      name = stripGreetings(relMatch[1]);
     } else {
       const words = raw.split(/\s+/);
       if (words.length > 0 && !/^\d+$/.test(words[0])) {
-        name = words[0];
+        name = stripGreetings(words[0]);
       }
     }
+    if (looksLikeFillerName(name)) name = '';
 
     let dueDate = '';
     let dueText = '';
@@ -285,6 +301,13 @@
       }
     }
 
+    // Nothing actionable was said (no amount, no date, no phone) — tell the
+    // user instead of opening a Khata entry with a greeting as the name.
+    // An amount-less "transaction" is never actionable.
+    if (!amount && !dueDate && !phone) {
+      return { action: 'NO_MATCH', name: '', amount: '', phone: '', type: type, dueDate: '', dueText: '', raw: raw };
+    }
+
     return {
       action: 'ADD_TRANSACTION',
       name: name || 'Customer',
@@ -297,12 +320,17 @@
     };
   }
 
+  function writeBack(d, gray, w, h) {
+    for (let i = 0, p = 0; i < w * h; i++, p += 4) d[p] = d[p + 1] = d[p + 2] = gray[i];
+  }
+
   /* ------------------------------------------------------------
-     Image enhancement: grayscale -> autocontrast (1% clip) -> unsharp.
+     Image enhancement: grayscale -> illumination flatten -> autocontrast (1% clip) -> unsharp.
      Biggest single accuracy lever: on the shipped sample bills it moved
      amount extraction from 1/4 to 3/4.
      ------------------------------------------------------------ */
-  function enhanceContrast(ctx, w, h) {
+  function enhanceContrast(ctx, w, h, opts) {
+    opts = opts || {};
     let imgData;
     try { imgData = ctx.getImageData(0, 0, w, h); }
     catch (e) { return; }                       // tainted canvas — skip, OCR still runs
@@ -316,6 +344,36 @@
       const g = (0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2]) | 0;
       gray[i] = g;
       hist[g]++;
+    }
+
+    // Flatten uneven illumination and fold/crease shadows BEFORE autocontrast.
+    // Crumpled/folded parchi photographed on a table have strong low-frequency
+    // shading that a global stretch cannot fix. Division (not subtraction)
+    // keeps the paper-text relationship, so clean scans pass through almost
+    // unchanged while shadowed regions are lifted.
+    try {
+      const bg = backgroundFlatten(gray, w, h, 24, 24);
+      const bhist = new Uint32Array(256);
+      for (let i = 0; i < n; i++) bhist[bg[i]]++;
+      let acc = 0, target = 200;
+      for (let v = 0; v < 256; v++) { acc += bhist[v]; if (acc >= n / 2) { target = v; break; } }
+      for (let i = 0; i < n; i++) {
+        const b = bg[i] < 24 ? 24 : bg[i];
+        gray[i] = gray[i] * target / b;
+      }
+    } catch (e) { /* fall through to global autocontrast only */ }
+
+    if (opts.binarize) {
+      // Adaptive threshold against a finer local background — the classic
+      // fix for crumpled/folded parchi where creases and shadows break the
+      // paper into uneven islands. Used only on the retry pass.
+      try {
+        const local = backgroundFlatten(gray, w, h, 48, 48);
+        for (let i = 0; i < n; i++) gray[i] = gray[i] < local[i] * 0.82 ? 0 : 255;
+      } catch (e) { /* keep the flattened grayscale */ }
+      writeBack(d, gray, w, h);
+      ctx.putImageData(imgData, 0, 0);
+      return;
     }
 
     // autocontrast: ignore the darkest/lightest 1% (shadows, paper glare)
@@ -350,6 +408,35 @@
   }
 
   // Separable 3-tap box blur (two passes) — cheap enough for a one-off scan
+  /* Low-frequency background estimate (coarse grid + bilinear upsample).
+     Used to flatten uneven illumination and fold/crease shadows on
+     crumpled parchi — text is high-frequency, shadows are not. */
+  function backgroundFlatten(src, w, h, gw, gh) {
+    const sums = new Float64Array(gw * gh), cnt = new Uint32Array(gw * gh);
+    for (let y = 0; y < h; y++) {
+      const gy = Math.min(gh - 1, (y * gh / h) | 0);
+      const row = y * w;
+      for (let x = 0; x < w; x++) {
+        const cell = gy * gw + Math.min(gw - 1, (x * gw / w) | 0);
+        sums[cell] += src[row + x]; cnt[cell]++;
+      }
+    }
+    const grid = new Float32Array(gw * gh);
+    for (let i = 0; i < gw * gh; i++) grid[i] = cnt[i] ? sums[i] / cnt[i] : 128;
+    const out = new Uint8ClampedArray(src.length);
+    for (let y = 0; y < h; y++) {
+      const fy = (y + 0.5) * gh / h - 0.5;
+      const y0 = Math.max(0, Math.floor(fy)), y1 = Math.min(gh - 1, y0 + 1), ty = fy - y0;
+      for (let x = 0; x < w; x++) {
+        const fx = (x + 0.5) * gw / w - 0.5;
+        const x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(gw - 1, x0 + 1), tx = fx - x0;
+        const a = grid[y0 * gw + x0], b = grid[y0 * gw + x1], c = grid[y1 * gw + x0], d = grid[y1 * gw + x1];
+        out[y * w + x] = (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+      }
+    }
+    return out;
+  }
+
   function boxBlur(src, w, h) {
     const tmp = new Uint8ClampedArray(src.length);
     const out = new Uint8ClampedArray(src.length);
@@ -474,6 +561,9 @@
 
       this.injectUI();
       this.bindGlobalKeys();
+
+      // Release the warm OCR worker when the page goes away.
+      window.addEventListener('pagehide', () => this._destroyWorker());
     },
 
     bindGlobalKeys() {
@@ -546,6 +636,16 @@
       const parsed = parseVoiceTranscript(transcript);
       if (typeof bbTrack === 'function') {
         bbTrack('voice_command_parsed', { action: parsed.action, has_amount: !!parsed.amount });
+      }
+
+      // Nothing actionable was said — guide the user instead of opening a
+      // result sheet with a greeting ("hello") as the customer name.
+      if (parsed.action === 'NO_MATCH') {
+        this.showListeningUI();
+        this.updateTranscriptUI('😕 Samajh nahi aaya. Aise bolein:\n• "Ravi se 500 lena hai"\n• "Mohan ko 200 dena hai kal tak"\n• "Ravi ka hisaab clear kar do"');
+        this._holdUi = true;
+        setTimeout(() => { this._holdUi = false; this.hideListeningUI(); }, 4200);
+        return;
       }
 
       if (window.state && Array.isArray(window.state.khata)) {
@@ -825,6 +925,12 @@
               <!-- Shown only when the parsed amount looks wrong -->
               <div id="bb-amount-warning" class="bb-warn-box" style="display:none;"></div>
 
+              <!-- Raw OCR output, so a bad scan can be corrected by eye -->
+              <details id="bb-raw-ocr" style="display:none;margin-bottom:12px;">
+                <summary style="font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;padding:4px 0;">📄 Scanned text dekhein (OCR ne yeh padha)</summary>
+                <pre id="bb-raw-ocr-text" style="max-height:150px;overflow:auto;font-size:11px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:#FAF5EE;border:1px solid #F0DFCF;border-radius:8px;padding:8px;margin-top:6px;"></pre>
+              </details>
+
               <div class="bb-result-tag-row">
                 <span id="bb-type-pill" class="bb-pill lena" onclick="bbVoiceAssistant.toggleType()">🟢 Lena Hai (Tap to change)</span>
               </div>
@@ -1002,6 +1108,20 @@
 
       this.renderAmountWarning(entry);
       this.renderMessageCards(entry);
+
+      // Raw OCR text (collapsible) — lets the user correct a bad scan by eye.
+      const rawBox = document.getElementById('bb-raw-ocr');
+      const rawText = document.getElementById('bb-raw-ocr-text');
+      if (rawBox && rawText) {
+        if (entry._isOcr && entry.raw) {
+          rawText.textContent = entry.raw;
+          rawBox.style.display = 'block';
+          rawBox.open = !!entry._lowConfidence;   // auto-open on unclear scans
+        } else {
+          rawBox.style.display = 'none';
+          rawText.textContent = '';
+        }
+      }
     },
 
     /* A wrong amount is the one OCR mistake that actually costs money.
@@ -1015,9 +1135,11 @@
       const shown = '₹' + Number(sus.value).toLocaleString('en-IN');
       const hint = sus.hint ? '₹' + Number(sus.hint).toLocaleString('en-IN') : null;
       box.style.display = 'block';
-      box.innerHTML = hint
-        ? `⚠️ <b>Amount pakka nahi hai.</b> Parchi se ${shown} pada, par bill ke baaki numbers ka jod sirf ${hint} banta hai. Amount zaroor check karein — WhatsApp bhejne se pehle.`
-        : `⚠️ <b>Amount bahut bada lag raha hai.</b> Parchi se ${shown} pada. Amount zaroor check karein — WhatsApp bhejne se pehle.`;
+      box.innerHTML = sus.reason === 'low-confidence'
+        ? `⚠️ <b>Scan clear nahi tha.</b> Parchi se ${shown} padha gaya, par hum ise bharosa nahi kar sakte — amount khali chhod diya hai. Parchi dekh ke amount daal dein.`
+        : hint
+          ? `⚠️ <b>Amount pakka nahi hai.</b> Parchi se ${shown} pada, par bill ke baaki numbers ka jod sirf ${hint} banta hai. Amount zaroor check karein — WhatsApp bhejne se pehle.`
+          : `⚠️ <b>Amount bahut bada lag raha hai.</b> Parchi se ${shown} pada. Amount zaroor check karein — WhatsApp bhejne se pehle.`;
     },
 
     toggleType() {
@@ -1353,7 +1475,7 @@
        contrast stretch. Measured on the shipped sample bills that produced
        1/4 correct amounts; this pipeline produces 3/4. OCR needs pixels —
        we upscale small bills instead of shrinking them. */
-    preprocessImage(fileOrUrl) {
+    preprocessImage(fileOrUrl, opts) {
       const toSrc = (f) => new Promise((res, rej) => {
         if (typeof f === 'string') return res(f);
         const r = new FileReader();
@@ -1392,7 +1514,7 @@
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, width, height);
 
-          enhanceContrast(ctx, width, height);
+          enhanceContrast(ctx, width, height, opts);
 
           canvas.toBlob((blob) => {
             if (blob) resolve(blob);
@@ -1441,39 +1563,65 @@
         progressBar.style.width = '45%';
         progressSub.textContent = 'Naam aur amount dhoondh rahe hain';
 
-        // 3. Recognize — worker created once, always terminated.
-        worker = await window.Tesseract.createWorker(OCR.lang, 1, {
-          workerPath: OCR.worker,
-          corePath:   OCR.core,
-          langPath:   OCR.langPath,
-          workerBlobURL: false,        // required: a blob: worker is blocked by worker-src 'self'
-          logger: (m) => {
-            if (this._ocrRunId !== runId) return;
-            if (m && m.status === 'recognizing text') {              const p = Math.round((m.progress || 0) * 100);
-              progressBar.style.width = (45 + Math.round(p * 0.5)) + '%';
-              statusText.textContent = `Text Scan: ${p}%`;
-            }
-          }
-        });
-        if (cancelled) return;
+        // 3. Recognize — one long-lived worker, reused across scans. Creating
+        //    it per scan added seconds of worker + WASM + model init to every
+        //    bill; the first scan still pays that cost, later scans reuse it.
+        statusText.textContent = 'Parchi scan ho rahi hai...';
+        progressBar.style.width = '45%';
+        progressSub.textContent = 'Naam aur amount dhoondh rahe hain';
+        this._progressRunId = runId;
+        worker = await this._withInitTimeout(this._getWorker());
+        if (cancelled || this._ocrRunId !== runId) return;
 
         const timeout = new Promise((_, rej) =>
           setTimeout(() => rej(new Error('OCR_TIMEOUT')), OCR.timeoutMs));
-        const result = await Promise.race([worker.recognize(optimizedBlob), timeout]);
+        let result = await Promise.race([worker.recognize(optimizedBlob), timeout]);
         if (this._ocrRunId !== runId) return;
         if (!String((result && result.data && result.data.text) || '').trim()) {
           throw new Error('OCR_EMPTY');
         }
+
+        // Unclear scan? One retry with adaptive binarization. Crumpled/folded
+        // parchi have creases and shadows that grayscale+autocontrast cannot
+        // fix; a local threshold often recovers most of the text. Only the
+        // better-confidence pass is used, so clean scans are never made worse.
+        if (Number(result.data.confidence || 0) < 75 && this._ocrRunId === runId) {
+          try {
+            statusText.textContent = 'Scan clear nahi tha — dobara parh rahe hain...';
+            progressBar.style.width = '70%';
+            const retryBlob = await this.preprocessImage(fileOrBlob, { binarize: true });
+            if (this._ocrRunId !== runId) return;
+            const retry = await Promise.race([worker.recognize(retryBlob), timeout]);
+            if (this._ocrRunId !== runId) return;
+            if (retry && Number(retry.data.confidence || 0) > Number(result.data.confidence || 0)) {
+              result = retry;
+            }
+          } catch (e) { /* keep the first pass */ }
+        }
+
         const text = (result && result.data && result.data.text) || '';
         progressBar.style.width = '100%';
         statusText.textContent = 'Scan Complete! ✅';
 
         // 4. Extract data
         const parsed = this.parseOcrText(text);
-        if (Number(result.data.confidence || 0) < 75) {
+        const scanConfidence = Number(result.data.confidence || 0);
+        if (scanConfidence < 75) {
           // Financial records must not be prefilled from an uncertain scan.
-          parsed.name = ''; parsed.amount = ''; parsed.phone = '';
-          parsed._confidence = 0; parsed._lowConfidence = true;
+          // Policy: the AMOUNT is always dropped (a mis-read digit is the one
+          // error that costs money), but a clearly LABELLED name and a
+          // customer-block phone are kept as review-gated suggestions — a
+          // crumpled parchi is still often readable enough for those. The
+          // dropped amount is shown as a hint so the user can compare.
+          const scannedAmount = parsed.amount;
+          parsed.amount = '';
+          parsed._confidence = 0;
+          parsed._lowConfidence = true;
+          parsed._scanConfidence = scanConfidence;
+          if (scannedAmount) {
+            parsed._amountSuspect = parsed._amountSuspect || { value: scannedAmount, hint: 0, reason: 'low-confidence' };
+          }
+          if (parsed._warn && parsed._warn.includes('name')) parsed.name = '';
         }
         parsed._isOcr = true;
         parsed._thumbSrc = thumbUrl || '';
@@ -1503,13 +1651,59 @@
         toast(msg);        this.skipOcrToManual();
       } finally {
         this._ocrCancel = null;
-        if (worker) { try { await worker.terminate(); } catch (e) {} }
+        // The worker is intentionally kept warm for the next scan; it is
+        // terminated on pagehide (see init()).
       }
     },
 
+    /* One long-lived Tesseract worker, created on the first scan and reused
+       after that (creating it per scan cost seconds of worker + WASM + model
+       init on every bill). Terminated on pagehide; a failed init is retried
+       on the next scan. */
+    _getWorker() {
+      if (this._workerReady) return Promise.resolve(this._worker);
+      if (this._workerInit) return this._workerInit;
+      this._workerInit = (async () => {
+        const w = await window.Tesseract.createWorker(OCR.lang, 1, {
+          workerPath: OCR.worker,
+          corePath:   OCR.core,
+          langPath:   OCR.langPath,
+          workerBlobURL: false,        // required: a blob: worker is blocked by worker-src 'self'
+          logger: (m) => {
+            // The worker outlives a single scan — only drive the progress UI
+            // for the scan that is currently active.
+            if (this._progressRunId !== this._ocrRunId) return;
+            if (m && m.status === 'recognizing text') {
+              const p = Math.round((m.progress || 0) * 100);
+              const bar = document.getElementById('bb-ocr-progress-bar');
+              const st = document.getElementById('bb-ocr-status-text');
+              if (bar) bar.style.width = (45 + Math.round(p * 0.5)) + '%';
+              if (st) st.textContent = `Text Scan: ${p}%`;
+            }
+          }
+        });
+        this._worker = w;
+        this._workerReady = true;
+        return w;
+      })().catch((e) => { this._workerInit = null; throw e; });
+      return this._workerInit;
+    },
+    _withInitTimeout(promise) {
+      // Engine script + worker/WASM/model init were previously uncovered by
+      // any timeout — a stalled network left the progress sheet spinning.
+      return Promise.race([
+        promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('OCR_TIMEOUT')), OCR.timeoutMs))
+      ]);
+    },
+    _destroyWorker() {
+      const w = this._worker;
+      this._worker = null; this._workerReady = false; this._workerInit = null;
+      if (w) { try { w.terminate(); } catch (e) {} }
+    },
+
     // Self-hosted, same-origin engine (CSP-safe, cacheable, offline-capable)
-    async loadEngine() {
-      if (window.Tesseract) return;
+    async loadEngine() {      if (window.Tesseract) return;
       if (!navigator.onLine) {
         // A previous scan already cached the engine (CACHE_OCR). A same-origin
         // <script> load can still succeed while offline, so try it before
