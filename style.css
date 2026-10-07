@@ -1376,3 +1376,7 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation:none !important; }
   .primary-btn, .ghost-btn, .sec-card, .chip, .icon-btn, .back-btn{ transition:none !important; }
 }
+
+/* Drawer: version wala label ek line me rahe (flex item wrap na kare) */
+.drawer-label-nowrap{ flex:1 1 auto; min-width:0; }
+.drawer-label-nowrap #drawer-vault-version{ white-space:nowrap; }
