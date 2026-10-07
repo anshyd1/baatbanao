@@ -1419,9 +1419,12 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
 .bb-icon-action:active{ transform:scale(.96); background:#FFF4EA; border-color:#FFD4C4; }
 .bb-icon-action:focus-visible{ outline:2px solid var(--coral); outline-offset:2px; }
 
+/* Sheet khula ho toh cookie/update banner na dikhe (warna overlap karta tha) */
+body.bb-more-open #bb-cookie-banner, body.bb-more-open #bb-update-banner{ display:none !important; }
+
 /* "More" sheet — per-card rare actions (Image, UPI QR) */
 .bb-more-backdrop{
-  position:fixed; inset:0; z-index:1200; background:rgba(38,24,24,.42);
+  position:fixed; inset:0; z-index:100100; background:rgba(38,24,24,.42);
   display:flex; align-items:flex-end; justify-content:center;
   animation:bbFadeIn .16s ease-out both;
 }

@@ -1119,10 +1119,12 @@ function openCardMore(taId){
   wrap.appendChild(sheet);
   wrap.addEventListener('click', (e) => { if(e.target === wrap) closeCardMore(); });
   document.body.appendChild(wrap);
+  document.body.classList.add('bb-more-open');
 }
 function closeCardMore(){
   const el = document.getElementById('bb-card-more');
   if(el) el.remove();
+  document.body.classList.remove('bb-more-open');
 }
 
 function upiOutputButton(formSnapshot){
