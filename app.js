@@ -545,22 +545,52 @@ function getHashRoute(){
 function bbCloseOverlays(){
   document.querySelectorAll('.bb-sheet-wrap, #bb-invoice-preview, #bb-upi-modal, #slip-modal-overlay, #hisaab-sheet, #hisaab-settle-sheet').forEach(e => e.remove());
 }
+/* --- Scroll memory: wapas aane pe wahi jagah, nayi route pe top --- */
+const _bbScrollMem = {};
+function bbSaveScroll(){
+  try{
+    const c = document.getElementById('content');
+    _bbScrollMem[state.route] = { y: window.scrollY || 0, c: c ? c.scrollTop : 0 };
+  }catch(e){}
+}
+function bbRestoreScroll(route){
+  const m = _bbScrollMem[route];
+  requestAnimationFrame(()=>{
+    const c = document.getElementById('content');
+    if (c && c.scrollTo) c.scrollTo(0, m ? m.c : 0);
+    window.scrollTo({top: m ? m.y : 0, left: 0, behavior:'instant'});
+  });
+}
+/* PDF/photo libs (~450KB) sirf tab load karo jab Billing/Invoice kholo */
+function bbPreloadRouteVendors(routeName){
+  if((routeName === 'billing' || routeName === 'invoice-new') && window.bbEnsureBillingVendors){
+    window.bbEnsureBillingVendors();
+  }
+}
 function navigate(route, params={}){
   bbCloseOverlays();
   const routeName = String(route || 'home').split('?')[0] || 'home';
+  const sameRoute = state.route === routeName;
+  if(!sameRoute) bbSaveScroll();          // jahan the wahi yaad rakho
   state.route = routeName;
   state.routeParams = params;
   window.location.hash = route;
   renderApp();
-  const _c = document.getElementById('content');
-  if (_c && _c.scrollTo) _c.scrollTo(0, 0);
-  window.scrollTo({top:0,left:0,behavior:'instant'});
+  bbRestoreScroll(sameRoute ? null : routeName);   // same tab pe tap = top pe wapas
+  bbPreloadRouteVendors(routeName);
 }
 
 window.addEventListener('hashchange', ()=>{
+  const routeName = getHashRoute();
+  // FIX: navigate() khud render karta hai — pehle yahan dobara render ho raha tha
+  // (har tap pe 2x kaam = lag). Ab sirf tab render karo jab route bahar se badla ho.
+  if(state.route === routeName) return;
+  bbSaveScroll();
   bbCloseOverlays();
-  state.route = getHashRoute();
+  state.route = routeName;
   renderApp();
+  bbRestoreScroll(routeName);
+  bbPreloadRouteVendors(routeName);
 });
 
 /* ===========================================================
@@ -1283,6 +1313,7 @@ async function shareCardImage(taId){
   const card = ta && ta.closest('.output-card');
   if(!card){ showToast('Card nahi mila'); return; }
   if(!window.html2canvas){
+    if(window.bbLoadVendor){ try { window.bbLoadVendor('html2canvas'); } catch(e){} }
     showToast('Photo library load ho rahi hai... ruko ⏳');
     for(let i=0;i<60 && !window.html2canvas;i++){ await new Promise(r=>setTimeout(r,500)); }
     if(!window.html2canvas){ showToast('Net slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
@@ -1913,20 +1944,6 @@ function viewKhata(){
   const overdueCount = state.khata.filter(k=>isOverdue(k)).length;
   const filter = state.khataFilter || 'all';
   const catF = state.categoryFilter || 'all_cat';
-  const searchQ = (state.khataSearch || '').trim().toLowerCase();
-  const list = state.khata.filter(k => {
-    if(searchQ){
-      const matchName = (k.name || '').toLowerCase().includes(searchQ);
-      const matchPhone = (k.phone || '').includes(searchQ);
-      const matchNote = (k.note || '').toLowerCase().includes(searchQ);
-      if(!matchName && !matchPhone && !matchNote) return false;
-    }
-    const matchCat = (catF === 'all_cat') || (k.relation === catF);
-    if(!matchCat) return false;
-    if(filter==='all') return true;
-    if(filter==='overdue') return isOverdue(k);
-    return k.status===filter;
-  });
 
   return `
     <div class="page-header">
@@ -1942,7 +1959,7 @@ function viewKhata(){
     <!-- Live Search Bar -->
     <div style="position:relative;margin-bottom:4px;">
       <input type="text" id="khata-search-input" placeholder="🔍 Search naam, phone ya note se..." value="${escapeHtml(state.khataSearch || '')}" oninput="setKhataSearch(this.value)" style="width:100%;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid #FFD4C4;background:#fff;font-size:0.9rem;font-weight:600;box-sizing:border-box;" />
-      ${state.khataSearch ? `<button onclick="setKhataSearch('')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#999;font-size:16px;cursor:pointer;">&times;</button>` : ''}
+      <button id="khata-search-clear" onclick="setKhataSearch('')" ${state.khataSearch ? '' : 'hidden'} style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#999;font-size:16px;cursor:pointer;">&times;</button>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -1992,13 +2009,37 @@ function viewKhata(){
       ${['all','pending','partial','overdue','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':f==='partial'?'Partial':f==='overdue'?'Overdue':'Paid'}</div>`).join('')}
     </div>
 
-    ${list.length===0 ? `
+    <div id="khata-list-region">${khataListInner()}</div>
+  `;
+}
+
+/* Sirf list ka HTML — search typing pe poora page re-render nahi hota (typing lag fix).
+   Filter + search logic yahi ek jagah hai, viewKhata aur setKhataSearch dono isi ko use karte hain. */
+function khataListInner(){
+  const filter = state.khataFilter || 'all';
+  const catF = state.categoryFilter || 'all_cat';
+  const searchQ = (state.khataSearch || '').trim().toLowerCase();
+  const list = state.khata.filter(k => {
+    if(searchQ){
+      const matchName = (k.name || '').toLowerCase().includes(searchQ);
+      const matchPhone = (k.phone || '').includes(searchQ);
+      const matchNote = (k.note || '').toLowerCase().includes(searchQ);
+      if(!matchName && !matchPhone && !matchNote) return false;
+    }
+    const matchCat = (catF === 'all_cat') || (k.relation === catF);
+    if(!matchCat) return false;
+    if(filter==='all') return true;
+    if(filter==='overdue') return isOverdue(k);
+    return k.status===filter;
+  });
+  if(list.length===0){
+    return `
       <div class="empty-state">
         <img class="empty-mascot" src="assets/mascot-sleeping.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
         <p><b>Sab clear!</b> ✨<br>Coin so raha hai — is filter mein koi entry nahi.</p>
-      </div>
-    ` : list.map(k => khataCard(k)).join('')}
-  `;
+      </div>`;
+  }
+  return list.map(k => khataCard(k)).join('');
 }
 
 function shareKhataSummary(){
@@ -2706,17 +2747,34 @@ const ROUTES = {
 function renderApp(){
   const route = state.route || 'home';
   const viewFn = ROUTES[route] || viewHome;
-  document.getElementById('content').innerHTML = viewFn();
-  const seoHome = document.getElementById('seo-home-section');
-  if(seoHome) seoHome.hidden = route !== 'home';
-  document.body.dataset.route = route;
-  const bottomNav = document.querySelector('.bottom-nav');
-  if(bottomNav) bottomNav.style.display = ['billing','invoice-new'].includes(route) ? 'none' : '';
+  const contentEl = document.getElementById('content');
+  const routeChanged = state._renderedRoute !== route;
+  state._renderedRoute = route;
 
-  // bottom nav active state
-  document.querySelectorAll('.nav-item').forEach(el=>{
-    el.classList.toggle('active', el.dataset.route === (['home','khata','history','profile'].includes(route) ? route : ''));
-  });
+  const paint = ()=>{
+    contentEl.innerHTML = viewFn();
+    const seoHome = document.getElementById('seo-home-section');
+    if(seoHome) seoHome.hidden = route !== 'home';
+    document.body.dataset.route = route;
+    const bottomNav = document.querySelector('.bottom-nav');
+    if(bottomNav) bottomNav.style.display = ['billing','invoice-new'].includes(route) ? 'none' : '';
+
+    // bottom nav active state — 5 tabs: Home · Vasooli · Khata · Hisaab · More
+    const NAV_ROUTES = ['home','vasooli','khata','hisaab'];
+    document.querySelectorAll('.nav-item').forEach(el=>{
+      const r = el.dataset.route;
+      const active = (r === 'more') ? !NAV_ROUTES.includes(route) : (r === route);
+      el.classList.toggle('active', active);
+    });
+  };
+
+  // Native-app jaisa soft page transition — sirf route badalne pe (typing pe nahi)
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(routeChanged && document.startViewTransition && !reduced){
+    try { document.startViewTransition(paint); } catch(e){ paint(); }
+  } else {
+    paint();
+  }
 }
 
 /* Init */
@@ -2724,6 +2782,13 @@ function initApp() {
   state.route = getHashRoute();
   renderApp();
   setTimeout(bbDataSafety, 5000);
+  // Drawer ka Vault version label hamesha sach bole (live /app/version.json se)
+  try {
+    fetch('/app/version.json', {cache:'no-store'}).then(r=>r.json()).then(v=>{
+      const el = document.getElementById('drawer-vault-version');
+      if(el && v && v.version) el.textContent = 'v' + v.version;
+    }).catch(()=>{});
+  } catch(e){}
 }
 
 /* Data safety: ask browser not to evict localStorage + gentle weekly backup nudge */
@@ -3077,15 +3142,20 @@ function executeParchiCopy(id){
 
 function setKhataSearch(val){
   state.khataSearch = val;
-  renderApp();
-  // Keep focus on search input after render
-  setTimeout(() => {
-    const el = document.getElementById('khata-search-input');
-    if(el){
-      el.focus();
-      el.selectionStart = el.selectionEnd = el.value.length;
-    }
-  }, 10);
+  const region = document.getElementById('khata-list-region');
+  if(region){
+    // Sirf list update — pehle yahan poora renderApp() chalta tha (har keystroke pe lag)
+    region.innerHTML = khataListInner();
+    const clearBtn = document.getElementById('khata-search-clear');
+    if(clearBtn) clearBtn.hidden = !state.khataSearch;
+  } else {
+    renderApp();
+  }
+  const el = document.getElementById('khata-search-input');
+  if(el && document.activeElement !== el){
+    el.focus();
+    el.selectionStart = el.selectionEnd = el.value.length;
+  }
 }
 
 function setCategoryFilter(c){

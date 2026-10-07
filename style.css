@@ -1327,3 +1327,52 @@ input::placeholder, textarea::placeholder{ color:#B8A49C; font-weight:500; }
 .hero-cta-pill {
   box-shadow: 0 4px 14px rgba(255, 114, 95, 0.28);
 }
+
+/* ===========================================================
+   UI v2 — Safe polish layer (appended; overrides above)
+   1) 5-tab bottom nav ki spacing (Home · Vasooli · Khata · Hisaab · More)
+   2) Bade touch targets (44px+) — menu aur back buttons
+   3) Turant tap feedback (grey flash / double-tap delay hataaya)
+   4) Native-app jaisa soft page transition (View Transitions API)
+   =========================================================== */
+
+html{ -webkit-tap-highlight-color: transparent; }
+button, a, .chip, .sec-card, .nav-item{ touch-action: manipulation; }
+
+/* Bottom nav: 5 tabs — har tab barabar, 52px tall target */
+.bottom-nav{ justify-content:space-between; gap:2px; padding-left:6px; padding-right:6px; }
+.nav-item{ flex:1 1 0; min-width:0; justify-content:center; gap:4px; min-height:52px; padding:9px 2px 7px; }
+.nav-item span{ font-size:10.5px; font-weight:800; letter-spacing:-0.1px; }
+.nav-item svg{ width:21px; height:21px; }
+@media (max-width:360px){ .nav-item span{ font-size:9.5px; } .nav-item svg{ width:19px; height:19px; } }
+
+/* Bigger touch targets */
+.icon-btn{ width:44px; height:44px; border-radius:14px; }
+.back-btn{ width:42px; height:42px; }
+
+/* Modern press feedback — halka scale, turant */
+.primary-btn, .ghost-btn, .sec-card, .chip, .list-card, .icon-btn, .back-btn{
+  transition: transform .12s var(--ease), box-shadow .18s var(--ease), background .15s var(--ease), color .15s var(--ease);
+}
+.primary-btn:active, .ghost-btn:active, .sec-card:active, .icon-btn:active, .back-btn:active{ transform:scale(.97); }
+
+/* Keyboard focus visible (desktop/web) */
+a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--coral); outline-offset:2px; border-radius:10px;
+}
+
+/* Route change = soft fade + 4px rise (native app feel) */
+#content{ view-transition-name: bb-content; }
+::view-transition-old(bb-content){ animation: bbViewOut .16s ease-in both; }
+::view-transition-new(bb-content){ animation: bbViewIn .22s var(--ease) both; }
+@keyframes bbViewOut{ to{ opacity:0; transform:translateY(-4px); } }
+@keyframes bbViewIn{ from{ opacity:0; transform:translateY(8px); } }
+
+/* Drawer links: thode bade aur aaram se tap hone wale */
+.drawer-link{ padding-top:12px; padding-bottom:12px; }
+
+/* Reduced motion: sab kuch shaant */
+@media (prefers-reduced-motion: reduce){
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation:none !important; }
+  .primary-btn, .ghost-btn, .sec-card, .chip, .icon-btn, .back-btn{ transition:none !important; }
+}

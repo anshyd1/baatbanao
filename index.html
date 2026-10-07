@@ -2,7 +2,7 @@
 <html lang="hi-IN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>BaatBanao — Polite WhatsApp Payment Reminder + UPI Link</title>
 <meta name="description" content="Polite WhatsApp payment reminder + UPI link in 5 sec — Hinglish, Hindi, Bhojpuri, English. For freelancers, shops, tuition & clients.">
 <link rel="canonical" href="https://www.baatbanao.shop/">
@@ -230,7 +230,7 @@
 <!-- Full styles -->
 <!-- style.css stays render-blocking on purpose: it's small and needed
      immediately to avoid a flash of unstyled home page. -->
-<link rel="stylesheet" href="style.css?v=1.1.0">
+<link rel="stylesheet" href="style.css?v=1.2.0">
 <link rel="stylesheet" href="install.css?v=1.1.0" media="print" onload="this.media='all'">
 <noscript>
   <link rel="stylesheet" href="install.css?v=1.1.0">
@@ -416,19 +416,27 @@
     </p>
   </div>
 
-  <!-- Bottom nav -->
+  <!-- Bottom nav — 5 clear Hinglish tabs (Vasooli & Hisaab ab one tap door) -->
   <div class="bottom-nav">
-    <button class="nav-item" data-route="home" onclick="navigate('home')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20C5 20.55 5.45 21 6 21H9.5C10.05 21 10.5 20.55 10.5 20V15C10.5 14.45 10.95 14 11.5 14H12.5C13.05 14 13.5 14.45 13.5 15V20C13.5 20.55 13.95 21 14.5 21H18C18.55 21 19 20.55 19 20V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <button class="nav-item" data-route="home" onclick="navigate('home')" aria-label="Home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20C5 20.55 5.45 21 6 21H9.5C10.05 21 10.5 20.55 10.5 20V15C10.5 14.45 10.95 14 11.5 14H12.5C13.05 14 13.5 14.45 13.5 15V20C13.5 20.55 13.95 21 14.5 21H18C18.55 21 19 20.55 19 20V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Home</span>
     </button>
-    <button class="nav-item" data-route="khata" onclick="navigate('khata')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <button class="nav-item" data-route="vasooli" onclick="navigate('vasooli')" aria-label="Vasooli — reminder banao">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L19.5 10H13L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <span>Vasooli</span>
+    </button>
+    <button class="nav-item" data-route="khata" onclick="navigate('khata')" aria-label="Udhaar Khata">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>Khata</span>
     </button>
-    <button class="nav-item" data-route="profile" onclick="navigate('profile')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.13 7.58 13 12 13C16.42 13 20 16.13 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Profile</span>
+    <button class="nav-item" data-route="hisaab" onclick="navigate('hisaab')" aria-label="Roz ka hisaab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 9H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 13H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15.5 10.5C16.6 10.5 17.5 11.4 17.5 12.5V15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 13H17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Hisaab</span>
+    </button>
+    <button class="nav-item" data-route="more" onclick="openMenu()" aria-label="Aur options — menu kholo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/></svg>
+      <span>More</span>
     </button>
   </div>
 
@@ -443,62 +451,86 @@
   </div>
 
   <div class="drawer-body">
-    <div class="drawer-group">Core Operations</div>
+    <div class="drawer-group">Roz ka Kaam</div>
     <a class="drawer-link" href="#home" onclick="closeMenu()"><span>🏠</span> Home Dashboard</a>
-    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Smart Payment Recovery</a>
-    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Digital Credit Ledger</a>
-    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Daily Cash Flow Ledger</a>
-    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Pro Invoicing &amp; Receipts</a>
+    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Vasooli — Reminder Banao</a>
+    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Udhaar Khata</a>
+    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Roz ka Hisaab</a>
+    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Bill &amp; Invoice Banao</a>
     <a class="drawer-link" href="/app"><span>🧊</span> Launch BaatBanao Vault (Web)</a>
-    <a class="drawer-link" href="/download"><span>⬇️</span> Download Vault App (v0.4.2)</a>
-    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Batch Recovery Dispatch</a>
+    <a class="drawer-link" href="/download"><span>⬇️</span> Download Vault App (<span id="drawer-vault-version">v0.4.4</span>)</a>
+    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Sabko Ek Saath Reminder</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Productivity Suite</div>
-    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Contextual Template Engine</a>
-    <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Dispatch History &amp; Logs</a>
-    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> Instant UPI QR Generator</a>
+    <div class="drawer-group">Aur Tools</div>
+    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Ready Message Templates</a>
+    <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Purane Reminder History</a>
+    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> UPI QR / Payment Link</a>
     <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> Install Native PWA</div>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Communication Blueprints</div>
-    <a class="drawer-link" href="/guides"><span>📚</span> All Recovery Blueprints (16)</a>
-    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Peer-to-Peer Loans</a>
-    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Retail Store Credit</a>
-    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Property Rental Dues</a>
-    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Client Invoices &amp; Retainers</a>
-    <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Regional Dialects (Bhojpuri)</a>
+    <div class="drawer-group">Message Guides</div>
+    <a class="drawer-link" href="/guides"><span>📚</span> 16 Ready Message Guides</a>
+    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Dost se Paise</a>
+    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Dukaan ka Udhaar</a>
+    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Kiraya / Rent</a>
+    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Client &amp; Freelance</a>
+    <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Bhojpuri Messages</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Assistance &amp; Priority Help</div>
+    <div class="drawer-group">Madad Chahiye?</div>
     <a class="drawer-link drawer-wa" href="https://wa.me/919918996096?text=Hello!%20I%20need%20assistance%20with%20BaatBanao" target="_blank" rel="noopener">
-      <span class="drawer-wa-label"><span>💬</span> WhatsApp Direct Support</span><span class="drawer-chip">Priority</span>
+      <span class="drawer-wa-label"><span>💬</span> WhatsApp par Baat Karein</span><span class="drawer-chip">Priority</span>
     </a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">System &amp; Governance</div>
-    <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Security &amp; Data Backup</a>
-    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> Share Application</div>
-    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy &amp; Data Governance</a>
-    <a class="drawer-link" href="/terms"><span>📜</span> Terms of Service</a>
-    <a class="drawer-link" href="/about"><span>ℹ️</span> About Platform</a>
-    <a class="drawer-link" href="/contact"><span>✉️</span> Official Contact</a>
+    <div class="drawer-group">Settings &amp; Help</div>
+    <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Backup &amp; Settings</a>
+    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> App Share Karein</div>
+    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy</a>
+    <a class="drawer-link" href="/terms"><span>📜</span> Terms</a>
+    <a class="drawer-link" href="/about"><span>ℹ️</span> About BaatBanao</a>
+    <a class="drawer-link" href="/contact"><span>✉️</span> Contact</a>
   </div>
 
-  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Zero-Knowledge Local Ledger</div>
+  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Aapka data sirf aapke phone me</div>
 </nav>
 
 <!-- Toast -->
 <div id="toast"></div>
 
-<script defer src="vendor/html2canvas.min.js"></script>
-<script defer src="vendor/jspdf.umd.min.js"></script>
+<!-- Vendor libs (html2canvas + jsPDF ~450KB) load on demand now — only when the user
+     opens Billing/Invoice or asks for a PDF/photo card. First paint stays light on 3G. -->
+<script>
+(function(){
+  var pending = {};
+  var URLS = {
+    html2canvas: 'vendor/html2canvas.min.js?v=2.0.2',
+    jspdf: 'vendor/jspdf.umd.min.js?v=2.0.2'
+  };
+  window.bbLoadVendor = function(name){
+    if (window[name === 'jspdf' ? 'jspdf' : 'html2canvas']) return Promise.resolve(true);
+    if (pending[name]) return pending[name];
+    pending[name] = new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = URLS[name]; s.async = true;
+      s.onload = function(){ resolve(true); };
+      s.onerror = function(){ pending[name] = null; reject(new Error(name + ' load failed')); };
+      document.head.appendChild(s);
+    });
+    return pending[name];
+  };
+  window.bbEnsureBillingVendors = function(){
+    return Promise.allSettled([window.bbLoadVendor('html2canvas'), window.bbLoadVendor('jspdf')]);
+  };
+})();
+</script>
 <script src="backup.js?v=1.1.0" defer></script>
 <script src="money.js?v=1.1.3" defer></script>
 <script src="billing.js?v=1.1.3" defer></script>
 <script src="hisaab.js?v=1.1.3" defer></script>
 <script defer src="vendor/qrcode.js?v=1.1.0"></script>
-<script src="app.js?v=2.0.1" defer></script>
+<script src="app.js?v=2.0.2" defer></script>
 <script src="install.js?v=1.1.0" defer></script>
 <script src="voice-ocr.js?v=2.0.1" defer></script>
 <script>

@@ -1,9 +1,10 @@
 /* ===========================================================
    BaatBanao Service Worker (version = CACHE_VERSION below)
+   v2.0.2: UI v2 polish — 5-tab nav, lazy billing vendors, single-render navigation.
    v1.1.0: Security hardening, canonical redirect fix, Vault v0.4.2 integration
    =========================================================== */
 
-const CACHE_VERSION = 'baatbanao-v2.0.1-ocr-finance';
+const CACHE_VERSION = 'baatbanao-v2.0.2-ui-polish';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -68,7 +69,10 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k.startsWith('baatbanao-') && k !== CACHE_VERSION).map(k => caches.delete(k)))
+      // OCR cache (baatbanao-ocr-v1, ~10MB) ko jaan-boojh ke rakho: warna har
+      // update pe offline OCR engine phir se download hota hai. Sirf app shell
+      // caches delete karo.
+      Promise.all(keys.filter(k => k.startsWith('baatbanao-') && k !== CACHE_VERSION && k !== OCR_CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
     .then(() => {
       return self.clients.matchAll({ type: 'window' }).then(clients => {
