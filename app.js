@@ -632,8 +632,8 @@ function viewHome(){
   return `
     <div class="hero-greeting">
       <div>
-        <span class="hero-kicker">BaatBanao se easy</span>
-        <h1>Payment reminder banao<br/>rishta bhi safe rakho</h1>
+        <span class="hero-kicker">Easy with BaatBanao</span>
+        <h1>Payment reminders that stay polite<br/>&amp; keep relationships safe</h1>
       </div>
       ${MASCOT}
     </div>
@@ -641,24 +641,20 @@ function viewHome(){
     <button class="hero-card hero-card-banner" onclick="navigate('vasooli')">
       <img class="hero-banner-img" src="assets/vasooli-hero-banner.webp" alt="" loading="eager" decoding="async" fetchpriority="high"/>
       <div class="hero-card-content">
-        <span class="hero-mode-label">Vasooli Mode 💸</span>
+        <span class="hero-mode-label">Reminder Studio 💸</span>
         <h2>Soft payment reminder</h2>
-        <p>Naam ya amount daalo — WhatsApp-ready message pao.</p>
-        <span class="hero-cta-pill">Message banao →</span>
+        <p>Enter a name and amount — get a WhatsApp-ready message instantly.</p>
+        <span class="hero-cta-pill">Create Reminder →</span>
       </div>
     </button>
 
-    <div class="input-pill" onclick="window.bbVoiceAssistant ? window.bbVoiceAssistant.startVoice() : navigate('vasooli')" style="cursor:pointer;">
-      <span>🎙️ "Ravi se 500 lena hai" bolein ya number...</span>
-      <div class="mic-btn" style="background:var(--coral);color:#fff;font-size:16px;">🎙️</div>
-    </div>
-
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:-6px; margin-bottom:12px;">
-      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
-        <span>🎙️ Bolkar Likho</span>
+    <!-- Quick add: sirf 2 clean actions (pehle 3 duplicate entry points the) -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()" aria-label="Speak to add an entry" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
+        <span>🎙️ Speak to Add</span>
       </button>
-      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
-        <span>📷 Bill / Parchi Scan</span>
+      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()" aria-label="Scan a bill" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:11px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 4px 12px rgba(65,35,25,0.04);">
+        <span>📷 Scan a Bill</span>
       </button>
     </div>
 
@@ -670,40 +666,40 @@ function viewHome(){
     <div class="features-grid">
       <button class="sec-card" onclick="navigate('vasooli')">
         <div class="sec-icon-circle" style="background:#FFF0ED;color:#FF5E48;">🙏</div>
-        <h3>Polite Reminder</h3>
-        <p>Customer/client ke liye respectful payment follow-up.</p>
+        <h3>Polite Reminders</h3>
+        <p>Respectful payment follow-ups for customers and clients.</p>
       </button>
       <button class="sec-card hisaab-core-card" onclick="navigate('hisaab')">
         <div class="sec-icon-circle" style="background:#EAF8F0;color:#087A43;">₹</div>
-        <h3>Ek Hisaab</h3>
-        <p>Roz ka kharcha, lena-dena aur shaam tak clear.</p>
+        <h3>Daily Cashbook</h3>
+        <p>Track daily expenses and lending — clear by evening.</p>
       </button>
       <button class="sec-card" onclick="navigate('khata')">
         <div class="sec-icon-circle" style="background:#FFF9E6;color:#D97706;">📒</div>
-        <h3>Customer Khata</h3>
-        <p>Pending customer balance aur reminder sambhalein.</p>
+        <h3>Credit Ledger</h3>
+        <p>Manage pending customer balances and reminders.</p>
       </button>
       <button class="sec-card" onclick="navigate('templates')">
         <div class="sec-icon-circle" style="background:#EEF8FF;color:#0284C7;">🧩</div>
-        <h3>Smart Templates</h3>
-        <p>Rent, tuition, freelance aur dukaan ke ready message.</p>
+        <h3>Message Templates</h3>
+        <p>Ready messages for rent, tuition, freelance and shops.</p>
       </button>
       <button class="sec-card" onclick="navigate('billing')">
         <div class="sec-icon-circle" style="background:#F3EEFF;color:#6D45B8;">🧾</div>
         <h3>Offline Billing</h3>
-        <p>Items, tax aur discount ke saath PDF-ready bill.</p>
+        <p>PDF-ready bills with items, tax and discount.</p>
       </button>
       <button class="sec-card" onclick="navigate('bulk')">
         <div class="sec-icon-circle" style="background:#F0FDF4;color:#16A34A;">🚀</div>
-        <h3>Bulk Remind</h3>
-        <p>Ek saath sabhi pending hisaab WhatsApp karein.</p>
+        <h3>Bulk Reminders</h3>
+        <p>Send WhatsApp reminders to all pending customers at once.</p>
       </button>
     </div>
 
     <!-- How to Use Visual Gallery (Warm Theme Faithful) -->
     <div class="how-to-use-section">
       <div class="how-to-use-head">
-        <h3><span>💡</span> Kaise Use Karein (3 Simple Steps)</h3>
+        <h3><span>💡</span> How It Works (3 Simple Steps)</h3>
         <span style="font-size:12px;color:var(--coral);font-weight:800;cursor:pointer;" onclick="navigate('vasooli')">Try Now →</span>
       </div>
       <div class="gallery-scroll">
@@ -712,24 +708,24 @@ function viewHome(){
             <img src="assets/mascot-thinking.webp" alt="Step 1" />
           </div>
           <span class="step-badge">Step 1</span>
-          <h4>Naam & Amount Daalo</h4>
-          <p>Kisse lena hai aur kitna lena hai — bas 2 basic details daalein.</p>
+          <h4>Enter Name &amp; Amount</h4>
+          <p>Just two details — who owes you and how much.</p>
         </div>
         <div class="step-card">
           <div class="step-icon-wrap">
             <img src="assets/mascot-coin.webp" alt="Step 2" />
           </div>
           <span class="step-badge">Step 2</span>
-          <h4>Tone & Auto-UPI Chuno</h4>
-          <p>Polite, Friendly, Funny ya Savage — rishte ke hisaab se tone select karein.</p>
+          <h4>Pick Tone &amp; Auto-UPI</h4>
+          <p>Polite, friendly, funny or firm — choose what fits the relationship.</p>
         </div>
         <div class="step-card">
           <div class="step-icon-wrap">
             <img src="assets/mascot-celebrate.webp" alt="Step 3" />
           </div>
           <span class="step-badge">Step 3</span>
-          <h4>1-Tap WhatsApp Bhejo</h4>
-          <p>Direct WhatsApp par reminder bhejein aur hisaab smoothly clear karein.</p>
+          <h4>Send on WhatsApp in 1 Tap</h4>
+          <p>Send the reminder directly on WhatsApp and settle dues smoothly.</p>
         </div>
       </div>
     </div>
@@ -748,12 +744,12 @@ function viewHome(){
           <span class="sig-cta">Remind →</span>
         </div>`;
       }).join('')}
-      ${pendingList.length > 5 ? `<div class="signal-more">+ ${pendingList.length - 5} aur khata me</div>` : ''}
-      <div class="signal-all" onclick="navigate('khata')">Full khata dekho (${pendingList.length}) →</div>
+      ${pendingList.length > 5 ? `<div class="signal-more">+${pendingList.length - 5} more in ledger</div>` : ''}
+      <div class="signal-all" onclick="navigate('khata')">View full ledger (${pendingList.length}) →</div>
     </div>` : `
     <div class="khata-strip" onclick="navigate('khata')">
-      <div class="khata-title"><span>Khata</span>${ICONS.bell}</div>
-      <div class="khata-row">Koi pending nahi hai. Pehla reminder save karo ✅</div>
+      <div class="khata-title"><span>Ledger</span>${ICONS.bell}</div>
+      <div class="khata-row">Nothing pending. Save your first reminder ✅</div>
     </div>`}
   `;
 }
@@ -797,25 +793,25 @@ function viewVasooli(){
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
-      <h1>Vasooli Mode 💸</h1>
+      <h1>Reminder Studio 💸</h1>
     </div>
     <div class="form-card">
-    <div class="form-card-head"><span class="step-dot">1</span><div><b>Details daalo</b><small>Sab optional hai — jitna doge, message utna personal banega.</small></div></div>
+    <div class="form-card-head"><span class="step-dot">1</span><div><b>Details</b><small>All optional — the more you add, the more personal the message.</small></div></div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block">
         <label class="field-label">Amount (optional)</label>
-        <input type="number" id="f-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
+        <input type="number" id="f-amount" inputmode="decimal" placeholder="2500 or leave blank" value="${escapeHtml(s.amount)}" oninput="updateForm('amount', this.value)" autofocus/>
       </div>
 
       <div class="field-block">
         <label class="field-label">Due date (optional)</label>
         <input type="date" id="f-due" value="${escapeHtml(s.dueDate)}" oninput="updateForm('dueDate', this.value)"/>
-        <div class="field-hint">Home pe 🟢🔴 signal is date se decide hoga</div>
+        <div class="field-hint">The green/red signal on Home uses this date</div>
       </div>
 
       <div class="field-block">
-        <label class="field-label">Naam (optional)</label>
-        <input type="text" id="f-name" placeholder="Ramesh bhai / Customer" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
+        <label class="field-label">Name (optional)</label>
+        <input type="text" id="f-name" placeholder="Ramesh / Customer" value="${escapeHtml(s.name)}" oninput="updateForm('name', this.value)"/>
       </div>
 
       <div class="field-block">
@@ -828,7 +824,7 @@ function viewVasooli(){
       </div>
 
       <div class="field-block">
-        <label class="field-label">Relation</label>
+        <label class="field-label">Relationship</label>
         <select id="f-relation" onchange="updateForm('relation', this.value)">
           ${relations.map(r => `<option value="${r}" ${s.relation===r?'selected':''}>${r}</option>`).join('')}
         </select>
@@ -853,11 +849,11 @@ function viewVasooli(){
 
     <div class="field-block">
       <label class="field-label">Note (optional)</label>
-      <textarea id="f-note" placeholder="Example: 2 mahine se pending hai, aaj chahiye" oninput="updateForm('note', this.value)">${escapeHtml(s.note)}</textarea>
+      <textarea id="f-note" placeholder="Example: pending for 2 months, needed today" oninput="updateForm('note', this.value)">${escapeHtml(s.note)}</textarea>
     </div>
     </div>
 
-    <button class="primary-btn primary-btn-lg" onclick="handleGenerate()">Message Banao ✨</button>
+    <button class="primary-btn primary-btn-lg" onclick="handleGenerate()">Create Message ✨</button>
 
     <div class="safety-banner">Tip: Naam blank chhodoge toh message “Bhai/Customer” style mein banega. Message bhejne se pehle check/edit kar lein.</div>
 
@@ -1015,7 +1011,7 @@ function bbQrBox(text, size=260){
 }
 function showUpiQr(data={}){
   if(!canUseUpi()){
-    showToast('Settings mein apna UPI ID save karo');
+    showToast('Save your UPI ID in Settings first');
     setTimeout(()=>navigate('settings'), 700);
     return;
   }
@@ -1043,7 +1039,7 @@ function showUpiQr(data={}){
         <button class="ghost-btn" onclick="shareUpiQr('${encArg(upiLink)}','${encArg(getSavedUpiName())}','${encArg(amountText)}')">Share QR</button>
         <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI</button>
       </div>
-      <small class="field-hint" style="display:block;margin-top:10px;">QR share karo ya UPI ID copy karke bhejo. WhatsApp message mein long link nahi bheja jayega.</small>
+      <small class="field-hint" style="display:block;margin-top:10px;">Share the QR or copy your UPI ID. Long links are not inserted into WhatsApp messages.</small>
     </div>`;
   document.body.appendChild(el);
 }
@@ -1072,7 +1068,7 @@ async function shareUpiQr(encodedUpi, encodedName='', encodedAmount=''){
   if(blob){
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'upi-qr.png'; a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
-    showToast('QR image download ho gayi — ab share karo');
+    showToast('QR image downloaded — now share it');
   } else {
     copyTextValue(upi, 'UPI link copied ✅');
   }
@@ -1089,13 +1085,13 @@ function upiOutputButton(formSnapshot){
 
 async function pickPhoneContact(target='vasooli'){
   if(!('contacts' in navigator) || !navigator.contacts.select){
-    showToast('Contact picker is browser mein supported nahi hai. Number manually paste karo.');
+    showToast('Contact picker is not supported in this browser. Paste the number manually.');
     return;
   }
   try{
     const contacts = await navigator.contacts.select(['name','tel'], { multiple:false });
     const c = contacts && contacts[0];
-    if(!c || !c.tel || !c.tel.length){ showToast('Is contact mein number nahi mila'); return; }
+    if(!c || !c.tel || !c.tel.length){ showToast('No phone number found in this contact'); return; }
     const phone = c.tel[0].replace(/[^0-9+]/g,'');
     const name = c.name && c.name[0] ? c.name[0] : '';
 
@@ -1128,13 +1124,13 @@ function handleGenerate(){
   const s = state.vasooliForm || {};
   const amountRaw = String(s.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
-  if(amountRaw && !bbValidMoney(amount)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
+  if(amountRaw && !bbValidMoney(amount)){ showToast('Enter a valid amount, or leave it blank'); return; }
 
   // Naam aur amount dono optional hain: user generic reminder bhi bana sake.
   // Phone India/local aur international dono support karta hai.
   const cleanPhone = normalizeWhatsAppPhone(s.phone);
   if(cleanPhone === null){
-    showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do');
+    showToast('Include country code, e.g. +91... / +971..., or leave blank');
     return;
   }
 
@@ -1161,7 +1157,7 @@ function handleGenerate(){
   outputDiv.innerHTML = `
     <div class="loading-box">
       <img class="loading-mascot" src="assets/mascot-thinking.webp" alt="" width="120" height="120" loading="lazy" decoding="async"/>
-      <p>Dosti bachate hue hisaab bana rahe hain...</p>
+      <p>Writing your message politely...</p>
     </div>
   `;
 
@@ -1169,7 +1165,7 @@ function handleGenerate(){
     let messages;
     let unsafeNotice = '';
     if(isUnsafe(combinedText)){
-      unsafeNotice = `<div class="safety-banner">Gaali ke bina bhi strong message ban sakta hai. Yeh respectful version try karein:</div>`;
+      unsafeNotice = `<div class="safety-banner">A strong message does not need harsh words. Try this respectful version:</div>`;
       messages = [{ label:'Strong but Respectful', text: safeAlternative(formData.name, formData.amount) }];
     } else {
       messages = generateMessages(formData);
@@ -1218,7 +1214,7 @@ function handleGenerate(){
 }
 
 const BB_CARD_THEMES = [
-  {id:'p1', chip:'\uD83D\uDC8E Classic Band', head:'\uD83D\uDCB8 Vasooli Mode', stamp:'', art:''},
+  {id:'p1', chip:'\uD83D\uDC8E Classic Band', head:'\uD83D\uDCB8 Reminder Studio', stamp:'', art:''},
   {id:'p2', chip:'\uD83D\uDD25 Coral Blast', head:'\uD83D\uDCB8 VASOOLI MODE', stamp:'', art:''},
   {id:'p3', chip:'\uD83C\uDF19 Midnight Gold', head:'\u2726 PAYMENT REMINDER \u2726', stamp:'', art:''},
   {id:'p4', chip:'\uD83D\uDCD2 Khata Ledger', head:'\uD83D\uDCD2 UDHAAR KHATA', stamp:'PENDING', art:''},
@@ -1301,7 +1297,7 @@ function outputCard(m, idx, formSnapshot){
         <div class="sub-btn-row">
           <button class="ghost-btn" onclick="copyOutput('${taId}')">${ICONS.copy} Copy</button>
           ${upiOutputButton(formSnapshot)}
-          <button class="ghost-btn save" onclick="saveOutputToKhataSafe('${taId}')">${ICONS.save} Khata</button>
+          <button class="ghost-btn save" onclick="saveOutputToKhataSafe('${taId}')">${ICONS.save} Save</button>
         </div>
       </div>
     </div>
@@ -1311,12 +1307,12 @@ function outputCard(m, idx, formSnapshot){
 async function shareCardImage(taId){
   const ta = document.getElementById(taId);
   const card = ta && ta.closest('.output-card');
-  if(!card){ showToast('Card nahi mila'); return; }
+  if(!card){ showToast('Card not found'); return; }
   if(!window.html2canvas){
     if(window.bbLoadVendor){ try { window.bbLoadVendor('html2canvas'); } catch(e){} }
     showToast('Photo library load ho rahi hai... ruko ⏳');
     for(let i=0;i<60 && !window.html2canvas;i++){ await new Promise(r=>setTimeout(r,500)); }
-    if(!window.html2canvas){ showToast('Net slow hai — library load nahi hui. Thoda ruk ke dobara dabao'); return; }
+    if(!window.html2canvas){ showToast('Slow connection — library did not load. Please try again in a moment'); return; }
   }
   showToast('📸 HD Photo card ban raha hai... 🚀');
   const dlPng = (blob)=>{
@@ -1366,7 +1362,7 @@ async function shareCardImage(taId){
     wrap.remove();
     
     const blob = await new Promise(r=>canvas.toBlob(r, 'image/png'));
-    if(!blob){ showToast('Image nahi bani — dobara try karo'); return; }
+    if(!blob){ showToast('Image could not be created — please try again'); return; }
     const file = new File([blob], 'baatbanao-reminder.png', { type:'image/png' });
 
     if(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem){
@@ -1388,16 +1384,16 @@ async function shareCardImage(taId){
           showToast('Share cancel kiya');
         } else {
           dlPng(blob);
-          showToast('📸 HD Card download ho gaya & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karo ✅');
+          showToast('📸 HD card downloaded & copied! Paste it in WhatsApp (Ctrl+V) ✅');
         }
       }
     } else {
       dlPng(blob);
-      showToast('📸 HD Card download & Clipboard me copy ho gaya! WhatsApp me Paste (Ctrl+V) karein ✅');
+      showToast('📸 HD card downloaded & copied! Paste it in WhatsApp (Ctrl+V) ✅');
     }
   }catch(err){
     console.warn('shareCardImage', err);
-    showToast('Image nahi bani — dobara try karo');
+    showToast('Image could not be created — please try again');
   }
 }
 
@@ -1431,7 +1427,7 @@ function openWhatsAppWithText(textValue, phoneRaw='', paymentData={}){
   const text = encodeURIComponent(finalText);
   const phone = normalizeWhatsAppPhone(phoneRaw);
 
-  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +971...'); return; }
+  if(phone === null){ showToast('Include the country code, e.g. +971...'); return; }
 
   triggerWhatsAppDirect(text, phone);
   bbTrack('whatsapp_open', {
@@ -1489,7 +1485,7 @@ function saveOutputToKhata(m, formSnapshot, taId){
   };
   state.khata.unshift(entry);
   persist();
-  showToast('Khata mein save ho gaya 📒');
+  showToast('Saved to ledger 📒');
 }
 
 
@@ -1544,17 +1540,17 @@ function viewTemplates(){
   const languages = ['Hinglish','Hindi','Bhojpuri','English'];
   return `
     <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Smart Templates 🧩</h1></div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Ready categories choose karo — message instantly professional banega.</p>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Pick a category — the message is instantly ready to send.</p>
     <div class="template-grid">
       ${BB_TEMPLATE_CATEGORIES.map(c=>`<button class="template-card ${f.category===c.id?'active':''}" onclick="selectTemplateCategory('${c.id}',this)"><span>${c.emoji}</span><b>${c.title}</b><small>${c.relation} · ${c.tone}</small></button>`).join('')}
     </div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
-      <div class="field-block"><label class="field-label">Naam (optional)</label><input type="text" placeholder="Ramesh / Client" value="${escapeHtml(f.name)}" oninput="updateTemplateForm('name',this.value)"/></div>
+      <div class="field-block"><label class="field-label">Name (optional)</label><input type="text" placeholder="Ramesh / Client" value="${escapeHtml(f.name)}" oninput="updateTemplateForm('name',this.value)"/></div>
       <div class="field-block"><label class="field-label">Amount (optional)</label><input type="number" inputmode="decimal" placeholder="2500" value="${escapeHtml(f.amount)}" oninput="updateTemplateForm('amount',this.value)"/></div>
       <div class="field-block"><label class="field-label">WhatsApp Number (optional)</label><input type="tel" inputmode="tel" placeholder="+91..." value="${escapeHtml(f.phone)}" oninput="updateTemplateForm('phone',this.value.replace(/[^0-9+]/g,''))"/></div>
     </div>
     <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="updateTemplateForm('language','${l}'); renderApp();">${l}</div>`).join('')}</div></div>
-    <button class="primary-btn" onclick="handleTemplateGenerate()">Template Message Banao ✨</button>
+    <button class="primary-btn" onclick="handleTemplateGenerate()">Create Template Message ✨</button>
     <div id="template-output"></div>
   `;
 }
@@ -1563,9 +1559,9 @@ function handleTemplateGenerate(){
   const cat = BB_TEMPLATE_CATEGORIES.find(c=>c.id===f.category) || BB_TEMPLATE_CATEGORIES[0];
   const amountRaw = String(f.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g,'')) : '';
-  if(amountRaw && !bbValidMoney(amount)){showToast('Valid amount (max 2 decimals) daalein, ya blank chhod dein');return;}
+  if(amountRaw && !bbValidMoney(amount)){showToast('Enter a valid amount (max 2 decimals), or leave it blank');return;}
   const phone = normalizeWhatsAppPhone(f.phone);
-  if(phone === null){ showToast('Number country code ke saath daalo, ya blank chhod do'); return; }
+  if(phone === null){ showToast('Include the country code, or leave it blank'); return; }
   const data = {name:f.name || '', phone:phone || '', amount, relation:cat.relation, language:f.language, tone:cat.tone, note:''};
 
   state.vasooliForm = data;
@@ -1585,8 +1581,8 @@ function viewBulkReminders(){
   const items = sortedPendingKhata();
   const summary = buildBulkSummary();
   return `
-    <div class="page-header"><button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button><h1>Bulk Reminder 🚀</h1></div>
-    <div class="safety-banner">WhatsApp auto-spam allowed nahi hai. BaatBanao safe flow use karta hai: summary copy/share ya ek-ek reminder open.</div>
+    <div class="page-header"><button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button><h1>Bulk Reminders 🚀</h1></div>
+    <div class="safety-banner">Auto-spam is not allowed on WhatsApp. BaatBanao uses a safe flow: share the summary or open reminders one by one.</div>
     <div class="summary-card"><div class="amt">${items.length}</div><div class="sub">pending entries queue mein · ${items.filter(k=>isOverdue(k)).length} overdue first</div></div>
     <div class="btn-row">
       <button class="ghost-btn copy" onclick="copyTextValue(buildBulkSummary(), 'Bulk summary copied ✅')">${ICONS.copy} Copy Summary</button>
@@ -1694,7 +1690,7 @@ function viewBusinessReply(){
       <textarea placeholder="Customer ne kya bola? Paste ya short note..." oninput="updateBusinessForm('context', this.value)">${escapeHtml(f.context)}</textarea>
     </div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
-      <div class="field-block"><label class="field-label">Relation</label><select onchange="updateBusinessForm('relation', this.value)">${relations.map(r=>`<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}</select></div>
+      <div class="field-block"><label class="field-label">Relationship</label><select onchange="updateBusinessForm('relation', this.value)">${relations.map(r=>`<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}</select></div>
       <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectBusinessOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
       <div class="field-block"><label class="field-label">Tone</label><div class="chip-row">${tones.map(t=>`<div class="chip ${f.tone===t?'active':''}" onclick="selectBusinessOption('tone','${t}',this)">${optionLabel(t)}</div>`).join('')}</div></div>
     </div>
@@ -1780,7 +1776,7 @@ function viewMastiMessage(){
   return `
     <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Masti Message 😄</h1></div>
     <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Friends/family ke liye light, fun aur share-ready messages.</p>
-    <div class="field-block"><label class="field-label">Naam (optional)</label><input type="text" placeholder="Dost ka naam" value="${escapeHtml(f.name)}" oninput="updateMastiForm('name', this.value)"/></div>
+    <div class="field-block"><label class="field-label">Name (optional)</label><input type="text" placeholder="Dost ka naam" value="${escapeHtml(f.name)}" oninput="updateMastiForm('name', this.value)"/></div>
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block"><label class="field-label">Language</label><div class="chip-row">${languages.map(l=>`<div class="chip ${f.language===l?'active':''}" onclick="selectMastiOption('language','${l}',this)">${l}</div>`).join('')}</div></div>
       <div class="field-block"><label class="field-label">Mood</label><div class="chip-row">${moods.map(m=>`<div class="chip ${f.mood===m?'active':''}" onclick="selectMastiOption('mood','${m}',this)">${optionLabel(m)}</div>`).join('')}</div></div>
@@ -1827,23 +1823,23 @@ function viewKhataForm(){
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button>
-      <h1>${isEdit ? 'Edit Khata' : 'Add Khata'}</h1>
+      <h1>${isEdit ? 'Edit Entry' : 'Add Entry'}</h1>
     </div>
-    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Naam, phone, amount sab optional hain. Number hoga toh direct WhatsApp khulega.</p>
+    <p style="margin:0 2px;color:var(--text-secondary);font-weight:600;font-size:13.5px;">Name, phone and amount are all optional. Add a number to open WhatsApp directly.</p>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
       <div class="field-block">
-        <label class="field-label">Naam (optional)</label>
-        <input type="text" id="kf-name" placeholder="Ramesh bhai / Customer" value="${escapeHtml(f.name)}" oninput="updateKhataForm('name', this.value)"/>
+        <label class="field-label">Name (optional)</label>
+        <input type="text" id="kf-name" placeholder="Ramesh / Customer" value="${escapeHtml(f.name)}" oninput="updateKhataForm('name', this.value)"/>
       </div>
       <div class="field-block">
         <label class="field-label">Amount (optional)</label>
-        <input type="number" id="kf-amount" inputmode="decimal" placeholder="2500 ya blank" value="${escapeHtml(f.amount)}" oninput="updateKhataForm('amount', this.value)"/>
+        <input type="number" id="kf-amount" inputmode="decimal" placeholder="2500 or leave blank" value="${escapeHtml(f.amount)}" oninput="updateKhataForm('amount', this.value)"/>
       </div>
       <div class="field-block">
         <label class="field-label">Paid Amount (optional)</label>
         <input type="number" id="kf-paid" inputmode="decimal" placeholder="0 / partial paid" value="${escapeHtml(f.paidAmount)}" oninput="updateKhataForm('paidAmount', this.value)"/>
-        <small class="field-hint">Partial payment track karne ke liye. Full amount paid hoga toh status Paid ho jayega.</small>
+        <small class="field-hint">Track partial payments here. Once the full amount is paid, status becomes Paid.</small>
       </div>
       <div class="field-block">
         <label class="field-label">Due Date (optional)</label>
@@ -1858,7 +1854,7 @@ function viewKhataForm(){
         <small class="field-hint">India 10 digit chalega. International ke liye +country code lagao.</small>
       </div>
       <div class="field-block">
-        <label class="field-label">Relation</label>
+        <label class="field-label">Relationship</label>
         <select onchange="updateKhataForm('relation', this.value)">
           ${relations.map(r => `<option value="${r}" ${f.relation===r?'selected':''}>${r}</option>`).join('')}
         </select>
@@ -1881,7 +1877,7 @@ function viewKhataForm(){
       <textarea placeholder="Example: last month ka pending" oninput="updateKhataForm('note', this.value)">${escapeHtml(f.note)}</textarea>
     </div>
 
-    <button class="primary-btn" onclick="saveKhataForm()">${isEdit ? 'Update Khata ✅' : 'Save Khata 📒'}</button>
+    <button class="primary-btn" onclick="saveKhataForm()">${isEdit ? 'Update Entry ✅' : 'Save Entry 📒'}</button>
     ${isEdit ? `<button class="ghost-btn danger" onclick="deleteKhata('${f._editId}')">Delete Entry</button>` : ''}
   `;
 }
@@ -1903,12 +1899,12 @@ function saveKhataForm(){
   const f = state.khataForm || defaultKhataForm();
   const amountRaw = String(f.amount || '').trim();
   const amount = amountRaw ? Number(amountRaw.replace(/,/g, '')) : '';
-  if(amountRaw && !bbValidMoney(amount)){ showToast('Amount sahi daalo, ya blank chhod do'); return; }
+  if(amountRaw && !bbValidMoney(amount)){ showToast('Enter a valid amount, or leave it blank'); return; }
   const phone = normalizeWhatsAppPhone(f.phone);
-  if(phone === null){ showToast('Number country code ke saath daalo, e.g. +91... / +971..., ya blank chhod do'); return; }
+  if(phone === null){ showToast('Include country code, e.g. +91... / +971..., or leave blank'); return; }
   const paidRaw = String(f.paidAmount || '').trim();
   const paidAmount = paidRaw ? Number(paidRaw.replace(/,/g,'')) : 0;
-  if(paidRaw && !bbValidMoney(paidAmount,true)){ showToast('Paid amount sahi daalo, ya blank chhod do'); return; }
+  if(paidRaw && !bbValidMoney(paidAmount,true)){ showToast('Enter a valid paid amount, or leave it blank'); return; }
   let computedStatus = f.status || 'pending';
   if(amount && paidAmount >= amount) computedStatus = 'paid';
   else if(paidAmount > 0) computedStatus = 'partial';
@@ -1931,7 +1927,7 @@ function saveKhataForm(){
   }
   persist();
   state.khataForm = null;
-  showToast(f._editId ? 'Khata update ho gaya ✅' : 'Khata save ho gaya 📒');
+  showToast(f._editId ? 'Entry updated ✅' : 'Entry saved 📒');
   navigate('khata');
 }
 
@@ -1948,7 +1944,7 @@ function viewKhata(){
   return `
     <div class="page-header">
       <button class="back-btn" onclick="navigate('home')">${ICONS.back}</button>
-      <h1>Udhaar Khata 2.0</h1>
+      <h1>Credit Ledger</h1>
     </div>
 
     <div class="summary-card">
@@ -1958,53 +1954,40 @@ function viewKhata(){
 
     <!-- Live Search Bar -->
     <div style="position:relative;margin-bottom:4px;">
-      <input type="text" id="khata-search-input" placeholder="🔍 Search naam, phone ya note se..." value="${escapeHtml(state.khataSearch || '')}" oninput="setKhataSearch(this.value)" style="width:100%;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid #FFD4C4;background:#fff;font-size:0.9rem;font-weight:600;box-sizing:border-box;" />
+      <input type="text" id="khata-search-input" placeholder="🔍 Search by name, phone or note..." value="${escapeHtml(state.khataSearch || '')}" oninput="setKhataSearch(this.value)" style="width:100%;padding:12px 38px 12px 14px;border-radius:14px;border:1.5px solid #FFD4C4;background:#fff;font-size:0.9rem;font-weight:600;box-sizing:border-box;" />
       <button id="khata-search-clear" onclick="setKhataSearch('')" ${state.khataSearch ? '' : 'hidden'} style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#999;font-size:16px;cursor:pointer;">&times;</button>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:10px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 3px 10px rgba(65,35,25,0.04);">
-        <span>🎙️ Bolkar Add Karein</span>
-      </button>
-      <button onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()" style="background:#FFFDF8; border:1.5px solid #F0DFCF; border-radius:16px; padding:10px 12px; font-weight:800; font-size:13px; color:var(--text-main); display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 3px 10px rgba(65,35,25,0.04);">
-        <span>📷 Parchi Scan Karein</span>
-      </button>
-    </div>
-
+    <!-- Quick add — ek hi row: type, speak ya scan (pehle 2 alag rows + FABs the) -->
     <div class="quick-add-box">
-      <input type="text" id="quick-khata-text" placeholder="Quick add: Ramesh 2500 kal" onkeydown="if(event.key==='Enter') quickAddKhataFromText()"/>
-      <button class="ghost-btn save" onclick="quickAddKhataFromText()">⚡ Add</button>
-    </div>
-
-    <div class="mini-stats">
-      <div><b>${pendingCount}</b><span>Pending</span></div>
-      <div><b>${partialCount}</b><span>Partial</span></div>
-      <div><b>${overdueCount}</b><span>Overdue</span></div>
-      <div><b>${paidTotal ? fmtMoney(paidTotal) : '₹0'}</b><span>Paid</span></div>
+      <input type="text" id="quick-khata-text" aria-label="Quick add entry" placeholder="Type: Ramesh 2500 tomorrow" onkeydown="if(event.key==='Enter') quickAddKhataFromText()"/>
+      <button class="qa-icon-btn" type="button" aria-label="Speak to add" title="Speak to add" onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startVoice()">🎙️</button>
+      <button class="qa-icon-btn" type="button" aria-label="Scan a bill" title="Scan a bill" onclick="window.bbVoiceAssistant && window.bbVoiceAssistant.startCameraOCR()">📷</button>
+      <button class="ghost-btn save" onclick="quickAddKhataFromText()">Add</button>
     </div>
 
     <div class="btn-row">
-      <button class="primary-btn" style="flex:1;" onclick="navigate('vasooli')">Reminder Banao 🔔</button>
-      <button class="ghost-btn save" style="flex:1;" onclick="openKhataForm()">+ Add Khata</button>
+      <button class="primary-btn" style="flex:1;" onclick="navigate('vasooli')">Create Reminder 🔔</button>
+      <button class="ghost-btn save" style="flex:1;" onclick="openKhataForm()">+ Add Entry</button>
     </div>
     <div class="btn-row">
-      <button class="ghost-btn" onclick="navigate('bulk')">🚀 Bulk Remind</button>
+      <button class="ghost-btn" onclick="navigate('bulk')">🚀 Bulk Reminders</button>
       <button class="ghost-btn" onclick="shareKhataSummary()">📤 Share Summary</button>
       <button class="ghost-btn" onclick="exportKhataCSV()">⬇️ Export CSV</button>
     </div>
 
     <!-- Category Pills -->
-    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">📂 Category Filter:</div>
+    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">📂 Category:</div>
     <div class="chip-row" style="margin-bottom:12px;">
       ${['all_cat','Dost','Tenant','Client','Shop Khata'].map(c => {
         const catFilter = state.categoryFilter || 'all_cat';
-        const labels = {'all_cat':'Sabhi Categories','Dost':'🤝 Dost','Tenant':'🏠 Rent','Client':'💼 Client','Shop Khata':'🛒 Dukaan'};
+        const labels = {'all_cat':'All Categories','Dost':'🤝 Friends','Tenant':'🏠 Rent','Client':'💼 Clients','Shop Khata':'🛒 Shop'};
         return `<div class="chip ${catFilter===c?'active':''}" onclick="setCategoryFilter('${c}')">${labels[c]}</div>`;
       }).join('')}
     </div>
 
     <!-- Status Pills -->
-    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">⚡ Status Filter:</div>
+    <div style="margin-bottom:8px; font-size:0.8rem; font-weight:700; color:#75615C;">⚡ Status:</div>
     <div class="chip-row">
       ${['all','pending','partial','overdue','paid'].map(f => `<div class="chip ${filter===f?'active':''}" onclick="setKhataFilter('${f}')">${f==='all'?'All':f==='pending'?'Pending':f==='partial'?'Partial':f==='overdue'?'Overdue':'Paid'}</div>`).join('')}
     </div>
@@ -2036,7 +2019,7 @@ function khataListInner(){
     return `
       <div class="empty-state">
         <img class="empty-mascot" src="assets/mascot-sleeping.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
-        <p><b>Sab clear!</b> ✨<br>Coin so raha hai — is filter mein koi entry nahi.</p>
+        <p><b>All clear!</b> ✨<br>No entries match this filter.</p>
       </div>`;
   }
   return list.map(k => khataCard(k)).join('');
@@ -2172,7 +2155,7 @@ function quickPartialPaid(id){
   const val = prompt('Kitna amount receive hua?', current ? String(current) : '');
   if(val === null) return;
   const paid = Number(String(val).replace(/,/g,''));
-  if(Number.isNaN(paid) || paid < 0){ showToast('Amount sahi nahi hai'); return; }
+  if(Number.isNaN(paid) || paid < 0){ showToast('Invalid amount'); return; }
   k.paidAmount = paid;
   if(hasValidAmount(k.amount) && paid >= Number(k.amount)) k.status = 'paid';
   else if(paid > 0) k.status = 'partial';
@@ -2204,9 +2187,9 @@ function showPaidCelebration(name, amount){
   el.innerHTML = `
     <div class="bb-celebrate-card">
       <img src="assets/mascot-paid.webp" alt="" width="180" height="180" loading="eager" decoding="async"/>
-      <h2>Paisa aa gaya! 🎉</h2>
+      <h2>Payment received! 🎉</h2>
       <p><b>${escapeHtml(name)}</b> ne <b>${displayAmount(amount)}</b> clear kiya</p>
-      <p class="bb-celebrate-tag">Dosti safe, hisaab clear ✨</p>
+      <p class="bb-celebrate-tag">Settled — relationship intact ✨</p>
     </div>`;
   document.body.appendChild(el);
   requestAnimationFrame(()=>el.classList.add('show'));
@@ -2214,7 +2197,7 @@ function showPaidCelebration(name, amount){
 }
 
 function deleteKhata(id){
-  if(!confirm('Ye khata entry delete karni hai?')) return;
+  if(!confirm('Delete this entry?')) return;
   state.khata = state.khata.filter(x=>x.id!==id);
   persist();
   if(state.route === 'khata-form') navigate('khata'); else renderApp();
@@ -2231,7 +2214,7 @@ function viewHistory(){
     ${list.length===0 ? `
       <div class="empty-state">
         <img class="empty-mascot" src="assets/mascot-thinking.webp" alt="" width="180" height="180" loading="lazy" decoding="async"/>
-        <p><b>Abhi tak koi message nahi banaya.</b><br>Vasooli Mode kholo aur shuru karo!</p>
+        <p><b>No messages yet.</b><br>Open Reminders to get started!</p>
       </div>
     ` : list.map(h => historyCard(h)).join('')}
     ${list.length>0 ? `<button class="ghost-btn danger" style="margin-top:6px;" onclick="clearHistory()">${ICONS.trash} Clear All History</button>` : ''}
@@ -2276,9 +2259,9 @@ function viewProfile(){
     </div>
     <div class="hero-card" style="cursor:default;" onclick="">
       <h2>Guest User 🙌</h2>
-      <p>Login abhi optional hai — sab kuch is device par save hai.</p>
+      <p>Login is optional — everything is saved on this device.</p>
     </div>
-    <div class="settings-item"><span class="label">📒 Total Khata Entries</span><span>${state.khata.length}</span></div>
+    <div class="settings-item"><span class="label">📒 Total Ledger Entries</span><span>${state.khata.length}</span></div>
     <div class="settings-item"><span class="label">🕓 Messages Generated</span><span>${state.history.length}</span></div>
     <button class="primary-btn" onclick="navigate('settings')">Settings ⚙️</button>
     ${isBBPro() ?
@@ -2430,7 +2413,7 @@ function viewPro(){
 
     <!-- Activation code (payment ke baad WhatsApp par milta hai) -->
     <div class="list-card pro-redeem" id="bb-redeem">
-      <div class="pro-redeem-head"><span>🔑</span><div><b>Activation code daalo</b><small>Payment ke baad WhatsApp par jo 10-character code mila, wahi number ke saath yahan daalo.</small></div></div>
+      <div class="pro-redeem-head"><span>🔑</span><div><b>Enter activation code</b><small>Enter the 10-character code you received on WhatsApp after payment, along with your number.</small></div></div>
       <div class="pro-redeem-grid">
         <select id="bb-plan-select" onchange="bbSelectedPlan=this.value" aria-label="Plan">
           ${Object.keys(BB_PLANS).map(k => `<option value="${k}" ${bbSelectedPlan===k?'selected':''}>₹${BB_PLANS[k].amount} · ${BB_PLANS[k].label}</option>`).join('')}
@@ -2438,7 +2421,7 @@ function viewPro(){
         <input id="bb-phone-input" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit WhatsApp number" value="${escapeHtml(localStorage.getItem('bb_pro_phone')||'')}"/>
         <input id="bb-code-input" inputmode="text" autocapitalize="characters" autocomplete="one-time-code" maxlength="10" placeholder="ACTIVATION CODE" style="text-transform:uppercase;letter-spacing:2px;"/>
       </div>
-      <button class="primary-btn" style="margin-top:10px;" onclick="bbRedeemCode()">Unlock karo 👑</button>
+      <button class="primary-btn" style="margin-top:10px;" onclick="bbRedeemCode()">Unlock 👑</button>
       <div id="bb-redeem-msg" class="pro-redeem-msg" aria-live="polite"></div>
     </div>
 
@@ -2462,7 +2445,7 @@ function bbSendTip(amount, plan){
   bbTrack('pro_checkout_start', { plan, amount });
   const upiUrl = bbBuildUpiLink(plan);
   // Payment cannot be verified from a UPI deep-link. Never unlock here — code WhatsApp par milega.
-  showToast('UPI app khul raha hai. Payment ke baad WhatsApp par screenshot bhejo — activation code milega.');
+  showToast('Opening your UPI app. After payment, send the screenshot on WhatsApp to get your activation code.');
   setTimeout(() => { window.location.href = upiUrl; }, 600);
   setTimeout(() => { const r = document.getElementById('bb-redeem'); if(r) r.scrollIntoView({behavior:'smooth', block:'center'}); }, 1800);
 }
@@ -2472,8 +2455,8 @@ async function bbRedeemCode(){
   const code = document.getElementById('bb-code-input').value.trim().toUpperCase();
   const msgEl = document.getElementById('bb-redeem-msg');
   const sel = document.getElementById('bb-plan-select'); if(sel && sel.value) bbSelectedPlan = sel.value;
-  if (phone.length !== 10){ msgEl.textContent = '⚠️ Sahi 10-digit number daalo.'; msgEl.style.color = '#C0392B'; return; }
-  if (!/^[A-Z0-9_-]{10}$/.test(code)){ msgEl.textContent = '⚠️ 10-character activation code daalo.'; msgEl.style.color = '#C0392B'; return; }
+  if (phone.length !== 10){ msgEl.textContent = '⚠️ Enter a valid 10-digit number.'; msgEl.style.color = '#C0392B'; return; }
+  if (!/^[A-Z0-9_-]{10}$/.test(code)){ msgEl.textContent = '⚠️ Enter the 10-character activation code.'; msgEl.style.color = '#C0392B'; return; }
   msgEl.textContent = 'Code verify ho raha hai…';
   try {
     const res = await fetch('/api/redeem', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({phone, plan:bbSelectedPlan, code})});
@@ -2488,7 +2471,7 @@ async function bbRedeemCode(){
     showToast('👑 Pro active!');
     setTimeout(()=> navigate('profile'), 1400);
   } catch(e) {
-    msgEl.textContent = (!navigator.onLine) ? '📴 Internet chahiye code verify karne ke liye.' : '❌ Code verify nahi hua. Number, plan aur code check karo — ya WhatsApp par poochho.'; msgEl.style.color = '#C0392B';
+    msgEl.textContent = (!navigator.onLine) ? '📴 Internet is needed to verify the code.' : '❌ Code could not be verified. Check the number, plan and code — or ask on WhatsApp.'; msgEl.style.color = '#C0392B';
   }
 }
 
@@ -2498,7 +2481,7 @@ function viewPay(){
   if(!upiLink){
     return `
       <div class="page-header"><button class="back-btn" onclick="navigate('home')">${ICONS.back}</button><h1>Payment Link</h1></div>
-      <div class="safety-banner">Payment link invalid hai. UPI ID check karein.</div>
+      <div class="safety-banner">Invalid payment link. Please check the UPI ID.</div>
     `;
   }
   const amountText = hasValidAmount(pay.am) ? displayAmount(pay.am) : 'Amount payer enter karega';
@@ -2516,7 +2499,7 @@ function viewPay(){
         <button class="ghost-btn copy" onclick="copyUpiLink('${encArg(upiLink)}')">Copy UPI Link</button>
         <button class="ghost-btn whatsapp" onclick="window.location.href='${upiLink.replace(/'/g, '%27')}'">Open UPI App</button>
       </div>
-      <div class="safety-banner" style="text-align:left;">Agar Open UPI kaam na kare toh QR scan karein ya UPI ID copy karein.</div>
+      <div class="safety-banner" style="text-align:left;">If "Open UPI" does not work, scan the QR or copy the UPI ID.</div>
     </div>
   `;
 }
@@ -2532,11 +2515,11 @@ function viewPrivacy(){
     <div class="list-card">
       <div class="meta" style="font-size:13px;line-height:1.55;color:var(--text-secondary);">
         <b>BaatBanao privacy promise:</b><br/><br/>
-        • Khata, history aur settings is device ke local storage mein save hote hain.<br/>
-        • App aapke behalf par automatic WhatsApp message send nahi karta. WhatsApp screen user ke click ke baad open hoti hai.<br/>
-        • Contacts button sirf selected contact ka naam/number leta hai. Full contact book upload/read nahi hoti.<br/>
+        • Ledger, history and settings are saved in this device's local storage.<br/>
+        • The app never sends WhatsApp messages on your behalf. WhatsApp opens only after your tap.<br/>
+        • The Contacts button reads only the contact you pick. Your full contact book is never uploaded or read.<br/>
         • Saved UPI ID/display name bhi local device storage mein save hota hai. QR/pay link isi data se banta hai.<br/>
-        • Contact picker browser permission ke saath kaam karta hai; unsupported browser mein manual number paste karna hoga.<br/>
+        • The contact picker needs browser permission; on unsupported browsers you can paste the number manually.<br/>
         • Payment/Pro verification currently manual UPI + WhatsApp screenshot flow par based hai.
       </div>
     </div>
@@ -2549,14 +2532,14 @@ function viewTerms(){
     <div class="list-card">
       <div class="meta" style="font-size:13px;line-height:1.55;color:var(--text-secondary);">
         <b>Use BaatBanao respectfully.</b><br/><br/>
-        • Yeh app sirf polite/professional reminder writing assistant hai, recovery agency nahi.<br/>
-        • Gaali, dhamki, harassment, illegal pressure ya defamation ke liye use na karein.<br/>
-        • Message bhejne se pehle user ko content check/edit karna chahiye.<br/>
+        • This app is a polite/professional reminder writing assistant — not a recovery agency.<br/>
+        • Do not use it for abuse, threats, harassment, illegal pressure or defamation.<br/>
+        • Always review and edit the message before sending it.<br/>
         • Payment disputes, legal claims aur collections ke liye user khud responsible hai.<br/>
-        • App availability, browser support aur WhatsApp behavior device/browser ke hisaab se vary kar sakta hai.
+        • App availability, browser support and WhatsApp behaviour may vary by device and browser.
       </div>
     </div>
-    <button class="primary-btn" onclick="openFeedback()">Feedback bhejo</button>
+    <button class="primary-btn" onclick="openFeedback()">Send Feedback</button>
   `;
 }
 
@@ -2585,7 +2568,7 @@ function viewSettings(){
     </div>
 
     <div class="settings-item">
-      <span class="label">Messages mein emoji use karo</span>
+      <span class="label">Use emoji in messages</span>
       <div class="toggle ${s.emojiEnabled?'on':''}" onclick="toggleSetting('emojiEnabled')"><div class="knob"></div></div>
     </div>
 
@@ -2606,7 +2589,7 @@ function viewSettings(){
       <input type="text" placeholder="Your business/name" value="${escapeHtml(s.upiName||'')}" oninput="updateSettingValue('upiName', this.value)"/>
     </div>
     <div class="settings-item">
-      <span class="label">WhatsApp reminder mein full UPI pay link attach karo</span>
+      <span class="label">Attach full UPI pay link in WhatsApp reminders</span>
       <div class="toggle ${s.upiAttachEnabled?'on':''}" onclick="toggleSetting('upiAttachEnabled')"><div class="knob"></div></div>
     </div>
     <button class="ghost-btn" onclick="showUpiQr({note:'Test UPI QR'})">📲 Test UPI QR</button>
@@ -2618,7 +2601,7 @@ function viewSettings(){
 
     <div class="divider"></div>
     <div class="section-title">Offline Data Backup</div>
-    <div class="privacy-mini">Khata, bills, history aur settings ki backup file aapke device par download hogi. Koi upload nahi.</div>
+    <div class="privacy-mini">A backup file of your ledger, bills, history and settings downloads to your device. Nothing is uploaded.</div>
     <div class="btn-row"><button class="ghost-btn save" onclick="bbExportBackup()">⬇ Export Backup</button><button class="ghost-btn" onclick="bbPickRestore()">⬆ Restore Backup</button></div>
     <input id="bb-restore-file" type="file" accept="application/json,.json" hidden onchange="bbRestoreBackup(this)">
     <button class="ghost-btn danger" onclick="clearAllData()">${ICONS.trash} Clear all app data</button>
@@ -2645,7 +2628,7 @@ function toggleSetting(key){
   renderApp();
 }
 function clearAllData(){
-  if(!confirm('Sabhi data (Khata + Ek Hisaab + Bills + History + Settings + Pro) delete karna hai? Yeh wapas nahi hoga. Pehle backup le liya?')) return;
+  if(!confirm('Delete all data (Ledger + Cashbook + Bills + History + Settings + Pro)? This cannot be undone. Did you take a backup first?')) return;
   ['bb_khata','bb_history','bb_settings','bb_invoices_v1','bb_hisaab_v1','bb_pro_unlocked','bb_pro_plan','bb_pro_receipt','bb_pro_phone',
    'bb_last_backup','bb_last_restore','bb_backup_nudge_date','bb_daily_gen_count','bb_daily_gen_date'].forEach(k => localStorage.removeItem(k));
   Object.keys(localStorage).filter(k => k.startsWith('bb_')).forEach(k => localStorage.removeItem(k));
@@ -2673,7 +2656,7 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMenu(); 
 
 function shareApp(){
   const url = 'https://www.baatbanao.shop/?utm_source=share&utm_medium=app';
-  const text = 'Udhaar/payment ka polite WhatsApp reminder 5 second me banao — free, bina login: ';
+  const text = 'Create polite WhatsApp payment reminders in 5 seconds — free, no login: ';
   bbTrack('share_app', {});
   if(navigator.share){
     navigator.share({ title:'BaatBanao', text, url }).catch(()=>{});
@@ -2703,7 +2686,7 @@ function viewCustomerLedger(){
   const id=state.routeParams&&state.routeParams.id,k=state.khata.find(x=>x.id===id);if(!k)return `<div class="empty-state"><p>Customer ledger nahi mila.</p><button class="primary-btn" onclick="navigate('khata')">Khata par jayein</button></div>`;
   const tx=ensureKhataTransactions(k).slice().sort((a,b)=>(String(b.date).localeCompare(String(a.date)))||((b.createdAt||0)-(a.createdAt||0))),bal=ledgerBalance(k);
   return `<div class="page-header"><button class="back-btn" onclick="navigate('khata')">${ICONS.back}</button><h1>${escapeHtml(k.name)}</h1></div>
-  <div class="ledger-balance ${bal>0?'due':bal<0?'advance':'clear'}"><small>${bal>0?'Aapko lena hai':bal<0?'Customer advance':'Hisaab clear'}</small><strong>₹${Math.abs(bal).toLocaleString('en-IN')}</strong><span>${tx.length} transactions · data offline</span></div>
+  <div class="ledger-balance ${bal>0?'due':bal<0?'advance':'clear'}"><small>${bal>0?'You will receive':bal<0?'Customer advance':'All settled'}</small><strong>₹${Math.abs(bal).toLocaleString('en-IN')}</strong><span>${tx.length} transactions · stored offline</span></div>
   <div class="ledger-main-actions"><button class="gave" onclick="openLedgerTransaction('${k.id}','gave')">− Aapne diye</button><button class="received" onclick="openLedgerTransaction('${k.id}','received')">+ Aapko mile</button></div>
   ${bal>0?`<button class="primary-btn" onclick="remindKhata('${k.id}')">🔔 WhatsApp Reminder</button>`:''}
   <div class="section-title">Transaction History</div>
@@ -2717,7 +2700,7 @@ function saveLedgerTransaction(id,type){
   const k=state.khata.find(x=>x.id===id),amount=Number(document.getElementById('ledger-amount')?.value),date=document.getElementById('ledger-date')?.value,note=document.getElementById('ledger-note')?.value.trim(),mode=document.getElementById('ledger-mode')?.value;if(!k||!bbValidMoney(amount)||!['gave','received'].includes(type)){showToast('Valid amount daalein');return;}
   ensureKhataTransactions(k).push({id:uid(),type,amount,date:date||todayISO(),note:note||(type==='gave'?'Credit diya':'Payment mila'),mode:mode||'Other',createdAt:Date.now()});syncKhataFromLedger(k);document.getElementById('ledger-tx-sheet')?.remove();bbTrack('ledger_transaction_add',{type,mode:mode||'Other'});renderApp();showToast('Transaction save ho gaya ✅');
 }
-function deleteLedgerTransaction(kid,tid){if(!confirm('Ye transaction delete karein?'))return;const k=state.khata.find(x=>x.id===kid);if(!k)return;k.transactions=ensureKhataTransactions(k).filter(t=>t.id!==tid);syncKhataFromLedger(k);bbTrack('ledger_transaction_delete',{});renderApp();showToast('Transaction delete hua');}
+function deleteLedgerTransaction(kid,tid){if(!confirm('Delete this transaction?'))return;const k=state.khata.find(x=>x.id===kid);if(!k)return;k.transactions=ensureKhataTransactions(k).filter(t=>t.id!==tid);syncKhataFromLedger(k);bbTrack('ledger_transaction_delete',{});renderApp();showToast('Transaction delete hua');}
 
 /* ===========================================================
    RENDER
@@ -2837,8 +2820,8 @@ function openHisaabSlip(id, isEditMode = false){
         <div style="background:linear-gradient(135deg, #FF6B57 0%, #FF856D 100%); color:#fff; padding:16px 20px; text-align:center; position:relative;">
           <button onclick="closeHisaabSlip()" style="position:absolute; right:14px; top:14px; background:rgba(0,0,0,0.2); border:none; color:#fff; width:30px; height:30px; border-radius:50%; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
           <div style="font-size:1.8rem; margin-bottom:2px;">🪙</div>
-          <h3 style="margin:0; font-size:1.25rem; font-weight:900; letter-spacing:0.5px;">HISAAB PARCHI</h3>
-          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">${isEditMode ? 'Fields edit karke Save karein' : (state.settings.upiName ? escapeHtml(state.settings.upiName) : 'Digital Ledger Slip')}</div>
+          <h3 style="margin:0; font-size:1.25rem; font-weight:900; letter-spacing:0.5px;">LEDGER SLIP</h3>
+          <div style="font-size:0.75rem; opacity:0.95; margin-top:2px;">${isEditMode ? 'Edit the fields, then save' : (state.settings.upiName ? escapeHtml(state.settings.upiName) : 'Digital Ledger Slip')}</div>
         </div>
 
         <div style="padding:18px 20px; background:#FFFDF8;">
@@ -2937,11 +2920,11 @@ function openHisaabSlip(id, isEditMode = false){
           <div style="display:flex; flex-direction:column; gap:10px;">
             <button type="button" onclick="sendSlipToWhatsApp()" style="background:#25D366; color:#fff; border:none; padding:14px; border-radius:14px; font-weight:900; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(37,211,102,0.4); width:100%; cursor:pointer;">
               <span style="font-size:1.25rem;">📲</span>
-              <span>WhatsApp Par Slip Bhejo</span>
+              <span>Send Slip on WhatsApp</span>
             </button>
             
             <button type="button" onclick="executeParchiCopy('${k.id}')" style="background:#FFF9E8; color:#5A302B; border:1.5px solid #FFD4C4; padding:11px; border-radius:12px; font-weight:800; font-size:0.88rem; cursor:pointer;">
-              📋 Copy Hisaab Text
+              📋 Copy Slip Text
             </button>
           </div>
 
@@ -3131,10 +3114,10 @@ function executeParchiCopy(id){
   const text = formatHisaabSlipText(k);
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(text).then(() => {
-      showToast('Hisaab Parchi copied! WhatsApp pe paste karein ✅');
+      showToast('Ledger slip copied! Paste it in WhatsApp ✅');
     });
   } else {
-    showToast('Hisaab copied! ✅');
+    showToast('Copied! ✅');
   }
 }
 

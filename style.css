@@ -534,7 +534,7 @@ select{ appearance:none; -webkit-appearance:none; background-image:url("data:ima
 }
 .drawer.show{ transform:none; visibility:visible; transition:transform .25s ease; }
 body.menu-open{ overflow:hidden; }
-body.menu-open .bb-fab-group, body.menu-open #bb-cookie-banner, body.menu-open #bb-update-banner{ display:none !important; }
+body.menu-open #bb-cookie-banner, body.menu-open #bb-update-banner{ display:none !important; }
 .drawer-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 16px 14px 20px; border-bottom:1.5px solid #F0DFCF; flex-shrink:0; }
 .drawer-brand{ display:flex; align-items:center; gap:8px; text-decoration:none; font-size:1.3rem; }
 .drawer-brand .logo-text{ font-weight:900; font-size:1.12rem; color:#261818; }
@@ -554,16 +554,9 @@ body.menu-open .bb-fab-group, body.menu-open #bb-cookie-banner, body.menu-open #
 .drawer-chip{ font-size:11px; background:#25D366; color:#fff; padding:2px 9px; border-radius:10px; font-weight:800; }
 .drawer-footer{ flex-shrink:0; text-align:center; font-size:12px; color:var(--text-muted); font-weight:700; padding:12px 20px; border-top:1px solid #F0DFCF; }
 
-/* Floating mic/camera: hide where page already has these actions or a sticky action bar */
-body[data-route="home"] .bb-fab-group,
-body[data-route="billing"] .bb-fab-group,
-body[data-route="invoice-new"] .bb-fab-group,
-body[data-route="khata-form"] .bb-fab-group,
-body[data-route="pay"] .bb-fab-group,
-body[data-route="pro"] .bb-fab-group{ display:none !important; }
-/* keep last content above the floating buttons on other routes */
+/* Floating mic/camera FABs removed — ek hi entry point per screen (Home / Khata) */
 #content{ padding-bottom:max(24px, env(safe-area-inset-bottom)); }
-body:not([data-route="home"]) #content{ padding-bottom:84px; }
+body:not([data-route="home"]) #content{ padding-bottom:40px; }
 
 /* Toast */
 #toast{
@@ -1380,3 +1373,18 @@ a:focus-visible, button:focus-visible, .chip:focus-visible, [tabindex]:focus-vis
 /* Drawer: version wala label ek line me rahe (flex item wrap na kare) */
 .drawer-label-nowrap{ flex:1 1 auto; min-width:0; }
 .drawer-label-nowrap #drawer-vault-version{ white-space:nowrap; }
+
+/* Khata quick-add: mic/scan chhote icon buttons (ek hi row me) */
+.qa-icon-btn{
+  flex:0 0 auto; width:42px; height:42px; min-width:42px; border-radius:14px;
+  border:1.5px solid var(--border-soft); background:#FFFDF8; font-size:17px;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.qa-icon-btn:active{ transform:scale(.95); }
+@media(max-width:420px){
+  .quick-add-box{ flex-wrap:wrap; }
+  .quick-add-box input{ flex:1 1 100%; }
+  /* mic + camera + Add ek hi row me */
+  .quick-add-box .qa-icon-btn, .quick-add-box .ghost-btn{ flex:1 1 0; }
+}

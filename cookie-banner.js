@@ -40,7 +40,7 @@
       el.setAttribute('role', 'dialog');
       el.setAttribute('aria-label', 'Cookie consent');
       el.style.cssText = 'position:fixed;left:10px;right:10px;bottom:' + (inApp ? '86px' : '12px') + ';z-index:100050;max-width:460px;margin:0 auto;background:#2b2420;color:#fff;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;font:600 12.5px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25)';
-      el.innerHTML = '<span style="flex:1">Analytics sirf aapki permission se load hogi. Reject karne par bhi app chalegi. <a href="/privacy" style="color:#ffc7bd">Privacy</a></span>' +
+      el.innerHTML = '<span style="flex:1">Analytics loads only with your permission. The app works fully even if you reject. <a href="/privacy" style="color:#ffc7bd">Privacy</a></span>' +
         '<button type="button" data-v="rejected" style="border:0;background:transparent;color:#d9cfc8;font:700 12.5px inherit;padding:8px 6px;cursor:pointer">Reject</button>' +
         '<button type="button" data-v="accepted" style="border:0;background:#FF6B57;color:#fff;font:800 12.5px inherit;padding:8px 14px;border-radius:10px;cursor:pointer">Allow</button>';
       el.addEventListener('click', function(e){

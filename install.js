@@ -1,5 +1,4 @@
 /* ===========================================================
-const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
    BaatBanao — Install + Update Manager v1.0.8
    NUCLEAR TOAST FIX:
    - No queue — max 1 toast at a time (new replaces old)
@@ -7,6 +6,10 @@ const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
    - App's own showToast() overridden to prevent duplicates
    - Aggressive ghost toast cleanup on load
    =========================================================== */
+
+/* Debug flag — pehle ye galti se comment ke andar tha, isliye SW update pe
+   "BB_DEBUG is not defined" error aata tha. Ab sahi jagah hai. */
+const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
 
 (function () {
   'use strict';
@@ -239,14 +242,14 @@ const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
   window.BB_Install = {
     trigger: triggerInstall,
     show: () => {
-      if (isStandalone) return showSingleToast('Aap already installed app use kar rahe hain! 🎉');
+      if (isStandalone) return showSingleToast('You are already using the installed app! 🎉');
       // Bug fix #1: check in-app browser FIRST — even if a stray
       // `deferredPrompt` somehow exists, most in-app webviews will not
       // actually complete an install, so we must not attempt it silently.
       if (isInAppBrowser) return showInstallUI('inapp');
       if (deferredPrompt) return triggerInstall();
       if (isIOS) return showInstallUI('ios');
-      if (isKnownInstalled) return showSingleToast('App shayad already installed hai 🏠');
+      if (isKnownInstalled) return showSingleToast('The app may already be installed 🏠');
       showInstallUI('generic');
     },
     isInstalled: () => isStandalone || isKnownInstalled,
@@ -285,28 +288,28 @@ const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
   function createBannerHTML(mode) {
     const iosSteps = `
       <ol class="bb-ios-steps">
-        <li><span class="bb-step-num">1</span> Neeche <b>Share</b> button dabaayein
+        <li><span class="bb-step-num">1</span> Tap the <b>Share</b> button below
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M20 21H4a1 1 0 0 1-1-1v-9"/></svg>
         </li>
-        <li><span class="bb-step-num">2</span> Scroll karke <b>"Add to Home Screen"</b> chunein</li>
-        <li><span class="bb-step-num">3</span> <b>Add</b> pe tap karein — bas ho gaya! ✅</li>
+        <li><span class="bb-step-num">2</span> Scroll and choose <b>"Add to Home Screen"</b></li>
+        <li><span class="bb-step-num">3</span> Tap <b>Add</b> — done! ✅</li>
       </ol>`;
 
     // Bug fix #2: Old copy hardcoded "Chrome ke menu se..." which is wrong
     // for Firefox, Samsung Internet, Edge, Opera, etc. Made browser-agnostic.
     const genericSteps = `
-      <p class="bb-note">Apne browser ke <b>menu (⋮ ya ≡)</b> se <b>"Install app"</b> ya <b>"Add to Home Screen"</b> dhoondh kar select karein.</p>`;
+      <p class="bb-note">Open your browser <b>menu (⋮ or ≡)</b> and choose <b>"Install app"</b> or <b>"Add to Home Screen"</b>.</p>`;
 
     // Bug fix #1: In-app browsers (Instagram/Facebook/WhatsApp webviews)
     // cannot install PWAs at all — show an honest message telling the user
     // to open the link in their real browser first, instead of broken/
     // misleading install steps.
     const inAppSteps = `
-      <p class="bb-note">Ye link ek app (Instagram/Facebook/WhatsApp) ke andar khula hai, jahan install karna possible nahi hai.</p>
+      <p class="bb-note">This link opened inside another app (Instagram/Facebook/WhatsApp), where install is not possible.</p>
       <ol class="bb-ios-steps">
-        <li><span class="bb-step-num">1</span> Upar-right corner mein <b>⋮</b> ya <b>"..."</b> button dhoondein</li>
-        <li><span class="bb-step-num">2</span> <b>"Browser mein kholein"</b> ya <b>"Open in Chrome/Safari"</b> chunein</li>
-        <li><span class="bb-step-num">3</span> Wahan se dubara <b>Install</b> try karein ✅</li>
+        <li><span class="bb-step-num">1</span> Find the <b>⋮</b> or <b>"..."</b> button in the top-right corner</li>
+        <li><span class="bb-step-num">2</span> Choose <b>"Open in browser"</b> or <b>"Open in Chrome/Safari"</b></li>
+        <li><span class="bb-step-num">3</span> Then try <b>Install</b> again ✅</li>
       </ol>`;
 
     const inner = mode === 'inapp' ? inAppSteps : (mode === 'ios' ? iosSteps : (mode === 'android' ? '' : genericSteps));
@@ -318,8 +321,8 @@ const BB_DEBUG = /(\?|&)bbdebug=1\b/.test(location.search);
         <div class="bb-install-head">
           <img src="assets/icon-192.png" alt="BaatBanao" class="bb-install-icon"/>
           <div>
-            <h3 id="bb-install-title">${mode === 'inapp' ? 'Pehle browser mein kholein' : 'BaatBanao install karein'}</h3>
-            <p class="bb-install-sub">${mode === 'inapp' ? 'In-app browser se install nahi ho sakta' : 'Phone ki home screen pe app jaisa icon milega'}</p>
+            <h3 id="bb-install-title">${mode === 'inapp' ? 'Open in browser first' : 'Install BaatBanao'}</h3>
+            <p class="bb-install-sub">${mode === 'inapp' ? 'Install is not possible from an in-app browser' : 'Get an app-like icon on your home screen'}</p>
           </div>
         </div>
         <ul class="bb-trust">

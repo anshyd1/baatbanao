@@ -59,21 +59,21 @@
     switch (code) {
       case 'not-allowed':
       case 'permission-denied':
-        return '🎙️ Mic permission nahi mili. Browser ke 🔒 icon se microphone allow karein, phir dobara tap karein.';
+        return '🎙️ Microphone permission denied. Allow the microphone from the 🔒 icon in your browser, then tap again.';
       case 'service-not-allowed':
-        return '🎙️ Browser ki speech service block hai. Chrome/Edge use karein ya settings me speech recognition on karein.';
+        return '🎙️ The browser speech service is blocked. Use Chrome/Edge or enable speech recognition in settings.';
       case 'no-speech':
-        return '🎙️ Kuch sunayi nahi diya. Thoda zor se bolein — dobara try kar raha hoon.';
+        return '🎙️ Did not catch that. Please speak a little louder — trying again.';
       case 'audio-capture':
-        return '🎙️ Mic device nahi mila. Mic/headset check karein, ya koi doosra app mic use to nahi kar raha.';
+        return '🎙️ No microphone found. Check your mic/headset, or make sure another app is not using it.';
       case 'network':
-        return '🎙️ Voice ke liye internet chahiye (speech Google server pe process hoti hai). Connection check karein.';
+        return '🎙️ Voice needs internet (speech is processed by the browser service). Please check your connection.';
       case 'aborted':
-        return '🎙️ Voice band ho gayi. Dobara tap karke bolein.';
+        return '🎙️ Voice stopped. Tap again and speak.';
       case 'language-not-supported':
-        return '🎙️ Ye browser Hindi/Hinglish speech support nahi karta. Neeche type karke bhi likh sakte hain.';
+        return '🎙️ This browser does not support Hindi/Hinglish speech. You can type below instead.';
       default:
-        return '🎙️ Mic me dikkat aayi (' + code + '). Dobara tap karein, ya neeche type karke likhein.';
+        return '🎙️ Microphone error (' + code + '). Tap again, or type below.';
     }
   }
 
@@ -416,7 +416,7 @@
       if (typeof bbTrack === 'function') bbTrack('voice_command_start', {});
 
       if (!this.micSupported) {
-        toast('🎙️ Is browser me voice support nahi hai (Firefox/Safari purane version). Chrome ya Edge use karein — neeche type karke bhi likh sakte hain.');
+        toast('🎙️ Voice is not supported in this browser (Firefox / older Safari). Use Chrome or Edge — or type below instead.');
         return;
       }
       if (!this.secureOk) {
@@ -429,7 +429,7 @@
       if (navigator.permissions && navigator.permissions.query) {
         navigator.permissions.query({ name: 'microphone' }).then((st) => {
           if (st.state === 'denied') {
-            toast('🎙️ Mic permission block hai. Browser ke 🔒 icon se microphone allow karein, phir dobara tap karein.');
+            toast('🎙️ Microphone permission is blocked. Allow it from the 🔒 icon in your browser, then tap again.');
             return;
           }
           this._startRecognition();
@@ -507,7 +507,7 @@
 
     handleClearHisaab(name) {
       if (!window.state || !Array.isArray(window.state.khata)) {
-        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        toast('Ledger did not load. Refresh the page and try again.');
         return;
       }
       const target = this.findKhataByName(name);
@@ -515,7 +515,7 @@
         // Destructive + voice input is imperfect => confirm, then offer undo.
         const amt = target.amount ? '₹' + Number(target.amount).toLocaleString('en-IN') : 'pura hisaab';
         if (!window.confirm(`${target.name} ka hisaab (${amt}) "paid" mark karein?`)) {
-          this.updateTranscriptUI('Cancel kar diya — kuch change nahi hua.');
+          this.updateTranscriptUI('Cancelled — nothing changed.');
           return;
         }
         const before = { status: target.status, paidAmount: target.paidAmount, updatedAt: target.updatedAt };
@@ -543,7 +543,7 @@
 
     handleQuickReminder(name) {
       if (!window.state || !Array.isArray(window.state.khata)) {
-        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        toast('Ledger did not load. Refresh the page and try again.');
         return;
       }
       const target = this.findKhataByName(name);
@@ -594,18 +594,8 @@
       const container = document.createElement('div');
       container.id = 'bb-voice-modal-root';
       container.innerHTML = `
-        <!-- Floating FAB Assistant (Compact, Clean, No overlap) -->
-        <div id="bb-fab-assistant" class="bb-fab-group">
-          <button class="bb-fab-btn bb-fab-camera" onclick="bbVoiceAssistant.openOcrPicker()"
-                  title="Scan Bill / Parchi / Photo" aria-label="Bill ya parchi scan karein">
-            <span>📷</span>
-          </button>
-          <button class="bb-fab-btn bb-fab-mic" id="bb-fab-mic" onclick="bbVoiceAssistant.startVoice()"
-                  title="Bolkar Hisaab Likhein" aria-label="Bolkar hisaab likhein">
-            <span class="bb-fab-icon">🎙️</span>
-            <span class="bb-fab-label">Bolkar Likhein</span>
-          </button>
-        </div>
+        <!-- NOTE: floating mic/camera FABs removed — wo har screen pe chipke rehte the.
+             Speak / Scan ke clean entry points ab sirf Home aur Khata screen pe hain. -->
 
         <!-- Hidden Inputs for Camera and File Upload -->
         <input type="file" id="bb-ocr-camera-input" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none;" onchange="bbVoiceAssistant.handleImageSelected(this)" />
@@ -622,22 +612,22 @@
             <!-- OCR Source Picker Stage -->
             <div id="bb-stage-ocr-picker" style="display:none;">
               <p style="font-size:13.5px;color:var(--text-secondary);font-weight:600;margin:0 0 16px;">
-                Dukaan ki kachi parchi, notebook ya printed invoice scan karein:
+                Scan a shop bill, notebook page or printed invoice:
               </p>
 
               <div class="bb-ocr-options-grid">
                 <button class="bb-ocr-opt-btn" onclick="bbVoiceAssistant.triggerDirectCamera()">
                   <span class="bb-opt-icon">📸</span>
                   <div>
-                    <strong>Camera Se Photo Lo</strong>
-                    <small>Live bill ya parchi ki photo khechein</small>
+                    <strong>Take a Photo</strong>
+                    <small>Capture a live bill or receipt</small>
                   </div>
                 </button>
                 <button class="bb-ocr-opt-btn" onclick="bbVoiceAssistant.triggerGalleryUpload()">
                   <span class="bb-opt-icon">📁</span>
                   <div>
-                    <strong>Gallery / File Upload</strong>
-                    <small>Pehle se khinchi hui photo ya bill chunein</small>
+                    <strong>Upload from Gallery</strong>
+                    <small>Choose a saved photo or bill</small>
                   </div>
                 </button>
               </div>
@@ -669,8 +659,8 @@
                 <div class="bb-pulse-ring r2"></div>
                 <div class="bb-mic-pulse-circle">🎙️</div>
               </div>
-              <div class="bb-listen-text">Sun raha hoon... Aise bolein:</div>
-              <div class="bb-listen-example">"Ravi se 500 lena hai kal tak" ya "9918000099"</div>
+              <div class="bb-listen-text">Listening... try saying:</div>
+              <div class="bb-listen-example">"Ravi owes me 500" or "9918000099"</div>
               <div id="bb-voice-transcript" class="bb-transcript-box">Listening...</div>
               <button class="bb-sheet-btn secondary" style="margin-top:14px;" onclick="bbVoiceAssistant.stopVoice()">Stop / Cancel</button>
             </div>
@@ -679,11 +669,11 @@
             <div id="bb-stage-ocr" style="display:none;">
               <div class="bb-ocr-loader">
                 <div class="bb-spinner"></div>
-                <p id="bb-ocr-status-text">📷 Parchi scan ho rahi hai...</p>
+                <p id="bb-ocr-status-text">📷 Scanning the bill...</p>
                 <div class="bb-progress-bar-wrap">
                   <div id="bb-ocr-progress-bar" class="bb-progress-bar"></div>
                 </div>
-                <small id="bb-ocr-progress-sub">Pehli baar ~2 MB OCR engine download hoga — uske baad offline chalega</small>
+                <small id="bb-ocr-progress-sub">First time: ~2 MB OCR engine downloads — works offline after that</small>
                 <div class="bb-sheet-actions" style="margin-top:18px;">
                   <button class="bb-sheet-btn secondary" onclick="bbVoiceAssistant.cancelOcr()">
                     Cancel ✕
@@ -752,12 +742,6 @@
       document.body.appendChild(container);
       this.injectStyles();
 
-      // Do not advertise a mic that cannot work (Firefox, older Safari).
-      if (!this.micSupported) {
-        const micFab = document.getElementById('bb-fab-mic');
-        if (micFab) micFab.style.display = 'none';
-      }
-
       // The Sample Bills chips are a test harness. A shopkeeper must never
       // see "🧪 Sample Bills (1-Tap Instant Test)". Enable with ?bbdebug=1
       // or localStorage.setItem('bbDebug','1').
@@ -776,7 +760,7 @@
       head.textContent = '🎙️ Voice Assistant';
       stageListen.style.display = 'block';
       modal.style.display = 'flex';
-      this.updateTranscriptUI('Sun raha hoon... Bolna shuru kijiye');
+      this.updateTranscriptUI('Listening... start speaking');
     },
 
     hideListeningUI() {
@@ -817,8 +801,8 @@
       const head = document.getElementById('bb-assist-head-title');
       const stageResult = document.getElementById('bb-stage-result');
 
-      head.textContent = entry._manual ? '✍️ Manual Entry — scan complete nahi hua' : entry._lowConfidence ? '📷 Scan unclear — details bharo' : entry._isOcr ? (entry._confidence >= 2 ? '📷 Scan result — details verify karo' : '📷 Scan hua — ek baar check karo') : '🎙️ Entry Samjhi Gayi!';
-      if (entry._isOcr && entry._confidence < 2 && typeof window.showToast === 'function') window.showToast('Scan ki details verify karke hi save karein.');
+      head.textContent = entry._manual ? '✍️ Manual Entry — scan did not complete' : entry._lowConfidence ? '📷 Scan unclear — fill in the details' : entry._isOcr ? (entry._confidence >= 2 ? '📷 Scan result — verify the details' : '📷 Scanned — please check once') : '🎙️ Entry Samjhi Gayi!';
+      if (entry._isOcr && entry._confidence < 2 && typeof window.showToast === 'function') window.showToast('Verify the scanned details before saving.');
       stageResult.style.display = 'block';
       modal.style.display = 'flex';
 
@@ -1021,7 +1005,7 @@
         window.state.khata.unshift(newKhataItem);           // fallback
         if (typeof window.persist === 'function') window.persist();
       } else {
-        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        toast('Ledger did not load. Refresh the page and try again.');
         return;
       }
 
@@ -1049,7 +1033,7 @@
       if (!entry) return;
 
       if (!window.state) {
-        toast('Khata load nahi hua. Page refresh karke dobara try karein.');
+        toast('Ledger did not load. Refresh the page and try again.');
         return;
       }
       if (window.state) {
@@ -1135,12 +1119,12 @@
       const okType = /^image\/(jpeg|jpg|png|webp|bmp)$/i.test(file.type || '');
       const okExt  = /\.(jpe?g|png|webp|bmp)$/i.test(file.name || '');
       if (!okType && !okExt) {
-        toast('📷 Ye photo format support nahi hai (HEIC/PDF nahi). JPG, PNG ya WEBP bhejein — iPhone me Settings → Camera → "Most Compatible" chunein.');
+        toast('📷 This photo format is not supported. Send JPG, PNG or WEBP — on iPhone choose Settings → Camera → "Most Compatible".');
         input.value = '';
         return;
       }
       if (file.size > MAX_IMAGE_BYTES) {
-        toast('📷 Photo bahut badi hai (15 MB limit). Camera se dobara khechein ya screenshot use karein.');
+        toast('📷 Photo is too large (15 MB limit). Take a new photo or use a screenshot.');
         input.value = '';
         return;
       }
@@ -1218,7 +1202,7 @@
       head.textContent = '📷 Bill / Parchi Scanner';
       stageOcr.style.display = 'block';
       modal.style.display = 'flex';
-      statusText.textContent = 'Image optimize ho rahi hai...';
+      statusText.textContent = 'Optimizing image...';
       progressBar.style.width = '10%';
       progressSub.textContent = 'Resize + contrast enhance';
 
@@ -1234,15 +1218,15 @@
         // 2. Load the engine FROM OUR OWN ORIGIN. The old code fetched
         //    tesseract.min.js from a third-party CDN, which the site's CSP
         //    blocks (script-src/connect-src/worker-src), so OCR never ran.
-        statusText.textContent = 'OCR engine load ho raha hai...';
+        statusText.textContent = 'Loading OCR engine...';
         progressBar.style.width = '25%';
-        progressSub.textContent = 'Pehli baar ~2 MB — uske baad bina internet chalega';
+        progressSub.textContent = 'First time: ~2 MB — works without internet after that';
         await this.loadEngine();
         if (cancelled || this._ocrRunId !== runId) return;
         if (this._ocrRunId !== runId) return;
-        statusText.textContent = 'Parchi scan ho rahi hai...';
+        statusText.textContent = 'Scanning the bill...';
         progressBar.style.width = '45%';
-        progressSub.textContent = 'Naam aur amount dhoondh rahe hain';
+        progressSub.textContent = 'Finding name and amount';
 
         // 3. Recognize — worker created once, always terminated.
         worker = await window.Tesseract.createWorker(OCR.lang, 1, {
@@ -1291,17 +1275,17 @@
         console.warn('OCR unavailable; switching to manual entry.');
         let msg;
         if (err && err.message === 'OCR_TIMEOUT') {
-          msg = '⏳ Scan me bahut time lag raha hai. Chhoti/seedhi photo se dobara try karein.';
+          msg = '⏳ The scan is taking too long. Try again with a smaller, straight photo.';
         } else if (err && err.message === 'OCR_EMPTY') {
-          msg = '📷 Parchi se koi text nahi mila. Achhi roshni me, seedha photo khechein.';
+          msg = '📷 No text found in the bill. Take a straight photo in good light.';
         } else if (err && err.message === 'OFFLINE_OCR') {
-          msg = '📶 Pehli baar OCR engine download karne ke liye internet chahiye. Abhi manual entry kar lijiye.';
+          msg = '📶 Internet is needed to download the OCR engine the first time. You can add the entry manually for now.';
         } else if (err && /IMAGE_(READ|DECODE|ENCODE)_FAILED|ENGINE_LOAD_FAILED/.test(err.message)) {
-          msg = '📷 Photo padh nahi paaye. Dusri photo ya screenshot se try karein.';
+          msg = '📷 Could not read the photo. Try another photo or a screenshot.';
         } else if (!navigator.onLine) {
-          msg = '📶 Internet nahi hai. Pehli baar scan ke liye internet chahiye — abhi manual entry kar lijiye.';
+          msg = '📶 No internet. The first scan needs internet — you can add the entry manually for now.';
         } else {
-          msg = 'OCR scan me dikkat aayi. Kripya manual entry karein.';
+          msg = 'Something went wrong in the OCR scan. Please add the entry manually.';
         }
         toast(msg);        this.skipOcrToManual();
       } finally {
@@ -1487,46 +1471,6 @@
       const s = document.createElement('style');
       s.id = 'bb-voice-styles';
       s.textContent = `
-        /* FAB Buttons Group - Clean, Elevated, No Overlap */
-        .bb-fab-group {
-          position: fixed;
-          bottom: 78px;
-          right: 14px;
-          z-index: 990;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .bb-fab-btn {
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-family: inherit;
-          font-weight: 800;
-          box-shadow: 0 8px 20px rgba(65,35,25,0.18);
-          transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .bb-fab-btn:active { transform: scale(0.93); }
-        .bb-fab-mic {
-          background: linear-gradient(135deg, #FF725F, #E8594B);
-          color: #fff;
-          padding: 11px 16px;
-          border-radius: 28px;
-          font-size: 13.5px;
-        }
-        .bb-fab-camera {
-          background: #FFFDF8;
-          color: #261818;
-          border: 1.5px solid #F0DFCF;
-          width: 42px;
-          height: 42px;
-          border-radius: 50%;
-          justify-content: center;
-          font-size: 17px;
-        }
-
         /* Modal Backdrop & Sheet */
         .bb-assist-backdrop {
           position: fixed;
@@ -1855,8 +1799,6 @@
         @media (max-width: 400px) {
           .bb-grid-inputs { grid-template-columns: 1fr; }
           .bb-sheet-actions { grid-template-columns: 1fr; }
-          .bb-fab-label { display: none; }
-          .bb-fab-mic { padding: 11px; border-radius: 50%; }
         }
       `;
       document.head.appendChild(s);

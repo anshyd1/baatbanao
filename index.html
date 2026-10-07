@@ -230,7 +230,7 @@
 <!-- Full styles -->
 <!-- style.css stays render-blocking on purpose: it's small and needed
      immediately to avoid a flash of unstyled home page. -->
-<link rel="stylesheet" href="style.css?v=1.2.1">
+<link rel="stylesheet" href="style.css?v=1.2.3">
 <link rel="stylesheet" href="install.css?v=1.1.0" media="print" onload="this.media='all'">
 <noscript>
   <link rel="stylesheet" href="install.css?v=1.1.0">
@@ -286,7 +286,7 @@
     <h1 class="logo">
       <span>B</span><span>a</span><span>a</span><span>t</span><span>B</span><span>a</span><span>n</span><span>a</span><span>o</span>
     </h1>
-    <p class="tag">Paisa bhi wapas, rishta bhi safe <span class="wink">😄</span></p>
+    <p class="tag">Get paid politely — relationships intact <span class="wink">😄</span></p>
     <div class="dots"><span></span><span></span><span></span></div>
   </div>
   <p class="madein">
@@ -383,7 +383,7 @@
   <div id="seo-home-section" style="padding:26px 18px 10px; max-width:760px; margin:0 auto;">
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
       <span style="font-size:26px;">🪙</span>
-      <span style="font-weight:900; font-size:18px; color:#2b2420;">Polite payment reminder — 5 second me, rishta safe rakh ke</span>
+      <span style="font-weight:900; font-size:18px; color:#2b2420;">Polite payment reminders in 5 seconds — keeping relationships safe</span>
     </div>
     <p style="margin:0 0 14px; color:#6b6058; font-size:14px; line-height:1.6;">
       BaatBanao ek <b>free WhatsApp payment reminder maker</b> hai — Hinglish, Hindi, Bhojpuri aur English me.
@@ -422,19 +422,19 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3L21 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 9.5V20C5 20.55 5.45 21 6 21H9.5C10.05 21 10.5 20.55 10.5 20V15C10.5 14.45 10.95 14 11.5 14H12.5C13.05 14 13.5 14.45 13.5 15V20C13.5 20.55 13.95 21 14.5 21H18C18.55 21 19 20.55 19 20V9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Home</span>
     </button>
-    <button class="nav-item" data-route="vasooli" onclick="navigate('vasooli')" aria-label="Vasooli — reminder banao">
+    <button class="nav-item" data-route="vasooli" onclick="navigate('vasooli')" aria-label="Reminders — create a payment reminder">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L19.5 10H13L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-      <span>Vasooli</span>
+      <span>Reminders</span>
     </button>
-    <button class="nav-item" data-route="khata" onclick="navigate('khata')" aria-label="Udhaar Khata">
+    <button class="nav-item" data-route="khata" onclick="navigate('khata')" aria-label="Credit ledger — customer dues">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 8H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 12H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span>Khata</span>
     </button>
-    <button class="nav-item" data-route="hisaab" onclick="navigate('hisaab')" aria-label="Roz ka hisaab">
+    <button class="nav-item" data-route="hisaab" onclick="navigate('hisaab')" aria-label="Day cashbook — daily income and expenses">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M7 9H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 13H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M15.5 10.5C16.6 10.5 17.5 11.4 17.5 12.5V15.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 13H17.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Hisaab</span>
+      <span>Cashbook</span>
     </button>
-    <button class="nav-item" data-route="more" onclick="openMenu()" aria-label="Aur options — menu kholo">
+    <button class="nav-item" data-route="more" onclick="openMenu()" aria-label="More — open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="2"/></svg>
       <span>More</span>
     </button>
@@ -451,49 +451,49 @@
   </div>
 
   <div class="drawer-body">
-    <div class="drawer-group">Roz ka Kaam</div>
+    <div class="drawer-group">Daily Work</div>
     <a class="drawer-link" href="#home" onclick="closeMenu()"><span>🏠</span> Home</a>
-    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Vasooli — Reminder Banao</a>
-    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Udhaar Khata</a>
-    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Roz ka Hisaab</a>
-    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Bill &amp; Invoice Banao</a>
-    <a class="drawer-link" href="/app"><span>🧊</span> Vault Kholo (Web)</a>
+    <a class="drawer-link" href="#vasooli" onclick="closeMenu()"><span>⚡</span> Payment Reminders</a>
+    <a class="drawer-link" href="#khata" onclick="closeMenu()"><span>📒</span> Credit Ledger</a>
+    <a class="drawer-link" href="#hisaab" onclick="closeMenu()"><span>💰</span> Daily Cashbook</a>
+    <a class="drawer-link" href="#billing" onclick="closeMenu()"><span>🧾</span> Invoices &amp; Billing</a>
+    <a class="drawer-link" href="/app"><span>🧊</span> Open Vault (Web)</a>
     <a class="drawer-link" href="/download"><span>⬇️</span> <span class="drawer-label-nowrap">Download Vault App <span id="drawer-vault-version">v0.4.4</span></span></a>
-    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Sabko Ek Saath Reminder</a>
+    <a class="drawer-link" href="#bulk" onclick="closeMenu()"><span>🚀</span> Bulk Reminders</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Aur Tools</div>
-    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Ready Message Templates</a>
+    <div class="drawer-group">More Tools</div>
+    <a class="drawer-link" href="#templates" onclick="closeMenu()"><span>🧩</span> Message Templates</a>
     <a class="drawer-link" href="#history" onclick="closeMenu()"><span>🕒</span> Reminder History</a>
-    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> UPI QR / Payment Link</a>
-    <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> App Install Karein</div>
+    <a class="drawer-link" href="/upi-payment-link-generator"><span>🔗</span> UPI QR &amp; Payment Link</a>
+    <div class="drawer-link bb-install-menu-item" role="button" tabindex="0" data-bb-install-trigger onclick="closeMenu()"><span>📲</span> Install App</div>
 
     <div class="drawer-sep"></div>
     <div class="drawer-group">Message Guides</div>
-    <a class="drawer-link" href="/guides"><span>📚</span> 16 Ready Message Guides</a>
-    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Dost se Paise</a>
-    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Dukaan ka Udhaar</a>
-    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Kiraya / Rent</a>
-    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Client &amp; Freelance</a>
+    <a class="drawer-link" href="/guides"><span>📚</span> 16 Message Guides</a>
+    <a class="drawer-link" href="/dost-se-paise-wapas-message"><span>🤝</span> Friends &amp; Personal Loans</a>
+    <a class="drawer-link" href="/kirana-shop-udhaar-reminder"><span>🏪</span> Shop Credit</a>
+    <a class="drawer-link" href="/kirayedaar-rent-reminder-message"><span>🏠</span> Rent &amp; Tenancy</a>
+    <a class="drawer-link" href="/freelancer-payment-reminder-message"><span>💻</span> Clients &amp; Freelancers</a>
     <a class="drawer-link" href="/bhojpuri-udhaar-message"><span>🗣️</span> Bhojpuri Messages</a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Madad Chahiye?</div>
+    <div class="drawer-group">Support</div>
     <a class="drawer-link drawer-wa" href="https://wa.me/919918996096?text=Hello!%20I%20need%20assistance%20with%20BaatBanao" target="_blank" rel="noopener">
-      <span class="drawer-wa-label"><span>💬</span> WhatsApp par Baat Karein</span><span class="drawer-chip">Priority</span>
+      <span class="drawer-wa-label"><span>💬</span> WhatsApp Support</span><span class="drawer-chip">Priority</span>
     </a>
 
     <div class="drawer-sep"></div>
-    <div class="drawer-group">Settings &amp; Help</div>
+    <div class="drawer-group">Settings</div>
     <a class="drawer-link" href="#settings" onclick="closeMenu()"><span>⚙️</span> Backup &amp; Settings</a>
-    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> App Share Karein</div>
-    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy</a>
-    <a class="drawer-link" href="/terms"><span>📜</span> Terms</a>
-    <a class="drawer-link" href="/about"><span>ℹ️</span> About BaatBanao</a>
+    <div class="drawer-link" role="button" tabindex="0" onclick="shareApp();closeMenu()"><span>📤</span> Share App</div>
+    <a class="drawer-link" href="/privacy"><span>🔒</span> Privacy Policy</a>
+    <a class="drawer-link" href="/terms"><span>📜</span> Terms of Service</a>
+    <a class="drawer-link" href="/about"><span>ℹ️</span> About</a>
     <a class="drawer-link" href="/contact"><span>✉️</span> Contact</a>
   </div>
 
-  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Aapka data sirf aapke phone me</div>
+  <div class="drawer-footer">Made with ❤️ in India 🇮🇳 · Your data stays on your device</div>
 </nav>
 
 <!-- Toast -->
