@@ -27,7 +27,7 @@ class Site:
   if 'google-analytics.com' in u.netloc or u.netloc=='www.google.com' or 'doubleclick.net' in u.netloc or 'googleadservices.com' in u.netloc:
    self.collect.append({'url':req.url,'body':req.post_data or ''});await route.fulfill(status=204);return
   if u.netloc=='www.googletagmanager.com':self.tags.append(req.url)
-  if self.fail_ocr and 'cdn.jsdelivr.net' in u.netloc:await route.abort();return
+  if self.fail_ocr and ('cdn.jsdelivr.net' in u.netloc or '/vendor/tesseract/' in u.path):await route.abort();return
   if self.fail_vault and ('flutter-canvaskit' in req.url or u.path=='/app/main.dart.js'):await route.abort();return
   if u.netloc!='www.baatbanao.shop':await route.continue_();return
   path=u.path;file=R/('index.html' if path=='/' else 'app/index.html' if path=='/app' else path.lstrip('/'))
@@ -112,12 +112,22 @@ async def browser_tests():
   await page.screenshot(path=str(OUT/'candidate-ocr-clean.png'),full_page=True)
   await page.evaluate("async()=>{const b=await(await fetch('/assets/sample-bills/sample-bill-1-kirana.jpg')).blob();await bbVoiceAssistant.runOcrOnImage(b,'');}");await page.wait_for_timeout(500)
   entry=await page.evaluate('bbVoiceAssistant.activeEntry')
-  check('Uncertain demo scan does not prefill guessed financial fields',entry.get('_lowConfidence') and entry.get('amount')=='' and entry.get('name')=='' and entry.get('phone')=='',str(entry))
+  check('Shipped kirana bill takes the labelled due date, not the invoice date',entry.get('dueDate')=='2026-09-25',str(entry))
+  check('Shipped kirana bill extracts amount and customer name',entry.get('amount')==1450 and entry.get('name','').lower()=='ramesh kumar',str(entry))
+  check('Shipped kirana bill takes the phone from the customer block',entry.get('phone')=='9876543210',str(entry))
   check('Bill header phone is not misidentified as customer phone',await page.evaluate("bbVoiceAssistant.parseOcrText('STORE\\nMobile: 9999999999\\nCustomer: Ravi Kumar\\nAmount Due: INR 1450').phone")=='')
+  # Genuinely uncertain scan (worker reports low confidence) must not prefill money.
+  lowconf=await page.evaluate("""async()=>{const oldCreate=Tesseract.createWorker;Tesseract.createWorker=async()=>({recognize:async()=>({data:{text:'Customer: Someone\\nAmount Due: INR 100',confidence:40}}),terminate:async()=>{}});const b=await(await fetch('/assets/sample-bills/sample-bill-1-kirana.jpg')).blob();await bbVoiceAssistant.runOcrOnImage(b,'');await new Promise(r=>setTimeout(r,400));Tesseract.createWorker=oldCreate;return bbVoiceAssistant.activeEntry;}""")
+  check('Low-confidence scan does not prefill guessed financial fields',lowconf.get('_lowConfidence') and lowconf.get('amount')=='' and lowconf.get('name')=='' and lowconf.get('phone')=='',str(lowconf))
   check('Unlabelled invoice/year digits are not guessed as an amount',await page.evaluate("bbVoiceAssistant.parseOcrText('Invoice 123456\\nCustomer: Ravi Kumar\\nDate 06/10/2026').amount")=='')
   # Simulated delayed completion exercises cancellation; the OCR above was real.
-  cancelled=await page.evaluate("""async()=>{const old=Tesseract.recognize;let finish;Tesseract.recognize=()=>new Promise(r=>finish=r);const b=await(await fetch('/assets/sample-bills/sample-bill-1-kirana.jpg')).blob();const task=bbVoiceAssistant.runOcrOnImage(b,'');while(!finish)await new Promise(r=>setTimeout(r,10));bbVoiceAssistant.skipOcrToManual();finish({data:{text:'Customer: OLD RESULT\\nAmount Due: INR 100',confidence:99}});await task;await new Promise(r=>setTimeout(r,450));Tesseract.recognize=old;return bbVoiceAssistant.activeEntry;}""")
+  cancelled=await page.evaluate("""async()=>{const oldCreate=Tesseract.createWorker;let finish;Tesseract.createWorker=async()=>({recognize:()=>new Promise(r=>finish=r),terminate:async()=>{}});const b=await(await fetch('/assets/sample-bills/sample-bill-1-kirana.jpg')).blob();const task=bbVoiceAssistant.runOcrOnImage(b,'');while(!finish)await new Promise(r=>setTimeout(r,10));bbVoiceAssistant.skipOcrToManual();finish({data:{text:'Customer: OLD RESULT\\nAmount Due: INR 100',confidence:99}});await task;await new Promise(r=>setTimeout(r,450));Tesseract.createWorker=oldCreate;return bbVoiceAssistant.activeEntry;}""")
   check('Cancelled OCR cannot overwrite manual entry',cancelled.get('_manual') and not cancelled.get('amount'))
+  gate=await page.evaluate("""async()=>{const before=state.khata.length;bbVoiceAssistant.showResultModal({name:'Gate Test',amount:'500',phone:'9876543210',type:'lena',dueDate:'2026-10-10',_isOcr:true});bbVoiceAssistant.saveToKhataAction();const blocked=state.khata.length===before;const copyDisabled=document.querySelector('.bb-msg-copy-btn').disabled;bbVoiceAssistant.setReviewed(true);bbVoiceAssistant.saveToKhataAction();const saved=state.khata.length===before+1;const savedRow=state.khata[0];return {blocked,copyDisabled,saved,row:{name:savedRow.name,amount:savedRow.amount,dueDate:savedRow.dueDate}};}""")
+  check('Review gate blocks save/copy before verification and allows after',gate['blocked'] and gate['saved'] and gate['copyDisabled'],str(gate))
+  check('Review gate saves the reviewed values',gate['row']['amount']==500 and gate['row']['dueDate']=='2026-10-10',str(gate))
+  relock=await page.evaluate("""()=>{bbVoiceAssistant.showResultModal({name:'Gate Test 2',amount:'100',type:'lena',_isOcr:true});bbVoiceAssistant.setReviewed(true);document.getElementById('bb-edit-amount').value='200';bbVoiceAssistant.syncActiveEntry();return bbVoiceAssistant.isReviewed();}""")
+  check('Review gate re-locks after a field edit',relock==False)
   await ctx.close()
   site=Site();site.fail_ocr=True;ctx,page=await context(browser,site);await page.goto(BASE,wait_until='load');await page.evaluate("async(data)=>{await bbVoiceAssistant.runOcrOnImage(new Blob([Uint8Array.from(atob(data.split(',')[1]),c=>c.charCodeAt(0))],{type:'image/png'}),'');}",image_data())
   check('Blocked OCR dependencies produce honest manual fallback','Manual Entry' in await page.locator('#bb-assist-head-title').inner_text())

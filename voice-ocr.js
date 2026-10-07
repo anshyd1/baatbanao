@@ -85,6 +85,11 @@
   function cleanSpokenText(t){
     return String(t || '').trim().replace(/[\.,\?!।]/g, ' ');
   }
+  /* Local calendar date (YYYY-MM-DD). Never toISOString() — between local
+     midnight and 05:30 IST the UTC day is still yesterday. */
+  function localISODate(d){
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
 
   /* "1,450" / "1.450" / "1450.00" / "1 450"  ->  1450
      OCR reads a thousands comma as a dot often enough to matter: we measured
@@ -99,52 +104,98 @@
     return isFinite(n) ? n : null;
   }
 
+  /* Hindi/Hinglish spoken-number vocabulary. Composition follows Indian
+     grouping: "ek hazar paanch sau" = 1×1000 + 5×100 = 1500. */
+  const HINDI_NUMBER_WORDS = {
+    'ek': 1, 'एक': 1, 'do': 2, 'doo': 2, 'दो': 2, 'teen': 3, 'तीन': 3, 'char': 4, 'चार': 4,
+    'panch': 5, 'paanch': 5, 'पांच': 5, 'chhe': 6, 'chhah': 6, 'che': 6, 'छह': 6,
+    'saat': 7, 'सात': 7, 'aath': 8, 'आठ': 8, 'nau': 9, 'नौ': 9, 'das': 10, 'दस': 10,
+    'gyarah': 11, 'gyara': 11, 'ग्यारह': 11, 'barah': 12, 'बारह': 12, 'terah': 13, 'तेरह': 13,
+    'chaudah': 14, 'चौदह': 14, 'pandrah': 15, 'pandra': 15, 'पंद्रह': 15, 'solah': 16, 'सोलह': 16,
+    'satrah': 17, 'सत्रह': 17, 'atharah': 18, 'अठारह': 18, 'unnis': 19, 'उन्नीस': 19,
+    'bees': 20, 'बीस': 20, 'tees': 30, 'तीस': 30, 'chalis': 40, 'चालीस': 40,
+    'pachaas': 50, 'पचास': 50, 'saath': 60, 'साठ': 60, 'sattar': 70, 'सत्तर': 70,
+    'assi': 80, 'अस्सी': 80, 'nabbe': 90, 'नब्बे': 90,
+    'dedh': 1.5, 'डेढ़': 1.5, 'dhai': 2.5, 'ढाई': 2.5, 'adha': 0.5, 'aadha': 0.5, 'आधा': 0.5
+  };
+  const HINDI_MULTIPLIERS = {
+    'sau': 100, 'सौ': 100,
+    'hazar': 1000, 'hazaar': 1000, 'हजार': 1000, 'हज़ार': 1000, 'k': 1000,
+    'lakh': 100000, 'लाख': 100000
+  };
+  const CURRENCY_WORD_RE = /(rupaye|rupya|rupees|rs\.?|₹|inr)/i;
+  /* Spans that look like money but are dates, day-numbers or phone numbers.
+     "Ravi 15 ko 500 dena hai" must never parse as ₹15. */
+  const NON_MONEY_SPANS = [
+    /\b\d{1,2}\s*(?:ko|tarikh|tareekh|tareeq)\b/gi,
+    /\d{1,2}\s*(?:को|तारीख|तरीख)/g,                                        // "15 को"
+    /\b\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}\b/g,
+    /\b\d{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?,?\s*\d{2,4}\b/gi,
+    /(?:\+?91[\s-]?)?[6-9]\d{9}/g
+  ];
+  function stripNonMoneySpans(s) {
+    let out = String(s || '');
+    for (const re of NON_MONEY_SPANS) out = out.replace(re, ' ');
+    return out;
+  }
+  function composeSpokenNumber(tokens) {
+    let total = 0, current = 0, used = false;
+    for (const t of tokens) {
+      if (t.m != null) { current = (current || 1) * t.m; total += current; current = 0; used = true; }
+      else { current += t.v; used = true; }
+    }
+    return used ? total + current : null;
+  }
+  function roundMoney2(n) {
+    const v = Number(n);
+    if (!isFinite(v)) return null;
+    return typeof bbRoundMoney === 'function' ? bbRoundMoney(v) : Math.round(v * 100) / 100;
+  }
+
   /* `exclude` = a substring that must never be read as money (a 10-digit
      phone number the caller already picked out of the same sentence). */
   function extractAmountFromText(text, exclude){
     let src = String(text || '');
     if (exclude) src = src.split(exclude).join(' ');
-    const clean = cleanSpokenText(src).toLowerCase();
+    const moneySrc = stripNonMoneySpans(src);
+    // Lowercase only — cleanSpokenText() would strip the dot in "1450.75".
+    const cleanMoney = moneySrc.toLowerCase();
 
-    // 1. Multipliers like "2.5 hazar", "5k", "1 lakh", "2 hazar", "500", etc.
-    const multiplierMatch = clean.match(/(\d+(?:[.,]\d+)?)\s*(lakh|लाख|hazaar|hazar|sau|सौ|हजार|k\b)/i);
-    if (multiplierMatch) {
-      const val = normaliseNumber(multiplierMatch[1]);
-      const unit = multiplierMatch[2].toLowerCase();
-      if (val != null) {
-        if (unit === 'lakh' || unit === 'लाख') return Math.round(val * 100000);
-        if (unit === 'hazaar' || unit === 'hazar' || unit === 'k' || unit === 'हजार') return Math.round(val * 1000);
-        if (unit === 'sau' || unit === 'सौ') return Math.round(val * 100);
+    // 1. Spoken numbers ("ek hazar paanch sau", "दो हजार", "2.5 hazar", "5k").
+    //    Only trusted when the phrase actually carries a multiplier or a
+    //    currency word — otherwise stray words like "kar do" read as ₹2.
+    const tokenRe = /(\d+(?:[.,]\d+)?)|([a-z\u0900-\u097F]+)/gi;
+    const tokens = [];
+    let tm;
+    while ((tm = tokenRe.exec(cleanMoney))) {
+      if (tm[1] != null) {
+        const v = normaliseNumber(tm[1]);
+        if (v != null) tokens.push({ v });
+      } else {
+        const w = tm[2].toLowerCase();
+        if (HINDI_MULTIPLIERS[w] != null) tokens.push({ m: HINDI_MULTIPLIERS[w] });
+        else if (HINDI_NUMBER_WORDS[w] != null) tokens.push({ v: HINDI_NUMBER_WORDS[w] });
+      }
+    }
+    if (tokens.some(t => t.m != null) || (CURRENCY_WORD_RE.test(cleanMoney) && tokens.length)) {
+      const composed = composeSpokenNumber(tokens);
+      if (composed != null && composed > 0) {
+        const rounded = roundMoney2(composed);
+        if (rounded != null && rounded > 0) return rounded;
       }
     }
 
-    // 2. Direct plain digits like "200", "1200", "₹500", "1,450.00"
-    const digitMatch = src.match(/(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:[.,]\d{1,3})?)/i);
+    // 2. Direct plain digits like "200", "1200", "₹500", "1,450.00".
+    //    Paise (≤2 decimals) are preserved; 3-decimal groups were already
+    //    collapsed to thousands by normaliseNumber().
+    const digitMatch = moneySrc.match(/(?:₹|rs\.?|inr|rupees)?\s*(\d[\d,]*(?:[.,]\d{1,3})?)/i);
     if (digitMatch) {
       const parsed = normaliseNumber(digitMatch[1]);
-      if (parsed != null && parsed > 0) return Math.round(parsed);
+      if (parsed != null && parsed > 0) {
+        const rounded = roundMoney2(parsed);
+        if (rounded != null && rounded > 0) return rounded;
+      }
     }
-
-    // 3. Spoken number words
-    const numWords = {
-      'ek': 1, 'do': 2, 'teen': 3, 'char': 4, 'panch': 5, 'paanch': 5, 'chhe': 6, 'che': 6,
-      'saat': 7, 'aath': 8, 'nau': 9, 'das': 10, 'gyarah': 11, 'barah': 12, 'terah': 13,
-      'chaudah': 14, 'pandrah': 15, 'solah': 16, 'satrah': 17, 'atharah': 18, 'unnis': 19, 'bees': 20,
-      'dedh': 1.5, 'dhai': 2.5,
-      'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'डेढ़': 1.5, 'ढाई': 2.5
-    };
-
-    const wordMult = src.match(/(ek|do|teen|char|panch|paanch|chhe|che|saat|aath|nau|das|dedh|dhai|एक|दो|तीन|चार|पांच|डेढ़|ढाई)\s*(hazaar|hazar|sau|सौ|हजार)/i);
-    if (wordMult) {
-      const val = numWords[wordMult[1].toLowerCase()] || 1;
-      const unit = wordMult[2];
-      if (/(hazaar|hazar|हजार)/i.test(unit)) return Math.round(val * 1000);
-      if (/(sau|सौ)/i.test(unit)) return Math.round(val * 100);
-    }
-
-    if (/(sau|सौ)/i.test(clean)) return 100;
-    if (/(hazar|hazaar|हजार)/i.test(clean)) return 1000;
-
     return null;
   }
 
@@ -215,17 +266,19 @@
     let dueText = '';
     const now = new Date();
     if (/(kal tak|kal|कल तक|कल)/i.test(clean)) {
-      const tmrw = new Date(now.getTime() + 86400000);
-      dueDate = tmrw.toISOString().slice(0, 10);
+      const tmrw = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      dueDate = localISODate(tmrw);
       dueText = 'Kal tak';
     } else if (/(aaj|today|आज)/i.test(clean)) {
-      dueDate = now.toISOString().slice(0, 10);
+      dueDate = localISODate(now);
       dueText = 'Aaj tak';
     } else if (/(parso|परसों)/i.test(clean)) {
-      const p = new Date(now.getTime() + 172800000);
-      dueDate = p.toISOString().slice(0, 10);
+      const p = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+      dueDate = localISODate(p);
       dueText = 'Parso tak';
     } else {
+      // "15 tarikh" has no month/year — shown as text only, never persisted
+      // as a due date. The review checkbox is the confirmation step.
       const tarikhMatch = clean.match(/(\d{1,2})\s*(tarikh|tareekh|तारीख|tareeq)/i);
       if (tarikhMatch) {
         dueText = `${tarikhMatch[1]} tarikh tak`;
@@ -366,19 +419,35 @@
           this.isListening = false;
           console.warn('Speech error:', e.error);
 
-          // Nothing heard? Try once more in the other language before giving up.
-          if ((e.error === 'no-speech' || e.error === 'aborted') && this.langIndex === 0) {
+          // An explicit user cancel is final — never auto-restart the mic.
+          if (this._userCancelled) {
+            this._pendingRetryLang = null;
+            this.updateTranscriptUI('🎙️ Voice band kar di.');
+            this._holdUi = true;
+            setTimeout(() => { this._holdUi = false; this.hideListeningUI(); }, 1200);
+            return;
+          }
+
+          // Nothing heard / language unsupported? Try once more in the other
+          // language before giving up. The retry language is remembered so a
+          // racing onend cannot reset it back to the primary language.
+          if ((e.error === 'no-speech' || e.error === 'aborted' || e.error === 'language-not-supported') && this.langIndex === 0) {
             this.langIndex = 1;
-            this.recognition.lang = SPEECH.fallback;
+            this._pendingRetryLang = SPEECH.fallback;
             this.updateTranscriptUI(micErrorMessage(e.error));
             this._holdUi = true;
             setTimeout(() => {
               this._holdUi = false;
-              try { this.recognition.start(); } catch (_) { this.hideListeningUI(); }
+              try {
+                if (this.recognition) this.recognition.lang = this._pendingRetryLang || SPEECH.primary;
+                this._pendingRetryLang = null;
+                this.recognition.start();
+              } catch (_) { this.hideListeningUI(); }
             }, 900);
             return;
           }
 
+          this._pendingRetryLang = null;
           this._holdUi = true;                       // keep the sheet up so it can be read
           this.updateTranscriptUI(micErrorMessage(e.error));
           setTimeout(() => { this._holdUi = false; this.hideListeningUI(); }, 3400);
@@ -386,9 +455,16 @@
 
         this.recognition.onend = () => {
           this.isListening = false;
-          // Back to the primary language for the next utterance.
-          this.langIndex = 0;
-          if (this.recognition) this.recognition.lang = SPEECH.primary;
+          // Back to the primary language for the NEXT utterance — but never
+          // while a fallback retry is still pending (it must run in en-IN).
+          if (!this._pendingRetryLang) {
+            this.langIndex = 0;
+            if (this.recognition) this.recognition.lang = SPEECH.primary;
+          }
+          // NOTE: _userCancelled is deliberately NOT cleared here — browsers
+          // fire onend/onerror in different orders, and clearing it in onend
+          // let a racing 'aborted' error restart the mic after Cancel. It is
+          // reset when the user starts the next session (_startRecognition).
           // Never leave a dead "Sun raha hoon..." sheet on screen.
           setTimeout(() => {
             if (!this._holdUi && !this.isListening) this.hideListeningUI();
@@ -441,6 +517,10 @@
 
     _startRecognition() {
       this._holdUi = false;
+      this._userCancelled = false;
+      this._pendingRetryLang = null;
+      this.langIndex = 0;
+      if (this.recognition) this.recognition.lang = SPEECH.primary;
       try {
         this.recognition.start();
       } catch (err) {
@@ -452,6 +532,9 @@
     },
 
     stopVoice() {
+      // Mark as user-initiated so the resulting 'aborted' error can never
+      // trigger the no-speech fallback retry (mic restarting after Cancel).
+      this._userCancelled = true;
       if (this.recognition && this.isListening) {
         this.recognition.stop();
       }
@@ -518,15 +601,44 @@
           this.updateTranscriptUI('Cancel kar diya — kuch change nahi hua.');
           return;
         }
-        const before = { status: target.status, paidAmount: target.paidAmount, updatedAt: target.updatedAt };
-        target.status = 'paid';
-        target.paidAmount = target.amount;
+        // Full snapshot (incl. transactions[]) so undo restores the ledger
+        // event too — not just three summary fields.
+        const snapshot = JSON.stringify(target);
+        const outstanding = typeof window.outstandingAmount === 'function'
+          ? window.outstandingAmount(target)
+          : Math.max((Number(target.amount) || 0) - (Number(target.paidAmount) || 0), 0);
+        if (Array.isArray(target.transactions)) {
+          // Canonical path: settle through the transaction ledger.
+          if (outstanding > 0) {
+            target.transactions.push({
+              id: 'tx-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+              type: 'received',
+              amount: outstanding,
+              date: localISODate(new Date()),
+              note: 'Voice: hisaab clear',
+              mode: 'Other',
+              createdAt: Date.now()
+            });
+          }
+          if (typeof window.syncKhataFromLedger === 'function') {
+            window.syncKhataFromLedger(target);
+          } else {
+            target.status = 'paid';
+            target.paidAmount = target.amount;
+          }
+        } else {
+          // Legacy row without a ledger yet.
+          target.status = 'paid';
+          target.paidAmount = target.amount;
+        }
         target.updatedAt = Date.now();
         if (typeof window.persist === 'function') window.persist();
         toast(`✅ ${target.name} ka hisaab clear kar diya gaya!`);
         if (typeof window.bbShowUndo === 'function') {
           window.bbShowUndo('Hisaab clear hua', () => {
-            Object.assign(target, before);
+            const fresh = JSON.parse(snapshot);
+            Object.keys(target).forEach(k => { delete target[k]; });
+            Object.assign(target, fresh);
             if (typeof window.persist === 'function') window.persist();
             if (typeof window.renderApp === 'function') window.renderApp();
           });
@@ -548,9 +660,18 @@
       }
       const target = this.findKhataByName(name);
       if (target) {
+        // Remind for what is actually outstanding — never the gross original
+        // amount after a partial payment, and never on a cleared entry.
+        const due = typeof window.outstandingAmount === 'function'
+          ? window.outstandingAmount(target)
+          : Math.max((Number(target.amount) || 0) - (Number(target.paidAmount) || 0), 0);
+        if (!due || due <= 0 || target.status === 'paid') {
+          this.updateTranscriptUI(`✅ ${target.name} ka hisaab already clear hai — reminder ki zarurat nahi.`);
+          return;
+        }
         this.activeEntry = {
           name: target.name,
-          amount: target.amount || '',
+          amount: due,
           type: 'lena',
           phone: target.phone || '',
           dueDate: target.dueDate || '',
@@ -706,7 +827,6 @@
 
               <div class="bb-result-tag-row">
                 <span id="bb-type-pill" class="bb-pill lena" onclick="bbVoiceAssistant.toggleType()">🟢 Lena Hai (Tap to change)</span>
-                <span id="bb-date-pill" class="bb-pill date">📅 Aaj</span>
               </div>
 
               <!-- Quick Edit Grid -->
@@ -725,6 +845,19 @@
                 <label class="bb-label">WhatsApp Mobile Number</label>
                 <input type="tel" id="bb-edit-phone" class="bb-input" placeholder="10-digit number e.g. 9876543210" oninput="bbVoiceAssistant.syncActiveEntry()" />
               </div>
+
+              <div style="margin-top:10px;">
+                <label class="bb-label">Due Date</label>
+                <input type="date" id="bb-edit-date" class="bb-input" oninput="bbVoiceAssistant.syncActiveEntry()" />
+                <div id="bb-date-source" style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:4px;"></div>
+              </div>
+
+              <!-- Mandatory human review before anything financial leaves the app -->
+              <label id="bb-review-row" style="display:flex;gap:9px;align-items:flex-start;margin:16px 0 0;font-size:13px;font-weight:700;line-height:1.45;cursor:pointer;">
+                <input type="checkbox" id="bb-review-confirm" style="margin-top:2px;width:17px;height:17px;flex:none;" onchange="bbVoiceAssistant.setReviewed(this.checked)" />
+                <span>Maine <b>naam</b>, <b>₹ amount</b>, <b>Lena/Dena</b>, <b>mobile number</b> aur <b>due date</b> check kar liye — ye details sahi hain.</span>
+              </label>
+              <div id="bb-review-hint" style="display:none;margin-top:6px;font-size:12px;font-weight:700;color:#B45309;">⚠️ Save / Copy / WhatsApp se pehle ye details verify karein.</div>
 
               <!-- Pre-Generated Messages Carousel -->
               <div style="margin-top:16px;">
@@ -846,8 +979,26 @@
         typePill.textContent = '🟢 Lena Hai (Tap to change)';
       }
 
-      const datePill = document.getElementById('bb-date-pill');
-      datePill.textContent = entry.dueText ? `📅 ${entry.dueText}` : '📅 Aaj';
+      // Due date: editable input + honest source label. OCR only ever fills
+      // this from an explicit "Due Date" line; otherwise it stays blank.
+      const dateInput = document.getElementById('bb-edit-date');
+      if (dateInput) dateInput.value = entry.dueDate || '';
+      const dateSource = document.getElementById('bb-date-source');
+      if (dateSource) {
+        const src = entry._dateSource;
+        dateSource.textContent = src === 'bill-due-label'
+          ? '📅 Bill ki "Due Date" line se — phir bhi ek baar dekh lein'
+          : src === 'bill-invoice-date'
+            ? `📅 Bill par due date nahi mila (${entry.dueText ? entry.dueText.replace(' — due date nahi mila', '') : 'koi date nahi'}). Zaroorat ho toh aap daalein.`
+            : '📅 Aap khud daal sakte hain (ya khali chhod dein)';
+      }
+
+      // Human review gate — nothing financial is sent/saved until checked.
+      const reviewBox = document.getElementById('bb-review-confirm');
+      if (reviewBox) reviewBox.checked = false;
+      this._reviewed = false;
+      const reviewHint = document.getElementById('bb-review-hint');
+      if (reviewHint) reviewHint.style.display = 'block';
 
       this.renderAmountWarning(entry);
       this.renderMessageCards(entry);
@@ -880,15 +1031,56 @@
         typePill.className = 'bb-pill lena';
         typePill.textContent = '🟢 Lena Hai (Tap to change)';
       }
+      // Direction changed — the previous review no longer covers this entry.
+      this._reviewed = false;
+      const reviewBox = document.getElementById('bb-review-confirm');
+      if (reviewBox) reviewBox.checked = false;
+      const reviewHint = document.getElementById('bb-review-hint');
+      if (reviewHint) reviewHint.style.display = 'block';
       this.renderMessageCards(this.activeEntry);
     },
 
     syncActiveEntry() {
       if (!this.activeEntry) return;
+      const before = JSON.stringify([this.activeEntry.name, this.activeEntry.amount, this.activeEntry.phone, this.activeEntry.dueDate]);
       this.activeEntry.name = document.getElementById('bb-edit-name').value.trim();
       this.activeEntry.amount = document.getElementById('bb-edit-amount').value.trim();
       this.activeEntry.phone = document.getElementById('bb-edit-phone').value.trim();
+      const dateInput = document.getElementById('bb-edit-date');
+      if (dateInput) this.activeEntry.dueDate = dateInput.value || '';
+      const after = JSON.stringify([this.activeEntry.name, this.activeEntry.amount, this.activeEntry.phone, this.activeEntry.dueDate]);
+      if (before !== after) {
+        // A field actually changed — the previous review no longer covers it.
+        if (this.activeEntry.dueDate && dateInput && dateInput.value) this.activeEntry._dateSource = 'user';
+        const src = document.getElementById('bb-date-source');
+        if (src && this.activeEntry.dueDate) src.textContent = '📅 Aapne ye date daali';
+        this._reviewed = false;
+        const reviewBox = document.getElementById('bb-review-confirm');
+        if (reviewBox) reviewBox.checked = false;
+        const reviewHint = document.getElementById('bb-review-hint');
+        if (reviewHint) reviewHint.style.display = 'block';
+      }
       this.renderMessageCards(this.activeEntry);
+    },
+
+    /* ---- Mandatory human review gate ----------------------------------
+       A wrong amount / recipient is the one OCR-or-voice mistake that
+       actually costs money. Save, Copy, WhatsApp and Vasooli handoff stay
+       locked until the user explicitly confirms the parsed details, and any
+       later edit re-locks them. */
+    setReviewed(v) {
+      this._reviewed = !!v;
+      const hint = document.getElementById('bb-review-hint');
+      if (hint) hint.style.display = this._reviewed ? 'none' : 'block';
+      if (this.activeEntry) this.renderMessageCards(this.activeEntry);
+    },
+    isReviewed() { return !!this._reviewed; },
+    requireReview(actionLabel) {
+      if (this.isReviewed()) return true;
+      toast(`Pehle upar wale checkbox se details verify karein, phir ${actionLabel}.`);
+      const cb = document.getElementById('bb-review-confirm');
+      if (cb && cb.focus) cb.focus();
+      return false;
     },
 
     renderMessageCards(entry) {
@@ -897,14 +1089,15 @@
       const msgs = this.generateMessageOptions(entry);
 
       const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const lock = this.isReviewed() ? '' : 'disabled title="Pehle details verify karein"';
       container.innerHTML = msgs.map((m, i) => `
         <div class="bb-msg-card">
           <div class="bb-msg-card-head">
             <span class="bb-msg-tone">${esc(m.tone)}</span>
-            <button type="button" class="bb-msg-copy-btn" data-i="${i}">Copy</button>
+            <button type="button" class="bb-msg-copy-btn" data-i="${i}" ${lock}>Copy</button>
           </div>
           <div class="bb-msg-text">${esc(m.text)}</div>
-          <button type="button" class="bb-msg-wa-btn" data-i="${i}">
+          <button type="button" class="bb-msg-wa-btn" data-i="${i}" ${lock}>
             <span>💬 WhatsApp par Bhejo</span>
           </button>
         </div>
@@ -919,6 +1112,7 @@
     },
 
     sendWhatsAppDirect(encodedText) {
+      if (!this.requireReview('WhatsApp bhejne se pehle')) return;
       const text = decodeURIComponent(encodedText);
       const phone = document.getElementById('bb-edit-phone').value.trim();
       const amt = document.getElementById('bb-edit-amount').value.trim();
@@ -935,6 +1129,7 @@
     },
 
     copyMessage(encodedText) {
+      if (!this.requireReview('copy karne se pehle')) return;
       const text = decodeURIComponent(encodedText);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => {
@@ -947,6 +1142,7 @@
     },
 
     saveToKhataAction() {
+      if (!this.requireReview('Khata me save karne se pehle')) return;
       this.syncActiveEntry();
       const entry = this.activeEntry;
       if (!entry) return;
@@ -1044,6 +1240,7 @@
     },
 
     openInVasooliAction() {
+      if (!this.requireReview('Vasooli Mode kholne se pehle')) return;
       this.syncActiveEntry();
       const entry = this.activeEntry;
       if (!entry) return;
@@ -1313,7 +1510,14 @@
     // Self-hosted, same-origin engine (CSP-safe, cacheable, offline-capable)
     async loadEngine() {
       if (window.Tesseract) return;
-      if (!navigator.onLine) throw new Error('OFFLINE_OCR');
+      if (!navigator.onLine) {
+        // A previous scan already cached the engine (CACHE_OCR). A same-origin
+        // <script> load can still succeed while offline, so try it before
+        // giving up — "works offline after first use" must survive a reload.
+        try { await this.loadScript(OCR.engine); } catch (e) { throw new Error('OFFLINE_OCR'); }
+        if (!window.Tesseract) throw new Error('OFFLINE_OCR');
+        return;
+      }
       await this.loadScript(OCR.engine);
       if (!window.Tesseract) throw new Error('ENGINE_LOAD_FAILED');
       // Tell the service worker to keep the engine so the next scan is offline.
@@ -1345,21 +1549,79 @@
       const warn = [];
       let phone = '', amount = null, name = '', date_str = '';
 
-      // 1. Mobile number (10-digit, Indian) — bhi allow "+91 98765 43210" / "98765-43210"
+      // 1. Mobile number (10-digit, Indian) — also allow "+91 98765 43210" / "98765-43210"
       const phoneSrc = text.replace(/(\+?91[\s-]?)?(\d{5})[\s-](\d{5})/g, (m, c, a, b) => `${a}${b}`);
-      // Prefer a number sitting on a customer/party line, but DO fall back to
-      // any Indian mobile on the bill. (The customer-line-only rule dropped
-      // phone detection to 0/4 on our own sample bills — "Mob 9876543210",
-      // "Mobile: 9918223344" and "Phone: 9876543210" all sit on their own line.)
-      const customerPhoneLine = phoneSrc.split('\n').find(line => /\b(customer|client|buyer|party|naam|name|tenant|owner)\b.*\b(phone|mobile|mob|contact|number|no)\b/i.test(line)) || '';
-      const phoneMatch = customerPhoneLine.match(/(?:^|\D)([6-9]\d{9})(?!\d)/)
-                      || phoneSrc.match(/(?:^|\D)([6-9]\d{9})(?!\d)/);
-      if (phoneMatch) phone = phoneMatch[1];
+      const phoneLines = phoneSrc.split('\n');
+      const mobileRe = /(?:^|\D)([6-9]\d{9})(?!\d)/;
+      const phoneOnLine = (line) => { const m = line.match(mobileRe); return m ? m[1] : ''; };
+      // A number only counts as the CUSTOMER's when it is explicitly linked to
+      // the customer/party block. The dukaan header's own "Mob:" is NEVER the
+      // customer's number — a wrong WhatsApp recipient is worse than no number,
+      // so when the link is ambiguous the phone stays blank for the user.
+      const customerPhoneLine = phoneLines.find(line => /\b(customer|client|buyer|party|naam|name|tenant)\b.*\b(phone|mobile|mob|contact|number|no)\b/i.test(line)) || '';
+      let customerPhone = phoneOnLine(customerPhoneLine);
+      if (!customerPhone) {
+        // Bills usually print the party's number on its own line ("Phone: 98…")
+        // just under the customer-name line. Accept a bare phone line ONLY when
+        // it sits inside the customer block (after a customer-name line, and
+        // never on a store/header line).
+        const storeWordRe = /\b(store|shop|dukaan|dokan|kirana|medical|traders|enterprises|market|from|seller|supplier|vendor|company|pvt|ltd|llp)\b/i;
+        const customerWordRe = /\b(customer|client|buyer|party|tenant|billed\s*to|sold\s*to|naam)\b/i;
+        let seenCustomerBlock = false;
+        for (const line of phoneLines) {
+          const isStoreLine = storeWordRe.test(line);
+          const isCustomerLine = customerWordRe.test(line) || (/\bname\b/i.test(line) && !isStoreLine);
+          if (isCustomerLine) seenCustomerBlock = true;
+          if (seenCustomerBlock && !isStoreLine &&
+              (isCustomerLine || /\b(phone|mobile|mob|contact|number)\b/i.test(line))) {
+            const p = phoneOnLine(line);
+            if (p) { customerPhone = p; break; }
+          }
+        }
+      }
+      if (customerPhone) phone = customerPhone;
 
-      // 2. Date (dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy, "12 Sep 2026")
+      // 2. Due date — ONLY from an explicitly labelled due line. An invoice
+      //    date is not a due date: silently using it moves the reminder.
+      //    (dd/mm/yyyy, dd-mm-yy, dd.mm.yyyy, "12 Sep 2026")
       const dateRe = /\b(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{2,4}|\d{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?,?\s*\d{2,4})\b/i;
-      const dateMatch = text.match(dateRe);
-      if (dateMatch) date_str = dateMatch[1];
+      const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+      const toIsoDate = (line) => {
+        const m = line.match(dateRe);
+        if (!m) return '';
+        const tok = m[1];
+        let dd, mm, yy;
+        const slash = tok.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+        const word = tok.match(/^(\d{1,2})\s*([a-z]{3,9})\.?,?\s*(\d{2,4})$/i);
+        if (slash) { dd = +slash[1]; mm = +slash[2]; yy = +slash[3]; }
+        else if (word) {
+          dd = +word[1];
+          const mon = word[2].toLowerCase();
+          mm = MONTHS.findIndex(x => mon.startsWith(x)) + 1;
+          if (mon.startsWith('sept')) mm = 9;
+          yy = +word[3];
+        } else return '';
+        if (yy < 100) yy += 2000;
+        if (!dd || !mm || !yy || dd > 31 || mm > 12 || yy < 2000 || yy > 2100) return '';
+        return `${yy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+      };
+      const dueLabelRe = /(due\s*date|payment\s*due|due\s*(?:by|on|before)|pay\s*(?:by|before)|last\s*date|clear\s*before|due\s*amount\s*date)/i;
+      let invoiceDate = '';
+      let dateSource = 'none';
+      for (const line of rawLines) {
+        if (dueLabelRe.test(line)) {
+          const iso = toIsoDate(line);
+          if (iso) { date_str = iso; dateSource = 'bill-due-label'; break; }
+        }
+      }
+      if (!date_str) {
+        // The bill's own date is kept for DISPLAY only — never persisted as
+        // the due date.
+        for (const line of rawLines) {
+          const m = line.match(dateRe);
+          if (m) { invoiceDate = m[1]; dateSource = 'bill-invoice-date'; break; }
+        }
+      }
 
       // Helper: numbers on a line, minus dates / phone / invoice numbers / GST / PIN / years
       const numbersIn = (line) => {
@@ -1378,7 +1640,10 @@
           // normaliseNumber() fixes the two mis-reads we measured on the shipped
           // bills: "1.460" (comma read as dot) and "6.500" -> 1460 / 6500,
           // instead of the old 1 / 6.
-          const val = Math.round(normaliseNumber(rawNum));
+          // Paise are preserved (2 decimals); 3-decimal groups stay the
+          // thousands-misread heuristic above.
+          const n = normaliseNumber(rawNum);
+          const val = typeof bbRoundMoney === 'function' ? bbRoundMoney(n) : Math.round(n * 100) / 100;
           if (!isFinite(val) || val < 1) continue;
           const hasCurrency = /₹|rs|inr|rupees/i.test(m[0]) || /\/-\s*$/.test(m[0]);
           if (!hasCurrency && val >= 1990 && val <= 2099 && rawNum.replace(/[.,]/g, '').length === 4) continue; // saal
@@ -1444,9 +1709,11 @@
         if (suspect) warn.push('amount');
       }
 
-      // 4. Naam: keyword ke saath (same line ya next line), warna pehli "insaan jaisi" line
-      const nameKey = /(?:customer\s*name|tenant\s*name|client\s*name|party\s*name|bill(?:ed)?\s*to|sold\s*to|ship\s*to|received\s*from|customer|client|party|naam|name|shri|smt|m\/s|tenant|owner|mr\.?|mrs\.?|ms\.?)\s*[:\-–]?\s*(.*)$/i;
-      const clip = (v) => v.replace(/^\s*\([^)]*\)\s*[:\-–]?\s*/, '').replace(/\b(date|dt|mob|mobile|phone|ph|no|inv|invoice|bill|amount|amt|total|due|gst|address|add)\b.*$/i, '')
+      // 4. Naam: keyword ke saath (same line ya next line), warna pehli "insaan jaisi" line.
+      //    "Owner" is deliberately NOT a customer keyword — on rent receipts the
+      //    owner is the merchant (app user); the tenant/buyer is the customer.
+      const nameKey = /(?:customer\s*name|tenant\s*name|client\s*name|party\s*name|bill(?:ed)?\s*to|sold\s*to|ship\s*to|received\s*from|customer|client|party|naam|name|shri|smt|m\/s|tenant|mr\.?|mrs\.?|ms\.?)\s*[:\-–]?\s*(.*)$/i;
+      const clip = (v) => v.replace(/^\s*\([^)]*\)\s*[:\-–]?\s*/, '').replace(/^[\s.:;,(\-–]+/, '').replace(/^[^A-Za-z\u0900-\u097F]+/, '').replace(/\b(date|dt|mob|mobile|phone|ph|no|inv|invoice|bill|amount|amt|total|due|gst|address|add)\b.*$/i, '')
                            .replace(/[^A-Za-z\u0900-\u097F .&'-]/g, ' ').replace(/\s+/g, ' ').trim();
       for (let i = 0; i < rawLines.length && !name; i++) {
         const m = rawLines[i].match(nameKey);
@@ -1473,7 +1740,10 @@
         phone: phone || '',
         type: 'lena',
         dueDate: date_str,
-        dueText: date_str ? `Date: ${date_str}` : 'Parchi Hisaab',
+        dueText: date_str
+          ? `Due date: ${date_str}`
+          : invoiceDate ? `Bill date: ${invoiceDate} — due date nahi mila` : '',
+        _dateSource: dateSource,
         raw: text.slice(0, 100),
         _warn: warn,
         _amountSuspect: suspect,
@@ -1864,6 +2134,11 @@
   };
 
   window.bbVoiceAssistant = VoiceAssistant;
+
+  // Pure parsers exposed for the automated reliability suites (stateless —
+  // no DOM, storage or network access).
+  VoiceAssistant.parseVoiceTranscript = parseVoiceTranscript;
+  VoiceAssistant.extractAmountFromText = extractAmountFromText;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => VoiceAssistant.init());

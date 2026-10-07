@@ -68,7 +68,10 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter(k => k.startsWith('baatbanao-') && k !== CACHE_VERSION).map(k => caches.delete(k)))
+      // OCR_CACHE is deliberately preserved across upgrades: the ~10 MB
+      // engine must keep working offline after a deploy, otherwise "works
+      // offline after first scan" breaks on every new version.
+      Promise.all(keys.filter(k => k.startsWith('baatbanao-') && k !== CACHE_VERSION && k !== OCR_CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
     .then(() => {
       return self.clients.matchAll({ type: 'window' }).then(clients => {
